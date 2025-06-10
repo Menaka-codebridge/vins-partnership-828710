@@ -1,0 +1,11 @@
+# dependencies
+package-lock.json
+/node_modules
+
+# environments
+.env
+.env_prd
+.env_sit
+.env_stg
+.env_test
+.env_uat
