@@ -1,5 +1,5 @@
 const { MenuItems } = require("./menuItems.class");
-const createModel = require("../../models/menuItems.model");
+const createModel = require("../../cbModels/menuItems.model");
 const hooks = require("./menuItems.hooks");
 
 module.exports = function (app) {

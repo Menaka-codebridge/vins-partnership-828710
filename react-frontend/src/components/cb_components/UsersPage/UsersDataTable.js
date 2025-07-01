@@ -20,7 +20,8 @@ import { Toast } from "primereact/toast";
 import DeleteImage from "../../../assets/media/Delete.png";
 import client from "../../../services/restClient";
 import { Dropdown } from "primereact/dropdown";
-import { Skeleton } from 'primereact/skeleton';
+import { Skeleton } from "primereact/skeleton";
+import LoginAsIcon from "../../../assets/media/Users.png";
 
 const UsersDataTable = ({
   items,
@@ -63,6 +64,7 @@ const UsersDataTable = ({
   const [permissions, setPermissions] = useState({});
   const [fieldPermissions, setFieldPermissions] = useState({});
   const [isLoadingPermissions, setIsLoadingPermissions] = useState(true);
+  const [filters, setFilters] = useState({});
 
   const header = (
     <div
@@ -176,8 +178,6 @@ const UsersDataTable = ({
       );
     },
     JumpToPageInput: (options) => {
-      console.log("option", options);
-
       return (
         <div>
           <span>Page</span>
@@ -254,7 +254,7 @@ const UsersDataTable = ({
           if (userPermissions) {
             setPermissions(userPermissions);
           } else {
-            console.log("No permissions found for this user and service.");
+            console.debug("No permissions found for this user and service.");
           }
         }
       } catch (error) {
@@ -281,7 +281,7 @@ const UsersDataTable = ({
         if (filteredPermissions.length > 0) {
           setFieldPermissions(filteredPermissions[0]);
         }
-        console.log("FieldPermissions", fieldPermissions);
+        console.debug("FieldPermissions", fieldPermissions);
       } catch (error) {
         console.error("Failed to fetch permissions", error);
       }
@@ -383,7 +383,10 @@ const UsersDataTable = ({
 
   const renderSkeleton = () => {
     return (
-      <DataTable value={Array.from({ length: 5 })} className="p-datatable-striped">
+      <DataTable
+        value={Array.from({ length: 5 })}
+        className="p-datatable-striped"
+      >
         <Column body={<Skeleton />} />
         <Column body={<Skeleton />} />
         <Column body={<Skeleton />} />
@@ -391,6 +394,65 @@ const UsersDataTable = ({
         <Column body={<Skeleton />} />
       </DataTable>
     );
+  };
+
+  // Initialize filters based on selectedFilterFields
+  useEffect(() => {
+    const initialFilters = {};
+    selectedFilterFields.forEach((field) => {
+      initialFilters[field] = {
+        value: null,
+        matchMode: "contains",
+      };
+    });
+    setFilters(initialFilters);
+  }, [selectedFilterFields]);
+
+  const onFilter = (e) => {
+    setFilters(e.filters);
+  };
+
+  const filterTemplate = (options) => {
+    return (
+      <InputText
+        value={options.value || ""}
+        onChange={(e) => options.filterCallback(e.target.value)}
+        placeholder={`Filter ${options.field}`}
+      />
+    );
+  };
+
+  const loginAsTemplate = (rowData, { rowIndex }) => (
+    <Button
+      onClick={() => handleLoginAs(rowData._id)}
+      icon={<img src={LoginAsIcon} style={{ width: "1em", height: "1em" }} />}
+      className="p-button-rounded p-button-text p-button-info"
+      tooltip="Login As"
+      disabled={rowData._id === user._id}
+    />
+  );
+
+  const handleLoginAs = async (userId) => {
+    try {
+      const response = await client.post("login-as", { userId });
+      // Update redux store with new user data
+      props.dispatch.auth.update({
+        isLoggedIn: true,
+        user: response.user,
+        originalUserId: user._id,
+      });
+      // Save the access token
+      await client.set("jwt", response.accessToken);
+      navigate("/");
+    } catch (error) {
+      console.error("Login as failed:", error);
+      toast.current.show({
+        severity: "error",
+        summary: "Error",
+        detail: error.message || "Failed to login as user",
+        life: 3000,
+      });
+    }
   };
 
   return (
@@ -419,6 +481,9 @@ const UsersDataTable = ({
             globalFilter={globalFilter}
             header={header}
             user={user}
+            filters={filters}
+            onFilter={onFilter}
+            filterDisplay="menu"
           >
             <Column
               selectionMode="multiple"
@@ -430,6 +495,7 @@ const UsersDataTable = ({
               header="Name"
               body={pTemplate0}
               filter={selectedFilterFields.includes("name")}
+              filterElement={filterTemplate}
               hidden={selectedHideFields?.includes("name")}
               sortable
               style={{ minWidth: "8rem" }}
@@ -439,6 +505,7 @@ const UsersDataTable = ({
               header="Email"
               body={pTemplate1}
               filter={selectedFilterFields.includes("email")}
+              filterElement={filterTemplate}
               hidden={selectedHideFields?.includes("email")}
               sortable
               style={{ minWidth: "8rem" }}
@@ -448,6 +515,7 @@ const UsersDataTable = ({
               header="Status"
               body={p_booleanTemplate3}
               filter={selectedFilterFields.includes("status")}
+              filterElement={filterTemplate}
               hidden={selectedHideFields?.includes("status")}
               style={{ minWidth: "8rem" }}
             />
@@ -457,6 +525,8 @@ const UsersDataTable = ({
             {permissions.delete ? (
               <Column header="Delete" body={deleteTemplate} />
             ) : null}
+
+            {/* <Column header="Login As" body={loginAsTemplate} /> */}
           </DataTable>
           {selectedItems.length > 0 ? (
             <div

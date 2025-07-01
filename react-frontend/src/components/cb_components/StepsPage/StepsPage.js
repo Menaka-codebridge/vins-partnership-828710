@@ -15,8 +15,8 @@ import StepsEditDialogComponent from "./StepsEditDialogComponent";
 import StepsCreateDialogComponent from "./StepsCreateDialogComponent";
 import StepsFakerDialogComponent from "./StepsFakerDialogComponent";
 import StepsSeederDialogComponent from "./StepsSeederDialogComponent";
-import SortIcon from "../../../assets/media/Sort.png";
-import FilterIcon from "../../../assets/media/Filter.png";
+import SortMenu from "../../../services/SortMenu";
+import FilterMenu from "../../../services/FilterMenu";
 
 const StepsPage = (props) => {
   const navigate = useNavigate();
@@ -71,8 +71,35 @@ const StepsPage = (props) => {
   useEffect(() => {
     const _getSchema = async () => {
       const _schema = await props.getSchema("steps");
-      const _fields = _schema.data.map((field, i) => i > 5 && field.field);
-      setSelectedHideFields(_fields);
+      const excludedFields = [
+        "_id",
+        "createdBy",
+        "updatedBy",
+        "createdAt",
+        "updatedAt",
+      ];
+      const _fields = _schema.data
+        .filter((field) => !excludedFields.includes(field.field))
+        .map((field) => {
+          const fieldName = field.field
+            .split(".")
+            .map((part) =>
+              part
+                .replace(/([A-Z])/g, " $1")
+                .trim()
+                .replace(/\b\w/g, (c) => c.toUpperCase()),
+            )
+            .join(" ");
+          return {
+            name: fieldName,
+            value: field.field,
+          };
+        });
+      setFields(_fields);
+      const _hideFields = _schema.data
+        .map((field, i) => i > 5 && field.field)
+        .filter(Boolean);
+      setSelectedHideFields(_hideFields);
     };
     _getSchema();
     if (location?.state?.action === "create") {
@@ -132,9 +159,9 @@ const StepsPage = (props) => {
   }, [showFakerDialog, showDeleteAllDialog, showEditDialog, showCreateDialog]);
 
   const onClickSaveFilteredfields = (ff) => {
-    console.debug(ff);
+    setSelectedFilterFields(ff);
+    setShowFilter(false);
   };
-
   const onClickSaveHiddenfields = (ff) => {
     console.debug(ff);
   };
@@ -228,25 +255,25 @@ const StepsPage = (props) => {
     },
     permissions.import
       ? {
-        label: "Import",
-        icon: "pi pi-upload",
-        command: () => setShowUpload(true),
-      }
+          label: "Import",
+          icon: "pi pi-upload",
+          command: () => setShowUpload(true),
+        }
       : null,
     permissions.export
       ? {
-        label: "Export",
-        icon: "pi pi-download",
-        command: () => {
-          data.length > 0
-            ? setTriggerDownload(true)
-            : props.alert({
-              title: "Export",
-              type: "warn",
-              message: "no data to export",
-            });
-        },
-      }
+          label: "Export",
+          icon: "pi pi-download",
+          command: () => {
+            data.length > 0
+              ? setTriggerDownload(true)
+              : props.alert({
+                  title: "Export",
+                  type: "warn",
+                  message: "no data to export",
+                });
+          },
+        }
       : null,
     {
       label: "Help",
@@ -256,35 +283,35 @@ const StepsPage = (props) => {
     { separator: true },
     process.env.REACT_APP_ENV == "development"
       ? {
-        label: "Testing",
-        icon: "pi pi-check-circle",
-        items: [
-          {
-            label: "Faker",
-            icon: "pi pi-bullseye",
-            command: (e) => {
-              setShowFakerDialog(true);
+          label: "Testing",
+          icon: "pi pi-check-circle",
+          items: [
+            {
+              label: "Faker",
+              icon: "pi pi-bullseye",
+              command: (e) => {
+                setShowFakerDialog(true);
+              },
+              show: true,
             },
-            show: true,
-          },
-          {
-            label: `Drop ${data?.length}`,
-            icon: "pi pi-trash",
-            command: (e) => {
-              setShowDeleteAllDialog(true);
+            {
+              label: `Drop ${data?.length}`,
+              icon: "pi pi-trash",
+              command: (e) => {
+                setShowDeleteAllDialog(true);
+              },
             },
-          },
-        ],
-      }
+          ],
+        }
       : null,
     permissions.seeder
       ? {
-        label: "Data seeder",
-        icon: "pi pi-database",
-        command: (e) => {
-          setShowSeederDialog(true);
-        },
-      }
+          label: "Data seeder",
+          icon: "pi pi-database",
+          command: (e) => {
+            setShowSeederDialog(true);
+          },
+        }
       : null,
   ].filter(Boolean);
 
@@ -392,34 +419,20 @@ const StepsPage = (props) => {
         <div className="col-6 flex justify-content-end">
           <>
             {" "}
-            <SplitButton
-              model={filterMenuItems.filter(
-                (m) => !(m.icon === "pi pi-trash" && data?.length === 0),
-              )}
-              dropdownIcon={
-                <img
-                  src={FilterIcon}
-                  style={{ marginRight: "4px", width: "1em", height: "1em" }}
-                />
-              }
-              buttonClassName="hidden"
-              menuButtonClassName="ml-1 p-button-text"
-              // menuStyle={{ width: "250px" }}
-            ></SplitButton>
-            <SplitButton
-              model={sortMenuItems.filter(
-                (m) => !(m.icon === "pi pi-trash" && data?.length === 0),
-              )}
-              dropdownIcon={
-                <img
-                  src={SortIcon}
-                  style={{ marginRight: "4px", width: "1em", height: "1em" }}
-                />
-              }
-              buttonClassName="hidden"
-              menuButtonClassName="ml-1 p-button-text"
-              menuStyle={{ width: "200px" }}
-            ></SplitButton>
+            <FilterMenu
+              fields={fields}
+              showFilter={showFilter}
+              setShowFilter={setShowFilter}
+              selectedFilterFields={selectedFilterFields}
+              setSelectedFilterFields={setSelectedFilterFields}
+              onClickSaveFilteredfields={onClickSaveFilteredfields}
+            />
+            <SortMenu
+              fields={fields}
+              data={data}
+              setData={setData}
+              initialData={initialData}
+            />
             <Button
               label="add"
               style={{ height: "30px", marginRight: "10px" }}

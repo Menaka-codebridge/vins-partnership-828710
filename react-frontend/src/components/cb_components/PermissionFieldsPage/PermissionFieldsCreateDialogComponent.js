@@ -10,7 +10,6 @@ import { InputText } from "primereact/inputtext";
 import { Dropdown } from "primereact/dropdown";
 import { Checkbox } from "primereact/checkbox";
 
-
 import { getSchemaValidationErrorsStrings } from "../../../utils";
 const PermissionFieldsCreateDialogComponent = (props) => {
   const [_entity, set_entity] = useState({});
@@ -187,7 +186,7 @@ const PermissionFieldsCreateDialogComponent = (props) => {
       onHide={props.onHide}
       modal
       style={{ width: "40vw" }}
-      className="min-w-max"
+      className="min-w-max zoomin animation-duration-700"
       footer={renderFooter()}
       resizable={false}
     >

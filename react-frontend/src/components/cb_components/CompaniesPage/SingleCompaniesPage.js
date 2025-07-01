@@ -14,6 +14,7 @@ import { TabView, TabPanel } from "primereact/tabview";
 import { SplitButton } from "primereact/splitbutton";
 import { classNames } from "primereact/utils";
 import RecentService from "../../../services/RecentService";
+import { Divider } from "primereact/divider";
 
 const SingleCompaniesPage = (props) => {
   const navigate = useNavigate();
@@ -77,7 +78,7 @@ const SingleCompaniesPage = (props) => {
   }, [props, urlParams.singleCompaniesId]);
 
   const goBack = () => {
-    navigate("/companies");
+    navigate(-1);
   };
 
   const helpSidebarRef = useRef(null);
@@ -139,7 +140,7 @@ const SingleCompaniesPage = (props) => {
 
   const handleEditNavigation = () => {
     console.log("_entity:", companyId);
-    navigate(`/companies/edit/${companyId}`); 
+    navigate(`/companies/edit/${companyId}`);
   };
 
   return (
@@ -161,76 +162,124 @@ const SingleCompaniesPage = (props) => {
                 dropdownIcon="pi pi-ellipsis-h"
                 buttonClassName="hidden"
                 menuButtonClassName="ml-1 p-button-text"
-                // menuStyle={{ width: "200px" }}
               />
             </div>
           </div>
 
-          {/* ~cb-project-dashboard~ */}
+          {/* Enhanced Company Header */}
+          <div className="mt-4 mb-4">
+            <h1 className="text-5xl font-bold text-900 mb-3">
+              {_entity?.name}
+            </h1>
+            <Divider />
+          </div>
+
+          {/* Enhanced Details Grid */}
+          <div className="grid w-full mt-3">
+            <div className="col-12 md:col-6 lg:col-3 mb-4">
+              <div className="p-3 surface-50 border-round">
+                <label className="text-sm font-medium text-600 block mb-1">
+                  Company No
+                </label>
+                <p className="m-0 text-700 text-lg">
+                  <i className="pi pi-id-card mr-2 text-500"></i>
+                  {_entity?.companyNo || "-"}
+                </p>
+              </div>
+            </div>
+
+            <div className="col-12 md:col-6 lg:col-3 mb-4">
+              <div className="p-3 surface-50 border-round">
+                <label className="text-sm font-medium text-600 block mb-1">
+                  New Company Number
+                </label>
+                <p className="m-0 text-700 text-lg">
+                  <i className="pi pi-sort-numeric-up mr-2 text-500"></i>
+                  {Number(_entity?.newCompanyNumber) || "-"}
+                </p>
+              </div>
+            </div>
+
+            <div className="col-12 md:col-6 lg:col-3 mb-4">
+              <div className="p-3 surface-50 border-round">
+                <label className="text-sm font-medium text-600 block mb-1">
+                  Date Incorporated
+                </label>
+                <p className="m-0 text-700 text-lg">
+                  <i className="pi pi-calendar mr-2 text-500"></i>
+                  {_entity?.DateIncorporated || "-"}
+                </p>
+              </div>
+            </div>
+
+            <div className="col-12 md:col-6 lg:col-3 mb-4">
+              <div className="p-3 surface-50 border-round">
+                <label className="text-sm font-medium text-600 block mb-1">
+                  Is Default
+                </label>
+                <p className="m-0 text-700 text-lg">
+                  <i
+                    className={`pi mr-2 ${_entity?.isdefault === true ? "pi-check-circle text-green-500" : "pi-times-circle text-red-500"}`}
+                  ></i>
+                  {_entity?.isdefault ? "Yes" : "No"}
+                </p>
+              </div>
+            </div>
+
+            <div className="col-12 mb-4">
+              <div className="p-3 surface-50 border-round">
+                <label className="text-sm font-medium text-600 block mb-2">
+                  Addresses
+                </label>
+                {addresses.length > 0 ? (
+                  <div className="grid">
+                    {addresses.map((elem) => (
+                      <div className="col-12 md:col-6 lg:col-4" key={elem._id}>
+                        <Link
+                          to={`/companyAddresses/${elem._id}`}
+                          className="no-underline"
+                        >
+                          <div className="p-3 border-1 surface-border border-round hover:surface-100 transition-colors transition-duration-150">
+                            <div className="flex align-items-center">
+                              <i className="pi pi-map-marker text-primary mr-2"></i>
+                              <span className="text-700">{elem.Street1}</span>
+                            </div>
+                          </div>
+                        </Link>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-500 italic">No addresses available</p>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
-        <div className="grid w-full mt-5 ml-3">
-          <div className="col-12 md:col-6 lg:col-3 mb-10">
-            <label className="text-sm text-gray-600">Name</label>
-            <p className="m-0 ">{_entity?.name}</p>
-          </div>
-          <div className="col-12 md:col-6 lg:col-3 mb-10">
-            <label className="text-sm text-gray-600 ">Company no</label>
-            <p className="m-0 ">{_entity?.companyNo}</p>
-          </div>
-          <div className="col-12 md:col-6 lg:col-3 mb-10">
-            <label className="text-sm text-gray-600">New company number</label>
-            <p className="m-0 ">{Number(_entity?.newCompanyNumber)}</p>
-          </div>
-          <div className="col-12 md:col-6 lg:col-3 mb-10">
-            <label className="text-sm text-gray-600">Date Incorporated</label>
-            <p id="DateIncorporated" className="m-0 ">
-              {_entity?.DateIncorporated}
-            </p>
-          </div>
-          <div className="col-12 md:col-6 lg:col-3 mb-10">
-            <label className="text-sm text-gray-600">Is default</label>
-            <p className="m-0 ">
-              <i
-                id="isdefault"
-                className={`pi ${_entity?.isdefault === true ? "pi-check" : "pi-times"}`}
-              ></i>
-            </p>
-          </div>
-          <div className="col-12 md:col-6 lg:col-3 mb-10">
-            <label className="text-sm text-gray-600">Addresses</label>
-            {addresses.map((elem) => (
-              <Link key={elem._id} to={`/companyAddresses/${elem._id}`}>
-                <div>
-                  {" "}
-                  {/* Removed nested card */}
-                  <p className="text-xl text-primary">{elem.Street1}</p>
-                </div>
-              </Link>
-            ))}
-          </div>
+
+        {/* Tab View Section */}
+        <div className="mt-5 w-full">
+          <TabView className="shadow-1">
+            <TabPanel header="Profiles" leftIcon="pi pi-user mr-2">
+              <ProfilesPage />
+            </TabPanel>
+            <TabPanel header="Branches" leftIcon="pi pi-building-columns mr-2">
+              <BranchesPage />
+            </TabPanel>
+            <TabPanel header="Departments" leftIcon="pi pi-briefcase mr-2">
+              <DepartmentsPage />
+            </TabPanel>
+            <TabPanel header="Addresses" leftIcon="pi pi-map mr-2">
+              <CompanyAddressesPage />
+            </TabPanel>
+            <TabPanel header="Phones" leftIcon="pi pi-phone mr-2">
+              <CompanyPhonesPage />
+            </TabPanel>
+          </TabView>
         </div>
       </div>
 
-      <div className=" mt-20 ml-3">
-        <TabView>
-          <TabPanel header="Profiles" leftIcon="pi pi-user mr-2">
-            <ProfilesPage />
-          </TabPanel>
-          <TabPanel header="Branches" leftIcon="pi pi-building-columns mr-2">
-            <BranchesPage />
-          </TabPanel>
-          <TabPanel header="Departments" leftIcon="pi pi-briefcase mr-2">
-            <DepartmentsPage />
-          </TabPanel>
-          <TabPanel header="Addresses" leftIcon="pi pi-map mr-2">
-            <CompanyAddressesPage />
-          </TabPanel>
-          <TabPanel header="Phones" leftIcon="pi pi-phone mr-2">
-            <CompanyPhonesPage />
-          </TabPanel>
-        </TabView>
-      </div>
-
+      {/* Keep the rest of the components the same */}
       <CommentsSection
         recordId={urlParams.singleCompaniesId}
         user={props.user}
@@ -246,7 +295,8 @@ const SingleCompaniesPage = (props) => {
           newRecentItem={newRecentItem}
         />
       )}
-      
+
+      {/* Help sidebar remains the same */}
       <div
         id="rightsidebar"
         className={classNames(
@@ -255,7 +305,7 @@ const SingleCompaniesPage = (props) => {
         )}
         style={{
           height: "100%",
-          backgroundColor: "rgba(0, 0, 0, 0.5)", // Semi-transparent background for the overlay effect
+          backgroundColor: "rgba(0, 0, 0, 0.5)",
         }}
       >
         <div

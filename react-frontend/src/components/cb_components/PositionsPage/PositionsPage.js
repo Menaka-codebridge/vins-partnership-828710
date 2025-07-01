@@ -19,6 +19,8 @@ import FilterIcon from "../../../assets/media/Filter.png";
 import FavouriteService from "../../../services/FavouriteService";
 import { v4 as uuidv4 } from "uuid";
 import HelpbarService from "../../../services/HelpbarService";
+import SortMenu from "../../../services/SortMenu";
+import FilterMenu from "../../../services/FilterMenu";
 
 const PositionsPage = (props) => {
   const navigate = useNavigate();
@@ -82,8 +84,35 @@ const PositionsPage = (props) => {
   useEffect(() => {
     const _getSchema = async () => {
       const _schema = await props.getSchema("positions");
-      const _fields = _schema.data.map((field, i) => i > 5 && field.field);
-      setSelectedHideFields(_fields);
+      const excludedFields = [
+        "_id",
+        "createdBy",
+        "updatedBy",
+        "createdAt",
+        "updatedAt",
+      ];
+      const _fields = _schema.data
+        .filter((field) => !excludedFields.includes(field.field))
+        .map((field) => {
+          const fieldName = field.field
+            .split(".")
+            .map((part) =>
+              part
+                .replace(/([A-Z])/g, " $1")
+                .trim()
+                .replace(/\b\w/g, (c) => c.toUpperCase()),
+            )
+            .join(" ");
+          return {
+            name: fieldName,
+            value: field.field,
+          };
+        });
+      setFields(_fields);
+      const _hideFields = _schema.data
+        .map((field, i) => i > 5 && field.field)
+        .filter(Boolean);
+      setSelectedHideFields(_hideFields);
     };
     _getSchema();
     if (location?.state?.action === "create") {
@@ -132,12 +161,18 @@ const PositionsPage = (props) => {
           message: error.message || "Failed get Positions",
         });
       });
-  }, [showFakerDialog, showDeleteAllDialog, showEditDialog, showCreateDialog, refresh]);
+  }, [
+    showFakerDialog,
+    showDeleteAllDialog,
+    showEditDialog,
+    showCreateDialog,
+    refresh,
+  ]);
 
   const onClickSaveFilteredfields = (ff) => {
-    console.debug(ff);
+    setSelectedFilterFields(ff);
+    setShowFilter(false);
   };
-
   const onClickSaveHiddenfields = (ff) => {
     console.debug(ff);
   };
@@ -231,25 +266,25 @@ const PositionsPage = (props) => {
     },
     permissions.import
       ? {
-        label: "Import",
-        icon: "pi pi-upload",
-        command: () => setShowUpload(true),
-      }
+          label: "Import",
+          icon: "pi pi-upload",
+          command: () => setShowUpload(true),
+        }
       : null,
     permissions.export
       ? {
-        label: "Export",
-        icon: "pi pi-download",
-        command: () => {
-          data.length > 0
-            ? setTriggerDownload(true)
-            : props.alert({
-              title: "Export",
-              type: "warn",
-              message: "no data to export",
-            });
-        },
-      }
+          label: "Export",
+          icon: "pi pi-download",
+          command: () => {
+            data.length > 0
+              ? setTriggerDownload(true)
+              : props.alert({
+                  title: "Export",
+                  type: "warn",
+                  message: "no data to export",
+                });
+          },
+        }
       : null,
     {
       label: "Help",
@@ -259,35 +294,35 @@ const PositionsPage = (props) => {
     { separator: true },
     process.env.REACT_APP_ENV == "development"
       ? {
-        label: "Testing",
-        icon: "pi pi-check-circle",
-        items: [
-          {
-            label: "Faker",
-            icon: "pi pi-bullseye",
-            command: (e) => {
-              setShowFakerDialog(true);
+          label: "Testing",
+          icon: "pi pi-check-circle",
+          items: [
+            {
+              label: "Faker",
+              icon: "pi pi-bullseye",
+              command: (e) => {
+                setShowFakerDialog(true);
+              },
+              show: true,
             },
-            show: true,
-          },
-          {
-            label: `Drop ${data?.length}`,
-            icon: "pi pi-trash",
-            command: (e) => {
-              setShowDeleteAllDialog(true);
+            {
+              label: `Drop ${data?.length}`,
+              icon: "pi pi-trash",
+              command: (e) => {
+                setShowDeleteAllDialog(true);
+              },
             },
-          },
-        ],
-      }
+          ],
+        }
       : null,
     permissions.seeder
       ? {
-        label: "Data seeder",
-        icon: "pi pi-database",
-        command: (e) => {
-          setShowSeederDialog(true);
-        },
-      }
+          label: "Data seeder",
+          icon: "pi pi-database",
+          command: (e) => {
+            setShowSeederDialog(true);
+          },
+        }
       : null,
   ].filter(Boolean);
 
@@ -340,7 +375,7 @@ const PositionsPage = (props) => {
           {item.label}
         </div>
       ),
-      command: () => { },
+      command: () => {},
     },
     { separator: true },
     { label: "Name Ascending", command: () => onMenuSort("nameAsc") },
@@ -403,7 +438,9 @@ const PositionsPage = (props) => {
     const tabId = getOrSetTabId();
     const response = await props.get();
     const currentCache = response?.results;
-    const selectedUser = localStorage.getItem(`selectedUser_${tabId}`) || currentCache?.selectedUser;
+    const selectedUser =
+      localStorage.getItem(`selectedUser_${tabId}`) ||
+      currentCache?.selectedUser;
     setSelectedUser(selectedUser);
 
     if (currentCache && selectedUser) {
@@ -418,7 +455,7 @@ const PositionsPage = (props) => {
           10,
         );
         setPaginatorRecordsNo(paginatorRecordsNo);
-        console.log("PaginatorRecordsNo from cache:", paginatorRecordsNo);
+
         return;
       }
     }
@@ -435,7 +472,6 @@ const PositionsPage = (props) => {
         10,
       );
       setPaginatorRecordsNo(paginatorRecordsNo);
-      console.log("PaginatorRecordsNo from service:", paginatorRecordsNo);
     } catch (error) {
       console.error("Error fetching profile from profiles service:", error);
     }
@@ -470,7 +506,6 @@ const PositionsPage = (props) => {
       }
     };
     updateCache();
-
   }, [paginatorRecordsNo, selectedUser]);
 
   useEffect(() => {
@@ -483,7 +518,7 @@ const PositionsPage = (props) => {
             .find({
               query: { service: "positions" },
             });
-          console.log("companyPermissions", companyPermissions);
+          // console.log("companyPermissions", companyPermissions);
           let userPermissions = null;
 
           // Priority 1: Profile
@@ -507,9 +542,8 @@ const PositionsPage = (props) => {
 
           if (userPermissions) {
             setPermissions(userPermissions);
-            console.log("userPermissions", userPermissions);
           } else {
-            console.log("No permissions found for this user and service.");
+            console.debug("No permissions found for this user and service.");
           }
         }
       } catch (error) {
@@ -534,14 +568,15 @@ const PositionsPage = (props) => {
             <strong>Positions </strong>
           </h4>
           {permissions.read ? (
-          <SplitButton
-            model={menuItems.filter(
-              (m) => !(m.icon === "pi pi-trash" && items?.length === 0),
-            )}
-            dropdownIcon="pi pi-ellipsis-h"
-            buttonClassName="hidden"
-            menuButtonClassName="ml-1 p-button-text"
-          />          ) : null}
+            <SplitButton
+              model={menuItems.filter(
+                (m) => !(m.icon === "pi pi-trash" && items?.length === 0),
+              )}
+              dropdownIcon="pi pi-ellipsis-h"
+              buttonClassName="hidden"
+              menuButtonClassName="ml-1 p-button-text"
+            />
+          ) : null}
         </div>
         <div className="col-6 flex justify-content-end">
           <>
@@ -549,44 +584,31 @@ const PositionsPage = (props) => {
               favouriteItem={favouriteItem}
               serviceName="peoples"
             />{" "}
-            <SplitButton
-              model={filterMenuItems.filter(
-                (m) => !(m.icon === "pi pi-trash" && data?.length === 0),
-              )}
-              dropdownIcon={
-                <img
-                  src={FilterIcon}
-                  style={{ marginRight: "4px", width: "1em", height: "1em" }}
-                />
-              }
-              buttonClassName="hidden"
-              menuButtonClassName="ml-1 p-button-text"
-            // menuStyle={{ width: "250px" }}
-            ></SplitButton>
-            <SplitButton
-              model={sortMenuItems.filter(
-                (m) => !(m.icon === "pi pi-trash" && data?.length === 0),
-              )}
-              dropdownIcon={
-                <img
-                  src={SortIcon}
-                  style={{ marginRight: "4px", width: "1em", height: "1em" }}
-                />
-              }
-              buttonClassName="hidden"
-              menuButtonClassName="ml-1 p-button-text"
-              menuStyle={{ width: "200px" }}
-            ></SplitButton>
-                        {permissions.create ? (
-            <Button
-              label="add"
-              style={{ height: "30px", marginRight: "10px" }}
-              rounded
-              loading={loading}
-              icon="pi pi-plus"
-              onClick={() => setShowCreateDialog(true)}
-              role="positions-add-button"
-            />            ) : null}
+            <FilterMenu
+              fields={fields}
+              showFilter={showFilter}
+              setShowFilter={setShowFilter}
+              selectedFilterFields={selectedFilterFields}
+              setSelectedFilterFields={setSelectedFilterFields}
+              onClickSaveFilteredfields={onClickSaveFilteredfields}
+            />
+            <SortMenu
+              fields={fields}
+              data={data}
+              setData={setData}
+              initialData={initialData}
+            />
+            {permissions.create ? (
+              <Button
+                label="add"
+                style={{ height: "30px", marginRight: "10px" }}
+                rounded
+                loading={loading}
+                icon="pi pi-plus"
+                onClick={() => setShowCreateDialog(true)}
+                role="positions-add-button"
+              />
+            ) : null}
           </>
         </div>
       </div>
@@ -667,7 +689,11 @@ const PositionsPage = (props) => {
         onYes={() => deleteAll()}
         loading={loading}
       />
-    <HelpbarService isVisible={isHelpSidebarVisible} onToggle={toggleHelpSidebar} serviceName="positions" />
+      <HelpbarService
+        isVisible={isHelpSidebarVisible}
+        onToggle={toggleHelpSidebar}
+        serviceName="positions"
+      />
     </div>
   );
 };

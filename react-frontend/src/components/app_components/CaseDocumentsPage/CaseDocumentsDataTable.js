@@ -1,12 +1,12 @@
-import { Column } from 'primereact/column';
-import { DataTable } from 'primereact/datatable';
-import React, { useState, useRef, useEffect} from 'react';
-import _ from 'lodash';
-import { Button } from 'primereact/button';
+import { Column } from "primereact/column";
+import { DataTable } from "primereact/datatable";
+import React, { useState, useRef, useEffect } from "react";
+import _ from "lodash";
+import { Button } from "primereact/button";
 import { useParams } from "react-router-dom";
 import moment from "moment";
 import UploadService from "../../../services/UploadService";
-import { InputText } from 'primereact/inputtext';
+import { InputText } from "primereact/inputtext";
 import { Dialog } from "primereact/dialog";
 import { MultiSelect } from "primereact/multiselect";
 import DownloadCSV from "../../../utils/DownloadCSV";
@@ -17,27 +17,68 @@ import CopyIcon from "../../../assets/media/Clipboard.png";
 import DuplicateIcon from "../../../assets/media/Duplicate.png";
 import DeleteIcon from "../../../assets/media/Trash.png";
 
-const CaseDocumentsDataTable = ({ items, fields, onEditRow, onRowDelete, onRowClick, searchDialog, setSearchDialog,   showUpload, setShowUpload,
-    showFilter, setShowFilter,
-    showColumns, setShowColumns, onClickSaveFilteredfields ,
-    selectedFilterFields, setSelectedFilterFields,
-    selectedHideFields, setSelectedHideFields, onClickSaveHiddenfields, loading, user,   selectedDelete,
-  setSelectedDelete, onCreateResult}) => {
-    const dt = useRef(null);
-    const urlParams = useParams();
-    const [globalFilter, setGlobalFilter] = useState('');
+const CaseDocumentsDataTable = ({
+  items,
+  fields,
+  onEditRow,
+  onRowDelete,
+  onRowClick,
+  searchDialog,
+  setSearchDialog,
+  showUpload,
+  setShowUpload,
+  showFilter,
+  setShowFilter,
+  showColumns,
+  setShowColumns,
+  onClickSaveFilteredfields,
+  selectedFilterFields,
+  setSelectedFilterFields,
+  selectedHideFields,
+  setSelectedHideFields,
+  onClickSaveHiddenfields,
+  loading,
+  user,
+  selectedDelete,
+  setSelectedDelete,
+  onCreateResult,
+}) => {
+  const dt = useRef(null);
+  const urlParams = useParams();
+  const [globalFilter, setGlobalFilter] = useState("");
   const [selectedItems, setSelectedItems] = useState([]);
   const [showDialog, setShowDialog] = useState(false);
   const [data, setData] = useState([]);
 
-const dropdownTemplate0 = (rowData, { rowIndex }) => <p >{rowData.caseNo?.caseNo}</p>
-const pTemplate1 = (rowData, { rowIndex }) => <p >{rowData.extractedContent}</p>
-const p_calendarTemplate2 = (rowData, { rowIndex }) => <p >{moment(rowData.uploadTimestamp).fromNow()}</p>
-const file_uploadTemplate3 = (rowData, { rowIndex }) => <div  > </div>
-    const editTemplate = (rowData, { rowIndex }) => <Button onClick={() => onEditRow(rowData, rowIndex)} icon={`pi ${rowData.isEdit ? "pi-check" : "pi-pencil"}`} className={`p-button-rounded p-button-text ${rowData.isEdit ? "p-button-success" : "p-button-warning"}`} />;
-    const deleteTemplate = (rowData, { rowIndex }) => <Button onClick={() => onRowDelete(rowData._id)} icon="pi pi-times" className="p-button-rounded p-button-danger p-button-text" />;
-    
-      const checkboxTemplate = (rowData) => (
+  const dropdownTemplate0 = (rowData, { rowIndex }) => (
+    <p>{rowData.summonsNo?.summonsNo}</p>
+  );
+  const pTemplate1 = (rowData, { rowIndex }) => (
+    <p>{rowData.extractedContent}</p>
+  );
+  const p_calendarTemplate2 = (rowData, { rowIndex }) => (
+    <p>{rowData.uploadTimestamp}</p>
+  );
+  const pTemplate2 = (rowData, { rowIndex }) => <p>{rowData.documentType}</p>;
+  const file_uploadTemplate3 = (rowData, { rowIndex }) => (
+    <p>{rowData.uploadedDocument?.url}</p>
+  );
+  const editTemplate = (rowData, { rowIndex }) => (
+    <Button
+      onClick={() => onEditRow(rowData, rowIndex)}
+      icon={`pi ${rowData.isEdit ? "pi-check" : "pi-pencil"}`}
+      className={`p-button-rounded p-button-text ${rowData.isEdit ? "p-button-success" : "p-button-warning"}`}
+    />
+  );
+  const deleteTemplate = (rowData, { rowIndex }) => (
+    <Button
+      onClick={() => onRowDelete(rowData._id)}
+      icon="pi pi-times"
+      className="p-button-rounded p-button-danger p-button-text"
+    />
+  );
+
+  const checkboxTemplate = (rowData) => (
     <Checkbox
       checked={selectedItems.some((item) => item._id === rowData._id)}
       onChange={(e) => {
@@ -78,7 +119,7 @@ const file_uploadTemplate3 = (rowData, { rowIndex }) => <div  > </div>
       console.error("Failed to delete selected records", error);
     }
   };
-    
+
   const handleMessage = () => {
     setShowDialog(true); // Open the dialog
   };
@@ -87,10 +128,10 @@ const file_uploadTemplate3 = (rowData, { rowIndex }) => <div  > </div>
     setShowDialog(false); // Close the dialog
   };
 
-    return (
-        <>
-        <DataTable 
-           value={items}
+  return (
+    <>
+      <DataTable
+        value={items}
         ref={dt}
         removableSort
         onRowClick={onRowClick}
@@ -108,21 +149,59 @@ const file_uploadTemplate3 = (rowData, { rowIndex }) => <div  > </div>
         selection={selectedItems}
         onSelectionChange={(e) => setSelectedItems(e.value)}
         onCreateResult={onCreateResult}
-        >
-                <Column
+      >
+        <Column
           selectionMode="multiple"
           headerStyle={{ width: "3rem" }}
           body={checkboxTemplate}
         />
-<Column field="caseNo" header="Case No" body={dropdownTemplate0} filter={selectedFilterFields.includes("caseNo")} hidden={selectedHideFields?.includes("caseNo")}  style={{ minWidth: "8rem" }} />
-<Column field="extractedContent" header="Extracted Content" body={pTemplate1} filter={selectedFilterFields.includes("extractedContent")} hidden={selectedHideFields?.includes("extractedContent")}  sortable style={{ minWidth: "8rem" }} />
-<Column field="uploadTimestamp" header="UploadTimestamp" body={p_calendarTemplate2} filter={selectedFilterFields.includes("uploadTimestamp")} hidden={selectedHideFields?.includes("uploadTimestamp")}  sortable style={{ minWidth: "8rem" }} />
-<Column field="uploadedDocument" header="Uploaded Document" body={file_uploadTemplate3} filter={selectedFilterFields.includes("uploadedDocument")} hidden={selectedHideFields?.includes("uploadedDocument")}  sortable style={{ minWidth: "8rem" }} />
-            <Column header="Edit" body={editTemplate} />
-            <Column header="Delete" body={deleteTemplate} />
-            
-        </DataTable>
-
+        <Column
+          field="summonsNo"
+          header="summons No"
+          body={dropdownTemplate0}
+          filter={selectedFilterFields.includes("summonsNo")}
+          hidden={selectedHideFields?.includes("summonsNo")}
+          style={{ minWidth: "8rem" }}
+        />
+        <Column
+          field="extractedContent"
+          header="Extracted Content"
+          body={pTemplate1}
+          filter={selectedFilterFields.includes("extractedContent")}
+          hidden={selectedHideFields?.includes("extractedContent")}
+          sortable
+          style={{ minWidth: "8rem" }}
+        />
+        <Column
+          field="uploadTimestamp"
+          header="Upload Timestamp"
+          body={p_calendarTemplate2}
+          filter={selectedFilterFields.includes("uploadTimestamp")}
+          hidden={selectedHideFields?.includes("uploadTimestamp")}
+          sortable
+          style={{ minWidth: "8rem" }}
+        />
+        <Column
+          field="documentType"
+          header="Document Type"
+          body={pTemplate2}
+          filter={selectedFilterFields.includes("documentType")}
+          hidden={selectedHideFields?.includes("documentType")}
+          sortable
+          style={{ minWidth: "8rem" }}
+        />
+        <Column
+          field="uploadedDocument"
+          header="Uploaded Document"
+          body={file_uploadTemplate3}
+          filter={selectedFilterFields.includes("uploadedDocument")}
+          hidden={selectedHideFields?.includes("uploadedDocument")}
+          sortable
+          style={{ minWidth: "8rem" }}
+        />
+        <Column header="Edit" body={editTemplate} />
+        <Column header="Delete" body={deleteTemplate} />
+      </DataTable>
 
       {selectedItems.length > 0 ? (
         <div
@@ -298,20 +377,28 @@ const file_uploadTemplate3 = (rowData, { rowIndex }) => <div  > </div>
         </div>
       ) : null}
 
-
-        <Dialog header="Upload CaseDocuments Data" visible={showUpload} onHide={() => setShowUpload(false)}>
-        <UploadService 
-          user={user} 
-          serviceName="caseDocuments"            
+      <Dialog
+        header="Upload CaseDocuments Data"
+        visible={showUpload}
+        onHide={() => setShowUpload(false)}
+      >
+        <UploadService
+          user={user}
+          serviceName="caseDocuments"
           onUploadComplete={() => {
             setShowUpload(false); // Close the dialog after upload
-          }}/>
+          }}
+        />
       </Dialog>
 
-      <Dialog header="Search CaseDocuments" visible={searchDialog} onHide={() => setSearchDialog(false)}>
-      Search
-    </Dialog>
-    <Dialog
+      <Dialog
+        header="Search CaseDocuments"
+        visible={searchDialog}
+        onHide={() => setSearchDialog(false)}
+      >
+        Search
+      </Dialog>
+      <Dialog
         header="Filter Users"
         visible={showFilter}
         onHide={() => setShowFilter(false)}
@@ -336,7 +423,7 @@ const file_uploadTemplate3 = (rowData, { rowIndex }) => <div  > </div>
             console.log(selectedFilterFields);
             onClickSaveFilteredfields(selectedFilterFields);
             setSelectedFilterFields(selectedFilterFields);
-            setShowFilter(false)
+            setShowFilter(false);
           }}
         ></Button>
       </Dialog>
@@ -366,12 +453,12 @@ const file_uploadTemplate3 = (rowData, { rowIndex }) => <div  > </div>
             console.log(selectedHideFields);
             onClickSaveHiddenfields(selectedHideFields);
             setSelectedHideFields(selectedHideFields);
-            setShowColumns(false)
+            setShowColumns(false);
           }}
         ></Button>
       </Dialog>
-        </>
-    );
+    </>
+  );
 };
 
 export default CaseDocumentsDataTable;

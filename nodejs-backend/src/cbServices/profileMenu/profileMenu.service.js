@@ -1,5 +1,5 @@
 const { ProfileMenu } = require("./profileMenu.class");
-const createModel = require("../../models/profileMenu.model");
+const createModel = require("../../cbModels/profileMenu.model");
 const hooks = require("./profileMenu.hooks");
 
 module.exports = function (app) {

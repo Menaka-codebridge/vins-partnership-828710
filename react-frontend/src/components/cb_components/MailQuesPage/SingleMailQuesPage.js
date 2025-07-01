@@ -45,7 +45,7 @@ const SingleMailQuesPage = (props) => {
   }, [props, urlParams.singleMailQuesId]);
 
   const goBack = () => {
-    navigate("/mailQues");
+    navigate(-1);
   };
 
   return (

@@ -12,6 +12,14 @@ import { InputTextarea } from "primereact/inputtextarea";
 import { Checkbox } from "primereact/checkbox";
 import { Chips } from "primereact/chips";
 import { CascadeSelect } from "primereact/cascadeselect";
+import UserAddressesCreateDialogComponent from "../UserAddressesPage/UserAddressesCreateDialogComponent";
+import UserPhonesCreateDialogComponent from "../UserPhonesPage/UserPhonesCreateDialogComponent";
+import CompaniesCreateDialogComponent from "../CompaniesPage/CompaniesCreateDialogComponent";
+import BranchesCreateDialogComponent from "../BranchesPage/BranchesCreateDialogComponent";
+import DepartmentsCreateDialogComponent from "../DepartmentsPage/DepartmentsCreateDialogComponent";
+import SectionsCreateDialogComponent from "../SectionsPage/SectionsCreateDialogComponent";
+import CompanyPositionMappingsCreateDialogComponent from "../CompanyPositionMappingsPage/CompanyPositionMappingsCreateDialogComponent";
+import UploadFilesToS3 from "../../../services/UploadFilesToS3";
 import { getSchemaValidationErrorsStrings } from "../../../utils";
 
 const ProfilesCreateDialogComponent = (props) => {
@@ -30,7 +38,17 @@ const ProfilesCreateDialogComponent = (props) => {
   const [phone, setPhone] = useState([]);
   const [showAddressDialog, setShowAddressDialog] = useState(false);
   const [newAddress, setNewAddress] = useState({});
+  const [newRecord, setRecord] = useState({});
+  const [data, setData] = useState([]);
+  const [showPhoneDialog, setShowPhoneDialog] = useState(false);
+  const [showDepartmentDialog, setShowDepartmentDialog] = useState(false);
+  const [showSectionDialog, setShowSectionDialog] = useState(false);
+  const [showCompanyDialog, setShowCompanyDialog] = useState(false);
+  const [showBranchDialog, setShowBranchDialog] = useState(false);
+  const [showPositionMappingDialog, setShowPositionMappingDialog] =
+    useState(false);
   const [positionsRolesOptions, setPositionsRolesOptions] = useState([]);
+  const [validPositionIds, setValidPositionIds] = useState([]);
 
   useEffect(() => {
     let init = { hod: false, hos: false };
@@ -150,6 +168,24 @@ const ProfilesCreateDialogComponent = (props) => {
           ],
         },
       });
+      const imageId = result.image[0];
+
+      const documentStorage = await client.service("documentStorages").find({
+        query: {
+          _id: imageId,
+        },
+      });
+
+      if (documentStorage.data.length > 0) {
+        const docToUpdate = documentStorage.data[0];
+
+        await client.service("documentStorages").patch(docToUpdate._id, {
+          tableId: result._id,
+        });
+      } else {
+        console.log("No matching document found in documentStorages.");
+      }
+
       props.onHide();
       props.alert({
         type: "success",
@@ -167,6 +203,11 @@ const ProfilesCreateDialogComponent = (props) => {
       });
     }
     setLoading(false);
+  };
+
+  const setimageId = async (id) => {
+    await new Promise((resolve) => setTimeout(resolve, 10)); // Wait for 10ms
+    setValByKey("image", id);
   };
 
   useEffect(() => {
@@ -221,14 +262,14 @@ const ProfilesCreateDialogComponent = (props) => {
         );
       })
       .catch((error) => {
-        console.debug({ error });
+        console.log({ error });
         props.alert({
           title: "Departments",
           type: "error",
           message: error.message || "Failed get departments",
         });
       });
-  }, []);
+  }, [showDepartmentDialog]);
 
   useEffect(() => {
     // on mount sections
@@ -249,14 +290,14 @@ const ProfilesCreateDialogComponent = (props) => {
         );
       })
       .catch((error) => {
-        console.debug({ error });
+        console.log({ error });
         props.alert({
           title: "Sections",
           type: "error",
           message: error.message || "Failed get sections",
         });
       });
-  }, []);
+  }, [showSectionDialog]);
 
   useEffect(() => {
     client
@@ -315,7 +356,7 @@ const ProfilesCreateDialogComponent = (props) => {
           message: error.message || "Failed to fetch roles",
         });
       });
-  }, []);
+  }, [showPositionMappingDialog]);
 
   useEffect(() => {
     // on mount companies
@@ -351,9 +392,13 @@ const ProfilesCreateDialogComponent = (props) => {
       ...prev,
       company: { _id: selectedCompanyId },
       branch: null,
+      position: null,
     }));
     setBranch([]);
+    setPositionsRolesOptions([]);
+    setValidPositionIds([]);
 
+    // Fetch branches for the selected company
     client
       .service("branches")
       .find({
@@ -367,6 +412,89 @@ const ProfilesCreateDialogComponent = (props) => {
         setBranch(res.data.map((b) => ({ name: b.name, value: b._id })));
       })
       .catch((error) => props.alert({ type: "error", message: error.message }));
+
+    // Fetch companyPositionMappings to get valid positions
+    client
+      .service("companyPositionMappings")
+      .find({
+        query: {
+          company: selectedCompanyId,
+          $limit: 1,
+        },
+      })
+      .then((res) => {
+        const positionIds = res.data[0]?.position || [];
+        setValidPositionIds(positionIds);
+
+        // Fetch roles and positions, then filter positions based on validPositionIds
+        client
+          .service("roles")
+          .find({
+            query: {
+              $limit: 10000,
+              $sort: { createdAt: -1 },
+            },
+          })
+          .then((rolesRes) => {
+            const formattedRoles = rolesRes.data.map((role) => ({
+              name: role.name,
+              code: role._id,
+              items: [],
+            }));
+
+            client
+              .service("positions")
+              .find({
+                query: {
+                  $limit: 10000,
+                  $sort: { createdAt: -1 },
+                  _id: { $in: positionIds },
+                },
+              })
+              .then((positionsRes) => {
+                positionsRes.data.forEach((position) => {
+                  const role = formattedRoles.find(
+                    (r) => r.code === position.roleId,
+                  );
+                  if (role) {
+                    role.items.push({
+                      name: position.name,
+                      code: position._id,
+                      positionID: position._id,
+                      roleID: position.roleId,
+                    });
+                  }
+                });
+                setPositionsRolesOptions(
+                  formattedRoles.filter((role) => role.items.length > 0),
+                );
+              })
+              .catch((error) => {
+                console.error({ error });
+                props.alert({
+                  title: "Positions",
+                  type: "error",
+                  message: error.message || "Failed to fetch positions",
+                });
+              });
+          })
+          .catch((error) => {
+            console.error({ error });
+            props.alert({
+              title: "Roles",
+              type: "error",
+              message: error.message || "Failed to fetch roles",
+            });
+          });
+      })
+      .catch((error) => {
+        console.debug({ error });
+        props.alert({
+          title: "CompanyPositionMappings",
+          type: "error",
+          message: error.message || "Failed to fetch company position mappings",
+        });
+      });
   };
 
   useEffect(() => {
@@ -377,7 +505,7 @@ const ProfilesCreateDialogComponent = (props) => {
         query: {
           $limit: 10000,
           $sort: { createdAt: -1 },
-          userId: urlParams.singleUsersId,
+          userId: props.user._id,
         },
       })
       .then((res) => {
@@ -388,14 +516,14 @@ const ProfilesCreateDialogComponent = (props) => {
         );
       })
       .catch((error) => {
-        console.debug({ error });
+        console.log({ error });
         props.alert({
           title: "UserAddresses",
           type: "error",
           message: error.message || "Failed get userAddresses",
         });
       });
-  }, []);
+  }, [showAddressDialog]);
 
   useEffect(() => {
     // on mount userPhones
@@ -416,14 +544,18 @@ const ProfilesCreateDialogComponent = (props) => {
         );
       })
       .catch((error) => {
-        console.debug({ error });
+        console.log({ error });
         props.alert({
           title: "UserPhones",
           type: "error",
           message: error.message || "Failed get userPhones",
         });
       });
-  }, []);
+  }, [showPhoneDialog]);
+
+  useEffect(() => {
+    handleCompanyChange;
+  }, [showPositionMappingDialog]);
 
   const renderFooter = () => (
     <div className="flex justify-content-end">
@@ -491,6 +623,102 @@ const ProfilesCreateDialogComponent = (props) => {
       });
     }
   };
+  const onCreateResult = (newEntity) => {
+    setData([...data, newEntity]);
+  };
+
+  const fetchPositionsForCompany = (companyId) => {
+    setPositionsRolesOptions([]);
+    setValidPositionIds([]);
+
+    client
+      .service("companyPositionMappings")
+      .find({
+        query: {
+          company: companyId,
+          $limit: 1,
+        },
+      })
+      .then((res) => {
+        const positionIds = res.data[0]?.position || [];
+        setValidPositionIds(positionIds);
+
+        client
+          .service("roles")
+          .find({
+            query: {
+              $limit: 10000,
+              $sort: { createdAt: -1 },
+            },
+          })
+          .then((rolesRes) => {
+            const formattedRoles = rolesRes.data.map((role) => ({
+              name: role.name,
+              code: role._id,
+              items: [],
+            }));
+
+            client
+              .service("positions")
+              .find({
+                query: {
+                  $limit: 10000,
+                  $sort: { createdAt: -1 },
+                  _id: { $in: positionIds },
+                },
+              })
+              .then((positionsRes) => {
+                positionsRes.data.forEach((position) => {
+                  const role = formattedRoles.find(
+                    (r) => r.code === position.roleId,
+                  );
+                  if (role) {
+                    role.items.push({
+                      name: position.name,
+                      code: position._id,
+                      positionID: position._id,
+                      roleID: position.roleId,
+                    });
+                  }
+                });
+                setPositionsRolesOptions(
+                  formattedRoles.filter((role) => role.items.length > 0),
+                );
+              })
+              .catch((error) => {
+                console.error({ error });
+                props.alert({
+                  title: "Positions",
+                  type: "error",
+                  message: error.message || "Failed to fetch positions",
+                });
+              });
+          })
+          .catch((error) => {
+            console.error({ error });
+            props.alert({
+              title: "Roles",
+              type: "error",
+              message: error.message || "Failed to fetch roles",
+            });
+          });
+      })
+      .catch((error) => {
+        console.debug({ error });
+        props.alert({
+          title: "CompanyPositionMappings",
+          type: "error",
+          message: error.message || "Failed to fetch company position mappings",
+        });
+      });
+  };
+
+  useEffect(() => {
+    // Refresh positions after creating a position mapping
+    if (_entity?.company?._id && !showPositionMappingDialog) {
+      fetchPositionsForCompany(_entity.company._id);
+    }
+  }, [showPositionMappingDialog]);
 
   return (
     <Dialog
@@ -586,6 +814,26 @@ const ProfilesCreateDialogComponent = (props) => {
             ) : null}
           </small>
         </div>
+        {/* <div className="col-12 md:col-6 field">
+          <span className="align-items-center">
+            <label htmlFor="image">Image:</label>
+            <UploadFilesToS3
+              type={"create"}
+              user={props.user}
+              id={urlParams.id}
+              serviceName="profiles"
+              onUploadComplete={setimageId}
+              // onFileLoaded={onFileimageLoaded}
+            />
+          </span>
+          <small className="p-error">
+            {!_.isEmpty(error["image"]) ? (
+              <p className="m-0" key="error-image">
+                {error["image"]}
+              </p>
+            ) : null}
+          </small>
+        </div> */}
         <div className="col-12 md:col-6 field">
           <label htmlFor="company">Company</label>
           <Dropdown
@@ -614,37 +862,62 @@ const ProfilesCreateDialogComponent = (props) => {
           />
         </div>
         <div className="col-12 md:col-6 field">
-          <label htmlFor="position">Position and Role</label>
-          <CascadeSelect
-            id="position"
-            value={_entity?.position}
-            options={positionsRolesOptions}
-            optionLabel="name"
-            optionGroupLabel="name"
-            optionGroupChildren={["items"]}
-            style={{ minWidth: "14rem" }}
-            placeholder="Select a Position"
-            onChange={(e) => {
-              setValByKey("position", e.value);
-            }}
-          />
+          <span className="flex flex-col">
+            <label htmlFor="position">Position and Role:</label>
+            <div className="flex align-items-center">
+              {validPositionIds.length > 0 || !_entity?.company?._id ? (
+                <div className="w-full">
+                  <CascadeSelect
+                    id="position"
+                    value={_entity?.position}
+                    options={positionsRolesOptions}
+                    optionLabel="name"
+                    optionGroupLabel="name"
+                    optionGroupChildren={["items"]}
+                    style={{ minWidth: "14rem", width: "100%" }}
+                    placeholder={
+                      !_entity?.company?._id
+                        ? "Select a company first"
+                        : validPositionIds.length === 0
+                          ? "No positions available"
+                          : "Select a Position"
+                    }
+                    onChange={(e) => setValByKey("position", e.value)}
+                    disabled={
+                      !_entity?.company?._id || validPositionIds.length === 0
+                    }
+                  />
+                </div>
+              ) : (
+                <div>No positions available</div>
+              )}
+              {validPositionIds.length === 0 && (
+                <Button
+                  icon="pi pi-plus"
+                  className="p-button-text no-focus-effect ml-2"
+                  onClick={() => setShowPositionMappingDialog(true)}
+                  tooltip="Add Position Mapping"
+                  tooltipOptions={{ position: "bottom" }}
+                  disabled={!_entity?.company?._id}
+                />
+              )}
+            </div>
+          </span>
           {error.position && (
             <small className="p-error">{error.position}</small>
           )}
         </div>
-
         <div className="col-12 md:col-6 field">
-          <span className="align-items-center">
-            <label htmlFor="manager">Manager:</label>
-            <Dropdown
-              id="manager"
-              value={_entity?.manager?._id}
-              optionLabel="name"
-              optionValue="value"
-              options={managerOptions}
-              onChange={(e) => setValByKey("manager", { _id: e.value })}
-            />
-          </span>
+          <label htmlFor="manager">Manager:</label>
+          <Dropdown
+            id="manager"
+            value={_entity?.manager?._id}
+            optionLabel="name"
+            optionValue="value"
+            options={managerOptions}
+            onChange={(e) => setValByKey("manager", { _id: e.value })}
+          />
+
           <small className="p-error">
             {!_.isEmpty(error["manager"]) ? (
               <p className="m-0" key="error-manager">
@@ -731,17 +1004,34 @@ const ProfilesCreateDialogComponent = (props) => {
         </div>
 
         <div className="col-12 md:col-6 field">
-          <span className="align-items-center">
+          <span className="flex flex-col">
             <label htmlFor="phone">Phone:</label>
-            <Dropdown
-              id="phone"
-              value={_entity?.phone?._id}
-              optionLabel="name"
-              optionValue="value"
-              options={phoneOptions}
-              onChange={(e) => setValByKey("phone", { _id: e.value })}
-            />
+            <div className="flex align-items-center">
+              {phoneOptions.length > 0 ? (
+                <div className="w-full">
+                  <Dropdown
+                    id="phone"
+                    value={_entity?.phone?._id}
+                    optionLabel="name"
+                    optionValue="value"
+                    options={phoneOptions}
+                    onChange={(e) => setValByKey("phone", { _id: e.value })}
+                    style={{ width: "100%" }}
+                  />
+                </div>
+              ) : (
+                <div>No phone numbers found</div>
+              )}
+              <Button
+                icon="pi pi-plus"
+                className="p-button-text no-focus-effect ml-2"
+                onClick={() => setShowPhoneDialog(true)}
+                tooltip="Add Phone"
+                tooltipOptions={{ position: "bottom" }}
+              />
+            </div>
           </span>
+
           <small className="p-error">
             {!_.isEmpty(error["phone"]) ? (
               <p className="m-0" key="error-phone">
@@ -752,106 +1042,51 @@ const ProfilesCreateDialogComponent = (props) => {
         </div>
       </div>
 
-      <Dialog
-        header="Add New Address"
-        visible={showAddressDialog}
+      <UserAddressesCreateDialogComponent
+        entity={newRecord}
+        onCreateResult={onCreateResult}
+        show={showAddressDialog}
         onHide={() => setShowAddressDialog(false)}
-        modal
-        style={{ width: "30vw" }}
-        footer={
-          <div>
-            <Button
-              label="Save"
-              icon="pi pi-check"
-              onClick={handleCreateAddress}
-            />
-            <Button
-              label="Cancel"
-              icon="pi pi-times"
-              onClick={() => setShowAddressDialog(false)}
-              className="p-button-secondary"
-            />
-          </div>
-        }
-      >
-        <div className="p-fluid">
-          <div className="field">
-            <label htmlFor="street1">Street 1</label>
-            <InputText
-              id="street1"
-              value={newAddress.Street1}
-              onChange={(e) =>
-                setNewAddress({ ...newAddress, Street1: e.target.value })
-              }
-              required
-            />
-          </div>
-          <div className="field">
-            <label htmlFor="street2">Street 2</label>
-            <InputText
-              id="street2"
-              value={newAddress.Street2}
-              onChange={(e) =>
-                setNewAddress({ ...newAddress, Street2: e.target.value })
-              }
-            />
-          </div>
-          <div className="field">
-            <label htmlFor="poscode">Poscode</label>
-            <InputText
-              id="poscode"
-              value={newAddress.Poscode}
-              onChange={(e) =>
-                setNewAddress({ ...newAddress, Poscode: e.target.value })
-              }
-            />
-          </div>
-          <div className="field">
-            <label htmlFor="city">City</label>
-            <InputText
-              id="city"
-              value={newAddress.City}
-              onChange={(e) =>
-                setNewAddress({ ...newAddress, City: e.target.value })
-              }
-              required
-            />
-          </div>
-          <div className="field">
-            <label htmlFor="state">State</label>
-            <InputText
-              id="state"
-              value={newAddress.State}
-              onChange={(e) =>
-                setNewAddress({ ...newAddress, State: e.target.value })
-              }
-              required
-            />
-          </div>
-          <div className="field">
-            <label htmlFor="province">Province</label>
-            <InputText
-              id="province"
-              value={newAddress.Province}
-              onChange={(e) =>
-                setNewAddress({ ...newAddress, Province: e.target.value })
-              }
-              required
-            />
-          </div>
-          <div className="field">
-            <label htmlFor="country">Country</label>
-            <InputText
-              id="country"
-              value={newAddress.Country}
-              onChange={(e) =>
-                setNewAddress({ ...newAddress, Country: e.target.value })
-              }
-              required
-            />
-          </div>
-        </div>
-      </Dialog>
+      />
+
+      <UserPhonesCreateDialogComponent
+        entity={newRecord}
+        onCreateResult={onCreateResult}
+        show={showPhoneDialog}
+        onHide={() => setShowPhoneDialog(false)}
+      />
+
+      <CompaniesCreateDialogComponent
+        entity={newRecord}
+        onCreateResult={onCreateResult}
+        show={showCompanyDialog}
+        onHide={() => setShowCompanyDialog(false)}
+      />
+
+      <BranchesCreateDialogComponent
+        entity={newRecord}
+        onCreateResult={onCreateResult}
+        show={showBranchDialog}
+        onHide={() => setShowBranchDialog(false)}
+      />
+      <DepartmentsCreateDialogComponent
+        entity={newRecord}
+        onCreateResult={onCreateResult}
+        show={showDepartmentDialog}
+        onHide={() => setShowDepartmentDialog(false)}
+      />
+      <SectionsCreateDialogComponent
+        entity={newRecord}
+        onCreateResult={onCreateResult}
+        show={showSectionDialog}
+        onHide={() => setShowSectionDialog(false)}
+      />
+      <CompanyPositionMappingsCreateDialogComponent
+        entity={newRecord}
+        show={showPositionMappingDialog}
+        onHide={() => setShowPositionMappingDialog(false)}
+        onCreateResult={onCreateResult}
+      />
     </Dialog>
   );
 };

@@ -19,7 +19,8 @@ import FilterIcon from "../../../assets/media/Filter.png";
 import FavouriteService from "../../../services/FavouriteService";
 import { v4 as uuidv4 } from "uuid";
 import HelpbarService from "../../../services/HelpbarService";
-
+import SortMenu from "../../../services/SortMenu";
+import FilterMenu from "../../../services/FilterMenu";
 
 const DepartmentsPage = (props) => {
   const navigate = useNavigate();
@@ -83,8 +84,35 @@ const DepartmentsPage = (props) => {
   useEffect(() => {
     const _getSchema = async () => {
       const _schema = await props.getSchema("departments");
-      const _fields = _schema.data.map((field, i) => i > 5 && field.field);
-      setSelectedHideFields(_fields);
+      const excludedFields = [
+        "_id",
+        "createdBy",
+        "updatedBy",
+        "createdAt",
+        "updatedAt",
+      ];
+      const _fields = _schema.data
+        .filter((field) => !excludedFields.includes(field.field))
+        .map((field) => {
+          const fieldName = field.field
+            .split(".")
+            .map((part) =>
+              part
+                .replace(/([A-Z])/g, " $1")
+                .trim()
+                .replace(/\b\w/g, (c) => c.toUpperCase()),
+            )
+            .join(" ");
+          return {
+            name: fieldName,
+            value: field.field,
+          };
+        });
+      setFields(_fields);
+      const _hideFields = _schema.data
+        .map((field, i) => i > 5 && field.field)
+        .filter(Boolean);
+      setSelectedHideFields(_hideFields);
     };
     _getSchema();
     if (location?.state?.action === "create") {
@@ -143,12 +171,18 @@ const DepartmentsPage = (props) => {
           message: error.message || "Failed get Departments",
         });
       });
-  }, [showFakerDialog, showDeleteAllDialog, showEditDialog, showCreateDialog, refresh]);
+  }, [
+    showFakerDialog,
+    showDeleteAllDialog,
+    showEditDialog,
+    showCreateDialog,
+    refresh,
+  ]);
 
   const onClickSaveFilteredfields = (ff) => {
-    console.debug(ff);
+    setSelectedFilterFields(ff);
+    setShowFilter(false);
   };
-
   const onClickSaveHiddenfields = (ff) => {
     console.debug(ff);
   };
@@ -264,25 +298,25 @@ const DepartmentsPage = (props) => {
     },
     permissions.import
       ? {
-        label: "Import",
-        icon: "pi pi-upload",
-        command: () => setShowUpload(true),
-      }
+          label: "Import",
+          icon: "pi pi-upload",
+          command: () => setShowUpload(true),
+        }
       : null,
     permissions.export
       ? {
-        label: "Export",
-        icon: "pi pi-download",
-        command: () => {
-          data.length > 0
-            ? setTriggerDownload(true)
-            : props.alert({
-              title: "Export",
-              type: "warn",
-              message: "no data to export",
-            });
-        },
-      }
+          label: "Export",
+          icon: "pi pi-download",
+          command: () => {
+            data.length > 0
+              ? setTriggerDownload(true)
+              : props.alert({
+                  title: "Export",
+                  type: "warn",
+                  message: "no data to export",
+                });
+          },
+        }
       : null,
     {
       label: "Help",
@@ -292,35 +326,35 @@ const DepartmentsPage = (props) => {
     { separator: true },
     process.env.REACT_APP_ENV == "development"
       ? {
-        label: "Testing",
-        icon: "pi pi-check-circle",
-        items: [
-          {
-            label: "Faker",
-            icon: "pi pi-bullseye",
-            command: (e) => {
-              setShowFakerDialog(true);
+          label: "Testing",
+          icon: "pi pi-check-circle",
+          items: [
+            {
+              label: "Faker",
+              icon: "pi pi-bullseye",
+              command: (e) => {
+                setShowFakerDialog(true);
+              },
+              show: true,
             },
-            show: true,
-          },
-          {
-            label: `Drop ${data?.length}`,
-            icon: "pi pi-trash",
-            command: (e) => {
-              setShowDeleteAllDialog(true);
+            {
+              label: `Drop ${data?.length}`,
+              icon: "pi pi-trash",
+              command: (e) => {
+                setShowDeleteAllDialog(true);
+              },
             },
-          },
-        ],
-      }
+          ],
+        }
       : null,
     permissions.seeder
       ? {
-        label: "Data seeder",
-        icon: "pi pi-database",
-        command: (e) => {
-          setShowSeederDialog(true);
-        },
-      }
+          label: "Data seeder",
+          icon: "pi pi-database",
+          command: (e) => {
+            setShowSeederDialog(true);
+          },
+        }
       : null,
   ].filter(Boolean);
 
@@ -373,7 +407,7 @@ const DepartmentsPage = (props) => {
           {item.label}
         </div>
       ),
-      command: () => { },
+      command: () => {},
     },
     { separator: true },
     { label: "Name Ascending", command: () => onMenuSort("nameAsc") },
@@ -416,7 +450,9 @@ const DepartmentsPage = (props) => {
     const tabId = getOrSetTabId();
     const response = await props.get();
     const currentCache = response?.results;
-    const selectedUser = localStorage.getItem(`selectedUser_${tabId}`) || currentCache?.selectedUser;
+    const selectedUser =
+      localStorage.getItem(`selectedUser_${tabId}`) ||
+      currentCache?.selectedUser;
     setSelectedUser(selectedUser);
 
     if (currentCache && selectedUser) {
@@ -431,7 +467,7 @@ const DepartmentsPage = (props) => {
           10,
         );
         setPaginatorRecordsNo(paginatorRecordsNo);
-        console.log("PaginatorRecordsNo from cache:", paginatorRecordsNo);
+
         return;
       }
     }
@@ -448,7 +484,6 @@ const DepartmentsPage = (props) => {
         10,
       );
       setPaginatorRecordsNo(paginatorRecordsNo);
-      console.log("PaginatorRecordsNo from service:", paginatorRecordsNo);
     } catch (error) {
       console.error("Error fetching profile from profiles service:", error);
     }
@@ -483,7 +518,6 @@ const DepartmentsPage = (props) => {
       }
     };
     updateCache();
-
   }, [paginatorRecordsNo, selectedUser]);
 
   useEffect(() => {
@@ -496,7 +530,7 @@ const DepartmentsPage = (props) => {
             .find({
               query: { service: "departments" },
             });
-          console.log("companyPermissions", companyPermissions);
+          // console.log("companyPermissions", companyPermissions);
           let userPermissions = null;
 
           // Priority 1: Profile
@@ -520,9 +554,8 @@ const DepartmentsPage = (props) => {
 
           if (userPermissions) {
             setPermissions(userPermissions);
-            console.log("userPermissions", userPermissions);
           } else {
-            console.log("No permissions found for this user and service.");
+            console.debug("No permissions found for this user and service.");
           }
         }
       } catch (error) {
@@ -534,7 +567,6 @@ const DepartmentsPage = (props) => {
       fetchPermissions();
     }
   }, [selectedUser]);
-
 
   return (
     <div className="mt-5">
@@ -555,43 +587,29 @@ const DepartmentsPage = (props) => {
               dropdownIcon="pi pi-ellipsis-h"
               buttonClassName="hidden"
               menuButtonClassName="ml-1 p-button-text"
-            />) : null}
+            />
+          ) : null}
         </div>
         <div className="col-6 flex justify-content-end">
           <>
             <FavouriteService
               favouriteItem={favouriteItem}
               serviceName="departments"
+            />{" "}
+            <FilterMenu
+              fields={fields}
+              showFilter={showFilter}
+              setShowFilter={setShowFilter}
+              selectedFilterFields={selectedFilterFields}
+              setSelectedFilterFields={setSelectedFilterFields}
+              onClickSaveFilteredfields={onClickSaveFilteredfields}
             />
-            {" "}
-            <SplitButton
-              model={filterMenuItems.filter(
-                (m) => !(m.icon === "pi pi-trash" && data?.length === 0),
-              )}
-              dropdownIcon={
-                <img
-                  src={FilterIcon}
-                  style={{ marginRight: "4px", width: "1em", height: "1em" }}
-                />
-              }
-              buttonClassName="hidden"
-              menuButtonClassName="ml-1 p-button-text"
-            // menuStyle={{ width: "250px" }}
-            ></SplitButton>
-            <SplitButton
-              model={sortMenuItems.filter(
-                (m) => !(m.icon === "pi pi-trash" && data?.length === 0),
-              )}
-              dropdownIcon={
-                <img
-                  src={SortIcon}
-                  style={{ marginRight: "4px", width: "1em", height: "1em" }}
-                />
-              }
-              buttonClassName="hidden"
-              menuButtonClassName="ml-1 p-button-text"
-              menuStyle={{ width: "200px" }}
-            ></SplitButton>
+            <SortMenu
+              fields={fields}
+              data={data}
+              setData={setData}
+              initialData={initialData}
+            />
             {permissions.create ? (
               <Button
                 label="add"
@@ -601,7 +619,8 @@ const DepartmentsPage = (props) => {
                 icon="pi pi-plus"
                 onClick={() => setShowCreateDialog(true)}
                 role="departments-add-button"
-              />) : null}
+              />
+            ) : null}
           </>
         </div>
       </div>
@@ -682,7 +701,11 @@ const DepartmentsPage = (props) => {
         onYes={() => deleteAll()}
         loading={loading}
       />
-      <HelpbarService isVisible={isHelpSidebarVisible} onToggle={toggleHelpSidebar} serviceName="departments" />
+      <HelpbarService
+        isVisible={isHelpSidebarVisible}
+        onToggle={toggleHelpSidebar}
+        serviceName="departments"
+      />
     </div>
   );
 };

@@ -9,14 +9,14 @@ import { Provider } from "react-redux";
 import * as models from "../../../models";
 
 test("renders groundTruthQueues page", async () => {
-    const store = init({ models });
-    render(
-        <Provider store={store}>
-            <MemoryRouter>
-                <GroundTruthQueuesPage />
-            </MemoryRouter>
-        </Provider>
-    );
-    expect(screen.getByRole("groundTruthQueues-datatable")).toBeInTheDocument();
-    expect(screen.getByRole("groundTruthQueues-add-button")).toBeInTheDocument();
+  const store = init({ models });
+  render(
+    <Provider store={store}>
+      <MemoryRouter>
+        <GroundTruthQueuesPage />
+      </MemoryRouter>
+    </Provider>,
+  );
+  expect(screen.getByRole("groundTruthQueues-datatable")).toBeInTheDocument();
+  expect(screen.getByRole("groundTruthQueues-add-button")).toBeInTheDocument();
 });

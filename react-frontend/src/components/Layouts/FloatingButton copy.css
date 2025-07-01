@@ -24,13 +24,13 @@
 }
 
 .custom-red-button {
-  background-color: #d30000 !important;
-  border-color: #d30000 !important;
+  background-color: #511718 !important;
+  border-color: #511718 !important;
 }
 
 .custom-red-button:hover {
-  background-color: #a50a0a !important;
-  border-color: #a50a0a !important;
+  background-color: #511718 !important;
+  border-color: #511718 !important;
 }
 
 .custom-red-button:focus {

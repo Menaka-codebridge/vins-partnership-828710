@@ -112,9 +112,9 @@ const ProfileMenuPage = (props) => {
       });
   }, [showFakerDialog, showDeleteAllDialog, showEditDialog, showCreateDialog]);
   const onClickSaveFilteredfields = (ff) => {
-    console.debug(ff);
+    setSelectedFilterFields(ff);
+    setShowFilter(false);
   };
-
   const onClickSaveHiddenfields = (ff) => {
     console.debug(ff);
   };
@@ -377,34 +377,20 @@ const ProfileMenuPage = (props) => {
         <div className="col-6 flex justify-content-end">
           <>
             {" "}
-            <SplitButton
-              model={filterMenuItems.filter(
-                (m) => !(m.icon === "pi pi-trash" && data?.length === 0),
-              )}
-              dropdownIcon={
-                <img
-                  src={FilterIcon}
-                  style={{ marginRight: "4px", width: "1em", height: "1em" }}
-                />
-              }
-              buttonClassName="hidden"
-              menuButtonClassName="ml-1 p-button-text"
-              // menuStyle={{ width: "250px" }}
-            ></SplitButton>
-            <SplitButton
-              model={sortMenuItems.filter(
-                (m) => !(m.icon === "pi pi-trash" && data?.length === 0),
-              )}
-              dropdownIcon={
-                <img
-                  src={SortIcon}
-                  style={{ marginRight: "4px", width: "1em", height: "1em" }}
-                />
-              }
-              buttonClassName="hidden"
-              menuButtonClassName="ml-1 p-button-text"
-              menuStyle={{ width: "200px" }}
-            ></SplitButton>
+            {/* <FilterMenu
+              fields={fields}
+              showFilter={showFilter}
+              setShowFilter={setShowFilter}
+              selectedFilterFields={selectedFilterFields}
+              setSelectedFilterFields={setSelectedFilterFields}
+              onClickSaveFilteredfields={onClickSaveFilteredfields}
+            />
+            <SortMenu
+              fields={fields}
+              data={data}
+              setData={setData}
+              initialData={initialData}
+            /> */}
             <Button
               label="add"
               style={{ height: "30px" }}
@@ -447,7 +433,7 @@ const ProfileMenuPage = (props) => {
           />
         </div>
       </div>
-         <DownloadCSV
+      <DownloadCSV
         data={data}
         fileName={filename}
         triggerDownload={triggerDownload}

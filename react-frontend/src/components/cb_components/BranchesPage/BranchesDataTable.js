@@ -21,7 +21,8 @@ import { Toast } from "primereact/toast";
 import DeleteImage from "../../../assets/media/Delete.png";
 import { connect } from "react-redux";
 import client from "../../../services/restClient";
-import { Skeleton } from 'primereact/skeleton';
+import { Skeleton } from "primereact/skeleton";
+import { Checkbox } from "primereact/checkbox";
 
 const BranchesDataTable = ({
   items,
@@ -63,6 +64,7 @@ const BranchesDataTable = ({
   const [fieldPermissions, setFieldPermissions] = useState({});
   const [triggerDownload, setTriggerDownload] = useState(false);
   const [isLoadingPermissions, setIsLoadingPermissions] = useState(true);
+  const [filters, setFilters] = useState({});
 
   const header = (
     <div
@@ -173,8 +175,6 @@ const BranchesDataTable = ({
       );
     },
     JumpToPageInput: (options) => {
-      console.log("option", options);
-
       return (
         <div>
           <span>Page</span>
@@ -210,7 +210,7 @@ const BranchesDataTable = ({
       setShowDeleteConfirmation(false);
       setRefresh((prev) => !prev);
     } catch (error) {
-      console.error("Failed to delete selected records", error);
+      // console.error("Failed to delete selected records", error);
       setShowDeleteConfirmation(false);
     }
   };
@@ -246,7 +246,6 @@ const BranchesDataTable = ({
       deselectAllRows();
       setRefresh((prev) => !prev);
     } catch (error) {
-      console.error("Failed to copy to clipboard", error);
       toast.current.show({
         severity: "error",
         summary: "Error",
@@ -276,7 +275,7 @@ const BranchesDataTable = ({
       deselectAllRows();
       setRefresh((prev) => !prev);
     } catch (error) {
-      console.error("Failed to duplicate branches", error);
+      // console.error("Failed to duplicate branches", error);
       toast.current.show({
         severity: "error",
         summary: "Error",
@@ -343,11 +342,11 @@ const BranchesDataTable = ({
           if (userPermissions) {
             setPermissions(userPermissions);
           } else {
-            console.log("No permissions found for this user and service.");
+            // console.debug("No permissions found for this user and service.");
           }
         }
       } catch (error) {
-        console.error("Failed to fetch permissions", error);
+        // console.error("Failed to fetch permissions", error);
       } finally {
         setIsLoadingPermissions(false);
       }
@@ -360,13 +359,42 @@ const BranchesDataTable = ({
 
   const renderSkeleton = () => {
     return (
-      <DataTable value={Array.from({ length: 5 })} className="p-datatable-striped">
+      <DataTable
+        value={Array.from({ length: 5 })}
+        className="p-datatable-striped"
+      >
         <Column body={<Skeleton />} />
         <Column body={<Skeleton />} />
         <Column body={<Skeleton />} />
         <Column body={<Skeleton />} />
         <Column body={<Skeleton />} />
       </DataTable>
+    );
+  };
+
+  // Initialize filters based on selectedFilterFields
+  useEffect(() => {
+    const initialFilters = {};
+    selectedFilterFields.forEach((field) => {
+      initialFilters[field] = {
+        value: null,
+        matchMode: "contains",
+      };
+    });
+    setFilters(initialFilters);
+  }, [selectedFilterFields]);
+
+  const onFilter = (e) => {
+    setFilters(e.filters);
+  };
+
+  const filterTemplate = (options) => {
+    return (
+      <InputText
+        value={options.value || ""}
+        onChange={(e) => options.filterCallback(e.target.value)}
+        placeholder={`Filter ${options.field}`}
+      />
     );
   };
 
@@ -398,6 +426,9 @@ const BranchesDataTable = ({
             globalFilter={globalFilter}
             header={header}
             user={user}
+            filters={filters}
+            onFilter={onFilter}
+            filterDisplay="menu"
           >
             <Column
               selectionMode="multiple"
@@ -409,7 +440,9 @@ const BranchesDataTable = ({
               header="Company"
               body={dropdownTemplate0}
               filter={selectedFilterFields.includes("companyId")}
+              filterElement={filterTemplate}
               hidden={selectedHideFields?.includes("companyId")}
+              sortable
               style={{ minWidth: "8rem" }}
             />
             <Column
@@ -417,6 +450,7 @@ const BranchesDataTable = ({
               header="Name"
               body={pTemplate1}
               filter={selectedFilterFields.includes("name")}
+              filterElement={filterTemplate}
               hidden={selectedHideFields?.includes("name")}
               sortable
               style={{ minWidth: "8rem" }}
@@ -426,6 +460,7 @@ const BranchesDataTable = ({
               header="Is default"
               body={p_booleanTemplate2}
               filter={selectedFilterFields.includes("isDefault")}
+              filterElement={filterTemplate}
               hidden={selectedHideFields?.includes("isDefault")}
               sortable
               style={{ minWidth: "8rem" }}
@@ -655,35 +690,6 @@ const BranchesDataTable = ({
           >
             Search
           </Dialog>
-          <Dialog
-            header="Filter Users"
-            visible={showFilter}
-            onHide={() => setShowFilter(false)}
-          >
-            <div className="card flex justify-content-center">
-              <MultiSelect
-                value={selectedFilterFields}
-                onChange={(e) => setSelectedFilterFields(e.value)}
-                options={fields}
-                optionLabel="name"
-                optionValue="value"
-                filter
-                placeholder="Select Fields"
-                maxSelectedLabels={6}
-                className="w-full md:w-20rem"
-              />
-            </div>
-            <Button
-              text
-              label="save as pref"
-              onClick={() => {
-                console.debug(selectedFilterFields);
-                onClickSaveFilteredfields(selectedFilterFields);
-                setSelectedFilterFields(selectedFilterFields);
-                setShowFilter(false);
-              }}
-            ></Button>
-          </Dialog>
 
           <Dialog
             header="Hide Columns"
@@ -707,7 +713,7 @@ const BranchesDataTable = ({
               text
               label="save as pref"
               onClick={() => {
-                console.debug(selectedHideFields);
+                // console.debug(selectedHideFields);
                 onClickSaveHiddenfields(selectedHideFields);
                 setSelectedHideFields(selectedHideFields);
                 setShowColumns(false);

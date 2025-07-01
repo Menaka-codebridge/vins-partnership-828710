@@ -1,5 +1,5 @@
 const { PermissionServices } = require("./permissionServices.class");
-const createModel = require("../../models/permissionServices.model");
+const createModel = require("../../cbModels/permissionServices.model");
 const hooks = require("./permissionServices.hooks");
 
 module.exports = function (app) {

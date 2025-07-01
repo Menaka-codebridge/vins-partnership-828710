@@ -64,7 +64,7 @@ const SinglePermissionFieldsPage = (props) => {
   }, [props, urlParams.singlePermissionFieldsId]);
 
   const goBack = () => {
-    navigate("/permissionFields");
+    navigate(-1);
   };
 
   return (

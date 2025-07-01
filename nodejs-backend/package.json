@@ -72,6 +72,7 @@
         "firebase-admin": "^13.0.1",
         "helmet": "^4.6.0",
         "ioredis": "^5.4.1",
+        "js-tiktoken": "^1.0.20",
         "lodash": "^4.17.21",
         "moment": "^2.29.4",
         "mongodb-core": "^3.2.7",

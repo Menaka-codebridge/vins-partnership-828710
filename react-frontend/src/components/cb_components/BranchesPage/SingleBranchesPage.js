@@ -72,7 +72,7 @@ const SingleBranchesPage = (props) => {
   }, [props, urlParams.singleBranchesId]);
 
   const goBack = () => {
-    navigate("/branches");
+    navigate(-1);
   };
 
   const helpSidebarRef = useRef(null);
@@ -188,11 +188,18 @@ const SingleBranchesPage = (props) => {
           </div>
         </div>
         <div className="mt-2">
-<TabView>                <TabPanel header="true" leftIcon="pi pi-building-columns mr-2">
+          <TabView>
+            <div className="mt-2">
+              <TabView>
+                <TabPanel header="true" leftIcon="pi pi-building-columns mr-2">
                   <ProfilesPage />
                 </TabPanel>
+              </TabView>
+            </div>
           </TabView>
-        </div>        <CommentsSection
+        </div>
+
+        <CommentsSection
           recordId={urlParams.singleBranchesId}
           user={props.user}
           alert={props.alert}

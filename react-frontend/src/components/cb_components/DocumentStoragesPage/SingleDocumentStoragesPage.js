@@ -45,7 +45,7 @@ const SingleDocumentStoragesPage = (props) => {
   }, [props, urlParams.singleDocumentStoragesId]);
 
   const goBack = () => {
-    navigate("/documentStorages");
+    navigate(-1);
   };
 
   return (

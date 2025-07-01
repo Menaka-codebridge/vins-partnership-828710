@@ -44,7 +44,6 @@ const AppTopbar = (props) => {
       userProfiles[0]?._id ||
       null,
   );
-
   const [selectedUserName, setSelectedUserName] = useState("");
   const [selectedUserAvatar, setSelectedUserAvatar] = useState(null);
   const helpSidebarRef = useRef(null);
@@ -75,34 +74,68 @@ const AppTopbar = (props) => {
     }
   }, [selectedUser, browserTabId]);
 
+  // In AppTopbar.js
+  useEffect(() => {
+    if (props.user && props.user._id) {
+      const fetchAndSetProfile = async () => {
+        try {
+          // Fetch profiles for current user
+          const res = await client.service("profiles").find({
+            query: {
+              userId: props.user._id,
+              $limit: 10000,
+              $populate: ["position", "company"],
+            },
+          });
+
+          const userProfiles = res.data;
+          setProfiles(userProfiles);
+
+          // Check if current selectedUser is valid for this user
+          const currentSelected = localStorage.getItem(
+            "selectedUser_" + browserTabId,
+          );
+          const isValidSelected = userProfiles.some(
+            (p) => p._id === currentSelected,
+          );
+
+          // Set selected user - either the valid one or first profile
+          const newSelectedUser = isValidSelected
+            ? currentSelected
+            : userProfiles[0]?._id || null;
+          setSelectedUser(newSelectedUser);
+
+          // Update cache with the correct selected user
+          await initializeCacheStructure();
+        } catch (error) {
+          console.error("Error fetching profiles:", error);
+        }
+      };
+
+      fetchAndSetProfile();
+    }
+  }, [props.user._id]);
+
+  // Modify the initializeCacheStructure function to use the correct selectedUser
   const initializeCacheStructure = async () => {
     try {
-      // Fetch the current cache
-      const response = await props.getCache();
-      const currentCache = response.results || {};
-
-      // Fetch all profiles
+      // Get current profiles for user
       const profilesResponse = await client.service("profiles").find({
         query: {
+          userId: props.user._id,
           $limit: 10000,
           $populate: ["position"],
         },
       });
       const profilesData = profilesResponse.data;
 
-      // Filter profiles for the current user
-      const filteredProfilesData = profilesData.filter(
-        (profile) => profile.userId === props.user._id,
-      );
+      // Get current cache
+      const response = await props.getCache();
+      const currentCache = response.results || {};
 
-      // console.debug(
-      //   "Filtered profiles for current user:",
-      //   filteredProfilesData,
-      // );
-
-      // Build default cache structure
+      // Build cache structure
       const defaultCacheStructure = {
-        profiles: filteredProfilesData.map((profile) => ({
+        profiles: profilesData.map((profile) => ({
           profileId: profile._id,
           role: profile.position?.roleId || "Unknown Role",
           preferences: {
@@ -112,52 +145,34 @@ const AppTopbar = (props) => {
             settings: {},
           },
         })),
-        selectedUser: selectedUser || filteredProfilesData[0]?._id,
+        selectedUser: selectedUser || profilesData[0]?._id,
         browserTabId: browserTabId,
       };
 
-      // Check if cache needs to be updated
+      // Update cache if needed
       if (
         !currentCache.profiles ||
-        currentCache.profiles.length !== filteredProfilesData.length
+        currentCache.profiles.length !== profilesData.length ||
+        currentCache.selectedUser !== (selectedUser || profilesData[0]?._id)
       ) {
-        console.debug("Updating cache with new profile data.");
-
-        const updatedCache = {
-          ...currentCache,
-          profiles: defaultCacheStructure.profiles,
-          selectedUser: selectedUser || filteredProfilesData[0]?._id,
-          browserTabId: browserTabId,
-        };
-
-        // Save updated cache
-        await props.setCache(updatedCache);
-        console.debug("Cache updated successfully.");
-      } else {
-        console.debug("Cache already up-to-date.");
+        await props.setCache(defaultCacheStructure);
       }
     } catch (error) {
       console.error("Error initializing cache structure:", error);
     }
   };
-
-  useEffect(() => {
-    if (props.user && props.user._id) {
-      initializeCacheStructure();
-    }
-  }, [props.user._id]);
-
   // useEffect(() => {
-  //   initializeCacheStructure();
-  // }, []);
+  //   if (props.user && props.user._id) {
+  //     initializeCacheStructure();
+  //   }
+  // }, [props.user._id]);
 
-  // Handle user patched event only once
   useEffect(() => {
     const handlePatchedUser = (user) => {
       if (props.user._id === user?._id) {
         props.logout();
       }
-      setTicker(`patched ${user.name}`);
+      // setTicker(`patched ${user.name}`);
     };
 
     client.service("users").on("patched", handlePatchedUser);
@@ -168,20 +183,33 @@ const AppTopbar = (props) => {
   }, [props.user._id, props.logout]);
 
   const showMenu = (e) => {
-    if (userMenuRef?.current) userMenuRef.current.show(e);
+    if (userMenuRef.current) {
+      userMenuRef.current.show(e);
+    } else {
+      console.warn("userMenuRef is not initialized");
+    }
   };
+
   const showProfileMenu = (e) => {
-    if (profileMenuRef?.current) profileMenuRef.current.show(e);
+    if (profileMenuRef.current) {
+      profileMenuRef.current.show(e);
+    } else {
+      console.warn("profileMenuRef is not initialized");
+    }
   };
 
   const handleUserMenuHover = (e) => {
     setUserMenuVisible(true);
-    showMenu(e);
+    if (userMenuRef.current) {
+      userMenuRef.current.show(e);
+    }
   };
 
   const handleProfileMenuHover = (e) => {
     setProfileMenuVisible(true);
-    showProfileMenu(e);
+    if (profileMenuRef.current) {
+      profileMenuRef.current.show(e);
+    }
   };
 
   const handleUserMenuLeave = () => {
@@ -255,7 +283,6 @@ const AppTopbar = (props) => {
     fetchProfiles();
   }, [props.user]);
 
-  // Fetch and cache image URLs
   useEffect(() => {
     profiles.forEach((profile) => {
       const imageId = profile.image?.[0];
@@ -273,7 +300,6 @@ const AppTopbar = (props) => {
 
   const fetchImageUrl = async (imageId) => {
     if (!imageId) {
-      // console.error("Image ID is undefined");
       return "";
     }
     try {
@@ -294,6 +320,8 @@ const AppTopbar = (props) => {
         name: profile.name || "Unknown",
         position: profile.position?.description || "Unknown Position",
         role: roleNames[profile.position?.roleId] || "Unknown Role",
+        company: profile.company?.name || "",
+        branch: profile.branch?.name || "",
         status: "success",
         avatarContent: {
           type: profile.image && profile.image.length > 0 ? "image" : "text",
@@ -301,11 +329,10 @@ const AppTopbar = (props) => {
           url: imageUrls[profile.image?.[0]],
         },
       }))
-      .sort((a, b) => a.name.localeCompare(b.name)); // Sort alphabetically by name
+      .sort((a, b) => a.name.localeCompare(b.name));
 
     setUserItems(formattedUserItems);
 
-    // **Set initial selected user and update display information**
     let initialSelectedUser = selectedUser;
     if (!initialSelectedUser && formattedUserItems[0]) {
       initialSelectedUser = formattedUserItems[0].id;
@@ -341,11 +368,6 @@ const AppTopbar = (props) => {
     }
   }, [profiles, roleNames, imageUrls, props.user?._id, selectedUser]);
 
-  //   if (!selectedUser && formattedUserItems[0]) {
-  //     setSelectedUser(formattedUserItems[0].id);
-  //   }
-  // }, [profiles, roleNames,imageUrls, props.user?._id]);
-
   const handleUserChange = async (e) => {
     const userId = e.target.value;
     setSelectedUser(userId);
@@ -376,13 +398,7 @@ const AppTopbar = (props) => {
       }
 
       await props.setCache(updatedCache);
-      console.debug(
-        "Cache updated successfully with selectedRole:",
-        selectedRole,
-      );
-      // Navigate to the root route
       navigate("/");
-      // Reload the page
       window.location.reload();
     } catch (error) {
       console.error("Error updating cache:", error);
@@ -393,11 +409,17 @@ const AppTopbar = (props) => {
     ...userItems.map((user) => ({
       label: (
         <div
-          className="container flex flex-row ms-0"
-          style={{ width: "350px", cursor: "pointer" }}
+          className="container flex flex-row ms-0 p-2 rounded-lg"
+          style={{
+            width: "300px",
+            cursor: "pointer",
+            backgroundColor:
+              selectedUser === user.id ? "#E6F2FF" : "transparent",
+            border: selectedUser === user.id ? "1px solid #0066CC" : "none",
+          }}
           onClick={() => handleUserChange({ target: { value: user.id } })}
         >
-          <div className="ps-0">
+          <div className="ps-0 flex items-center">
             {user.avatarContent.type === "image" && user.avatarContent.url ? (
               <Avatar
                 image={user.avatarContent.url}
@@ -406,6 +428,7 @@ const AppTopbar = (props) => {
                 size="large"
                 style={{
                   borderRadius: "50%",
+                  border: "2px solid #D30000",
                 }}
               />
             ) : (
@@ -429,42 +452,59 @@ const AppTopbar = (props) => {
                   borderRadius: "50%",
                   backgroundColor: "#D30000",
                   color: "#ffffff",
+                  border: "2px solid #D30000",
                 }}
               />
             )}
           </div>
           <div className="container flex-grow">
             <div
-              className="justify-start mb-2"
+              className="justify-start"
               style={{
-                fontSize: "13px",
+                fontSize: "14px",
                 fontWeight: "600",
                 color: "#2A4454",
                 textAlign: "left",
-                width: "12rem",
+                width: "100%",
               }}
             >
-              {user.name}
+              <div
+                style={{
+                  wordWrap: "break-word",
+                  whiteSpace: "normal",
+                  maxWidth: "250px",
+                }}
+              >
+                {user.name}
+              </div>
+              <div className="flex items-center gap-2 mt-1 mb-1">
+                <Tag
+                  value={user.role}
+                  severity="info"
+                  className="text-xs py-1"
+                  style={{ background: "#E6F2FF", color: "#0066CC" }}
+                />
+                <span className="text-xs text-gray-600">{user.position}</span>
+              </div>
             </div>
-            <div
-              className="justify-start mb-2"
-              style={{ fontSize: "11px", color: "gray", textAlign: "left" }}
-            >
-              {user.position}
+            <div className="flex items-center gap-2">
+              {user.company && (
+                <Tag
+                  value={user.company}
+                  severity="success"
+                  className="text-xs py-1"
+                  style={{ background: "#E6F7EE", color: "#00875A" }}
+                />
+              )}
+              {user.branch && (
+                <Tag
+                  value={user.branch}
+                  severity="warning"
+                  className="text-xs py-1"
+                  style={{ background: "#FFF4E6", color: "#FF8B00" }}
+                />
+              )}
             </div>
-            <div className="flex justify-start align-items-end">
-              <Tag value={user.role} severity={user.status} />
-            </div>
-          </div>
-          <div className="container pe-10 mt-1">
-            <input
-              type="radio"
-              id={user.id}
-              name="userRadio"
-              value={user.id}
-              checked={selectedUser === user.id}
-              onChange={(e) => handleUserChange(e)}
-            />
           </div>
         </div>
       ),
@@ -530,16 +570,13 @@ const AppTopbar = (props) => {
 
       if (latestLogin.data.length > 0) {
         const latestRecordId = latestLogin.data[0]._id;
-
         await client.service("loginHistory").patch(latestRecordId, {
           logoutTime: new Date(),
         });
       }
       setSelectedUser(null);
       await props.logout();
-      setSelectedUser(null);
       navigate("/", { replace: true });
-      closeMenu(e);
     } catch (error) {
       console.error("Error updating logout time or logging out:", error);
     }
@@ -547,124 +584,150 @@ const AppTopbar = (props) => {
 
   return props.isLoggedIn ? (
     <div className="layout-topbar">
-      <Link to="/project">
-        <div className="cursor-pointer min-w-max flex align-items-end">
-          {/* <img
-            src={"./assets/logo/atlas-logo.svg"}
-            height={50}
-            className="mt-0"
-          /> */}
-          <h3
+      <div className="layout-topbar">
+        {/* Left-aligned logo and name */}
+        <div className="flex align-items-center">
+          <Link to="/project">
+            <div className="cursor-pointer min-w-max flex align-items-end">
+              <img
+                src={"./assets/logo/vinsLogo.png"}
+                height={50}
+                className="mb-1"
+              />
+              {/* <h3
             className="text-red-500"
-            style={{
-              fontFamily: "MarlinGeo",
-              fontWeight: "bolder",
-              margin: 0,
-              marginBottom: 8,
-            }}
+            style={{ fontFamily: "MarlinGeo", fontWeight: "bolder", margin: 0 }}
           >
             <i className="pi pi-menu" style={{ fontSize: "1.5rem" }}></i>{" "}
-            {label !== "" ? label : "AIMS"}
-          </h3>
-        </div>
-      </Link>
-      {ticker}
-
-      <ul className="layout-topbar-menu lg:flex origin-top">
-        <div
-          style={{
-            backgroundColor: "rgba(139, 139, 139, 0.1)",
-            borderRadius: "10px",
-            display: "flex",
-            justifyContent: "center",
-          }}
-          className="mr-5"
-          onClick={showProfileMenu}
-          // onMouseEnter={handleProfileMenuHover}
-          // onMouseLeave={handleProfileMenuLeave}
-          aria-controls="profile-popup-menu"
-          aria-haspopup
-        >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              padding: "0.25rem 0.5rem",
-            }}
-          >
-            {selectedUserAvatar && (
-              <Avatar
-                image={
-                  typeof selectedUserAvatar === "string" &&
-                  selectedUserAvatar.startsWith("http")
-                    ? selectedUserAvatar
-                    : null
-                }
-                label={
-                  typeof selectedUserAvatar === "string" &&
-                  !selectedUserAvatar.startsWith("http")
-                    ? (() => {
-                        const tokens = selectedUserAvatar
-                          .split(" ")
-                          .filter(
-                            (token) => token !== "-" && token.trim() !== "",
-                          );
-                        if (tokens.length >= 2) {
-                          return tokens
-                            .slice(0, 2)
-                            .map((token) => token.charAt(0).toUpperCase())
-                            .join("");
-                        }
-                        return selectedUserAvatar.substring(0, 2).toUpperCase();
-                      })()
-                    : null
-                }
-                className="mr-2"
-                shape="circle"
-                size="small"
-                style={{
-                  borderRadius: "50%",
-                  backgroundColor: "#D30000",
-                  color: "#ffffff",
-                }}
-              />
-            )}
-            <span className="font-medium">{selectedUserName}</span>
-          </div>
-        </div>
-
-        <div className="mt-2 ">
-          <Link to="/inbox">
-            <Email />
+            {label !== "" ? label : "My App"}
+          </h3> */}
+            </div>
           </Link>
         </div>
-        <div className="mt-2 ">
-          <NotificationMenu />
-        </div>
-        {props.onSettings ? (
-          <li>
-            <button
-              className="p-link layout-topbar-button"
-              onClick={props.onSettings}
-            >
-              <i className="pi pi-cog" />
-              <span>Settings</span>
-            </button>
-          </li>
-        ) : null}
-        {props.onAccount ? (
-          <li>
-            <button
-              className="p-link layout-topbar-button"
-              onClick={props.onAccount}
-            >
-              <i className="pi pi-user" />
-              <span>Profile</span>
-            </button>
-          </li>
-        ) : null}
-      </ul>
 
+        {/* Right-aligned navigation items */}
+        <div className="flex align-items-center gap-2">
+          <ul className="flex align-items-center list-none p-0 m-0 gap-2">
+            {/* Profile menu item */}
+            <li className="flex align-items-center">
+              <div
+                style={{
+                  backgroundColor: "rgba(139, 139, 139, 0.1)",
+                  borderRadius: "10px",
+                  cursor: "pointer",
+                }}
+                onClick={showProfileMenu}
+                aria-controls="profile-popup-menu"
+                aria-haspopup
+                className="mr-4"
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    padding: "0.25rem 0.5rem",
+                  }}
+                >
+                  {selectedUserAvatar && (
+                    <Avatar
+                      image={
+                        typeof selectedUserAvatar === "string" &&
+                        selectedUserAvatar.startsWith("http")
+                          ? selectedUserAvatar
+                          : null
+                      }
+                      label={
+                        typeof selectedUserAvatar === "string" &&
+                        !selectedUserAvatar.startsWith("http")
+                          ? selectedUserAvatar
+                          : null
+                      }
+                      className="mr-2"
+                      shape="circle"
+                      size="small"
+                      style={{
+                        borderRadius: "50%",
+                        backgroundColor: "#D30000",
+                        color: "#ffffff",
+                      }}
+                    />
+                  )}
+                  <span className="font-medium hidden sm:inline">
+                    {selectedUserName}
+                  </span>
+                </div>
+              </div>
+            </li>
+
+            {/* Email icon */}
+            <li className="flex align-items-center">
+              <Link to="/inbox">
+                <Email />
+              </Link>
+            </li>
+
+            {/* Notification menu */}
+            <li className="flex align-items-center">
+              <NotificationMenu />
+            </li>
+
+            {/* Settings button */}
+            {props.onSettings && (
+              <li className="flex align-items-center">
+                <button
+                  className="p-link layout-topbar-button"
+                  onClick={props.onSettings}
+                >
+                  <i className="pi pi-cog" />
+                  <span className="hidden sm:inline">Settings</span>
+                </button>
+              </li>
+            )}
+
+            {/* Profile button */}
+            {props.onAccount && (
+              <li className="flex align-items-center">
+                <button
+                  className="p-link layout-topbar-button"
+                  onClick={props.onAccount}
+                >
+                  <i className="pi pi-user" />
+                  <span className="hidden sm:inline">Profile</span>
+                </button>
+              </li>
+            )}
+          </ul>
+
+          {/* User avatar */}
+          <Avatar
+            label={(() => {
+              if (props.user.name) {
+                const tokens = props.user.name
+                  .split(" ")
+                  .filter((token) => token !== "-" && token.trim() !== "");
+                if (tokens.length >= 2) {
+                  return tokens
+                    .slice(0, 2)
+                    .map((token) => token.charAt(0).toUpperCase())
+                    .join("");
+                }
+                return props.user.name.substring(0, 2).toUpperCase();
+              } else {
+                return " ";
+              }
+            })()}
+            shape="circle"
+            onClick={showMenu}
+            aria-controls="user-popup-menu"
+            aria-haspopup
+            style={{
+              borderRadius: "50%",
+              backgroundColor: "#D30000",
+              color: "#ffffff",
+            }}
+          />
+        </div>
+      </div>
       <Menu
         model={items}
         popup
@@ -686,77 +749,43 @@ const AppTopbar = (props) => {
         id="profile-popup-menu"
         key={selectedUser}
         style={{
-          width: "310px",
+          width: "340px",
           transform: "translateX(80px)",
           marginTop: "15px",
           maxHeight: "600px",
           overflowY: "auto",
         }}
-        appendTo="self"
+        appendTo={document.body}
       />
-      {props.isLoggedIn ? (
-        <>
-          <Avatar
-            label={(() => {
-              if (props.user.name) {
-                const tokens = props.user.name
-                  .split(" ")
-                  .filter((token) => token !== "-" && token.trim() !== "");
-                if (tokens.length >= 2) {
-                  return tokens
-                    .slice(0, 2)
-                    .map((token) => token.charAt(0).toUpperCase())
-                    .join("");
-                }
-                return props.user.name.substring(0, 2).toUpperCase();
-              } else {
-                return " ";
-              }
-            })()}
-            className="mr-2 ml-2"
-            shape="circle"
-            onClick={showMenu}
-            // onMouseEnter={handleUserMenuHover}
-            // onMouseLeave={handleUserMenuLeave}
-            aria-controls="user-popup-menu"
-            aria-haspopup
-            style={{
-              borderRadius: "50%",
-              backgroundColor: "#D30000",
-              color: "#ffffff",
-            }}
-          />
-        </>
-      ) : (
-        <Button
-          label="login"
-          className="p-button-rounded"
-          onClick={() => navigate("/login")}
-        />
-      )}
 
-      <div
-        ref={helpSidebarRef}
-        id="rightsidebar"
-        className={classNames(
-          "overlay-auto z-10 surface-overlay shadow-2 fixed top-0 right-0 w-20rem animation-duration-150 animation-ease-in-out",
-          { hidden: !isHelpSidebarVisible, block: isHelpSidebarVisible },
-        )}
+      {/* <Avatar
+        label={(() => {
+          if (props.user.name) {
+            const tokens = props.user.name
+              .split(" ")
+              .filter((token) => token !== "-" && token.trim() !== "");
+            if (tokens.length >= 2) {
+              return tokens
+                .slice(0, 2)
+                .map((token) => token.charAt(0).toUpperCase())
+                .join("");
+            }
+            return props.user.name.substring(0, 2).toUpperCase();
+          } else {
+            return " ";
+          }
+        })()}
+        className="mr-2 ml-2"
+        shape="circle"
+        onClick={showMenu}
+        aria-controls="user-popup-menu"
+        aria-haspopup
         style={{
-          height: "100%",
-          backgroundColor: "rgba(0, 0, 0, 0.5)",
+          borderRadius: "50%",
+          backgroundColor: "#D30000",
+          color: "#ffffff",
         }}
-      >
-        <div
-          className="flex flex-column h-full p-4 bg-white"
-          style={{ height: "calc(100% - 60px)", marginTop: "10px" }}
-        >
-          <span className="text-xl font-medium text-900 mb-3">Help</span>
-          <div className="border-2 border-dashed surface-border border-round surface-section flex-auto">
-            <div className="mt-3">What do you want to do today?</div>
-          </div>
-        </div>
-      </div>
+      /> */}
     </div>
   ) : null;
 };

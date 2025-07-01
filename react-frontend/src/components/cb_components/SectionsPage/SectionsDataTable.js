@@ -21,7 +21,7 @@ import DeleteImage from "../../../assets/media/Delete.png";
 import client from "../../../services/restClient";
 import { Dropdown } from "primereact/dropdown";
 import { connect } from "react-redux";
-import { Skeleton } from 'primereact/skeleton';
+import { Skeleton } from "primereact/skeleton";
 
 const SectionsDataTable = ({
   items,
@@ -64,6 +64,7 @@ const SectionsDataTable = ({
   const [permissions, setPermissions] = useState({});
   const [fieldPermissions, setFieldPermissions] = useState({});
   const [isLoadingPermissions, setIsLoadingPermissions] = useState(true);
+  const [filters, setFilters] = useState({});
 
   const header = (
     <div
@@ -175,8 +176,6 @@ const SectionsDataTable = ({
       );
     },
     JumpToPageInput: (options) => {
-      console.log("option", options);
-
       return (
         <div>
           <span>Page</span>
@@ -254,7 +253,7 @@ const SectionsDataTable = ({
           if (userPermissions) {
             setPermissions(userPermissions);
           } else {
-            console.log("No permissions found for this user and service.");
+            console.debug("No permissions found for this user and service.");
           }
         }
       } catch (error) {
@@ -281,7 +280,7 @@ const SectionsDataTable = ({
         if (filteredPermissions.length > 0) {
           setFieldPermissions(filteredPermissions[0]);
         }
-        console.log("FieldPermissions", fieldPermissions);
+        console.debug("FieldPermissions", fieldPermissions);
       } catch (error) {
         console.error("Failed to fetch permissions", error);
       }
@@ -384,13 +383,42 @@ const SectionsDataTable = ({
 
   const renderSkeleton = () => {
     return (
-      <DataTable value={Array.from({ length: 5 })} className="p-datatable-striped">
+      <DataTable
+        value={Array.from({ length: 5 })}
+        className="p-datatable-striped"
+      >
         <Column body={<Skeleton />} />
         <Column body={<Skeleton />} />
         <Column body={<Skeleton />} />
         <Column body={<Skeleton />} />
         <Column body={<Skeleton />} />
       </DataTable>
+    );
+  };
+
+  // Initialize filters based on selectedFilterFields
+  useEffect(() => {
+    const initialFilters = {};
+    selectedFilterFields.forEach((field) => {
+      initialFilters[field] = {
+        value: null,
+        matchMode: "contains",
+      };
+    });
+    setFilters(initialFilters);
+  }, [selectedFilterFields]);
+
+  const onFilter = (e) => {
+    setFilters(e.filters);
+  };
+
+  const filterTemplate = (options) => {
+    return (
+      <InputText
+        value={options.value || ""}
+        onChange={(e) => options.filterCallback(e.target.value)}
+        placeholder={`Filter ${options.field}`}
+      />
     );
   };
 
@@ -420,6 +448,9 @@ const SectionsDataTable = ({
             globalFilter={globalFilter}
             header={header}
             user={user}
+            filters={filters}
+            onFilter={onFilter}
+            filterDisplay="menu"
           >
             <Column
               selectionMode="multiple"
@@ -431,6 +462,7 @@ const SectionsDataTable = ({
               header="Department"
               body={dropdownTemplate0}
               filter={selectedFilterFields.includes("departmentId")}
+              filterElement={filterTemplate}
               hidden={selectedHideFields?.includes("departmentId")}
               style={{ minWidth: "8rem" }}
             />
@@ -439,6 +471,7 @@ const SectionsDataTable = ({
               header="Name"
               body={pTemplate1}
               filter={selectedFilterFields.includes("name")}
+              filterElement={filterTemplate}
               hidden={selectedHideFields?.includes("name")}
               sortable
               style={{ minWidth: "8rem" }}
@@ -448,6 +481,7 @@ const SectionsDataTable = ({
               header="Code"
               body={pTemplate2}
               filter={selectedFilterFields.includes("code")}
+              filterElement={filterTemplate}
               hidden={selectedHideFields?.includes("code")}
               sortable
               style={{ minWidth: "8rem" }}
@@ -457,6 +491,7 @@ const SectionsDataTable = ({
               header="Is default"
               body={p_booleanTemplate3}
               filter={selectedFilterFields.includes("isDefault")}
+              filterElement={filterTemplate}
               hidden={selectedHideFields?.includes("isDefault")}
               sortable
               style={{ minWidth: "8rem" }}
@@ -647,7 +682,11 @@ const SectionsDataTable = ({
                   icon={
                     <img
                       src={DeleteIcon}
-                      style={{ marginRight: "4px", width: "1em", height: "1em" }}
+                      style={{
+                        marginRight: "4px",
+                        width: "1em",
+                        height: "1em",
+                      }}
                     />
                   }
                   onClick={handleDelete}
@@ -685,35 +724,6 @@ const SectionsDataTable = ({
             onHide={() => setSearchDialog(false)}
           >
             Search
-          </Dialog>
-          <Dialog
-            header="Filter Users"
-            visible={showFilter}
-            onHide={() => setShowFilter(false)}
-          >
-            <div className="card flex justify-content-center">
-              <MultiSelect
-                value={selectedFilterFields}
-                onChange={(e) => setSelectedFilterFields(e.value)}
-                options={fields}
-                optionLabel="name"
-                optionValue="value"
-                filter
-                placeholder="Select Fields"
-                maxSelectedLabels={6}
-                className="w-full md:w-20rem"
-              />
-            </div>
-            <Button
-              text
-              label="save as pref"
-              onClick={() => {
-                console.debug(selectedFilterFields);
-                onClickSaveFilteredfields(selectedFilterFields);
-                setSelectedFilterFields(selectedFilterFields);
-                setShowFilter(false);
-              }}
-            ></Button>
           </Dialog>
 
           <Dialog

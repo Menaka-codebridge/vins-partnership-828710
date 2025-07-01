@@ -11,6 +11,7 @@ import { Editor } from "primereact/editor";
 import { Avatar } from "primereact/avatar";
 import { Chip } from "primereact/chip";
 import { getSchemaValidationErrorsStrings } from "../../../utils";
+
 const InboxCreateDialogComponent = (props) => {
   const [_entity, set_entity] = useState({});
   const [error, setError] = useState({});
@@ -42,7 +43,7 @@ const InboxCreateDialogComponent = (props) => {
       setContentLinks(
         props.selectedItemsId.map((item) => ({
           id: item._id,
-          name: item.name,
+          name: item.name || Object.values(item)[1] || "Unknown", // Fallback to second element if name is missing
           url: `/${props.serviceInbox}/${item._id}`,
         })),
       );
@@ -68,6 +69,7 @@ const InboxCreateDialogComponent = (props) => {
     setIsSendButtonActive(false);
     setContentLinks([]);
   };
+
   const onSave = async () => {
     if (!validate()) return;
     const savedLinks = contentLinks;
@@ -173,8 +175,9 @@ const InboxCreateDialogComponent = (props) => {
   const handleTagRemove = (user) => {
     setSelectedUsers((prev) => prev.filter((u) => u.value !== user.value));
   };
-  const handleLinkClick = (url) => {
-    navigate(url);
+
+  const handleLinkRemove = (id) => {
+    setContentLinks((prevLinks) => prevLinks.filter((link) => link.id !== id));
   };
 
   const renderFooter = () => (
@@ -213,9 +216,6 @@ const InboxCreateDialogComponent = (props) => {
     set_entity(new_entity);
     setError({});
   };
-  const handleLinkRemove = (id) => {
-    setContentLinks((prevLinks) => prevLinks.filter((link) => link.id !== id));
-  };
 
   const fromOptions = from.map((elem) => ({
     name: elem.name,
@@ -237,7 +237,7 @@ const InboxCreateDialogComponent = (props) => {
       }}
       modal
       style={{ width: "40vw" }}
-      className="min-w-max"
+      className="min-w-max zoomin animation-duration-700"
       footer={renderFooter()}
       resizable={false}
     >
@@ -268,7 +268,6 @@ const InboxCreateDialogComponent = (props) => {
                     padding: "5px",
                     borderRadius: "5px",
                     marginRight: "5px",
-                    // backgroundColor: "#f0f0f0",
                   }}
                 >
                   <Avatar
@@ -320,7 +319,7 @@ const InboxCreateDialogComponent = (props) => {
                     alignItems: "center",
                     padding: "5px",
                     cursor: "pointer",
-                  }} // Added styles for better layout
+                  }}
                 >
                   <Avatar
                     label={user.name ? user.name.charAt(0) : "U"}
@@ -342,7 +341,6 @@ const InboxCreateDialogComponent = (props) => {
 
         <div className="col-12 field mt-3" style={{ marginBottom: "-20px" }}>
           <span className="align-items-center">
-            {/* <FloatLabel> */}
             <InputText
               id="subject"
               value={_entity?.subject}
@@ -350,8 +348,6 @@ const InboxCreateDialogComponent = (props) => {
               placeholder="Subject"
               required
             />
-            {/* <label htmlFor="subject">Subject</label> */}
-            {/* </FloatLabel> */}
           </span>
           <small className="p-error">
             {!_.isEmpty(error["subject"]) ? (
@@ -365,13 +361,13 @@ const InboxCreateDialogComponent = (props) => {
         <div className="col-12 field mt-4">
           <span className="align-items-center">
             <div className="content-links md-4">
-              {contentLinks.map((link, index) => (
+              {contentLinks.map((link) => (
                 <Chip
-                  key={link.id} // Use unique id as key
+                  key={link.id}
                   label={link.name}
                   className="content-link-chip"
                   removable
-                  onRemove={() => handleLinkRemove(link.id)} // Remove based on unique id
+                  onRemove={() => handleLinkRemove(link.id)}
                 />
               ))}
             </div>

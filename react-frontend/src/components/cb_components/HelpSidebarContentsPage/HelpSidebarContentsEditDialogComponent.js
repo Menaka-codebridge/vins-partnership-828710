@@ -5,7 +5,7 @@ import client from "../../../services/restClient";
 import _ from "lodash";
 import { Dialog } from "primereact/dialog";
 import { Button } from "primereact/button";
-import { InputText } from 'primereact/inputtext';
+import { InputText } from "primereact/inputtext";
 import { Editor } from "primereact/editor";
 import { Dropdown } from "primereact/dropdown";
 import axios from "axios";
@@ -36,7 +36,13 @@ const HelpSidebarContentsCreateDialogComponent = (props) => {
         const apiUrl = process.env.REACT_APP_SERVER_URL + "/listServices";
         const response = await axios.get(apiUrl);
         if (response.data?.status && response.data?.data) {
-          setServiceOptions(response.data.data);
+          // Use the API response directly and append "welcomeDashboard"
+          const updatedServiceOptions = [
+            ...response.data.data,
+            "welcomeDashboard",
+            "apptopbar",
+          ];
+          setServiceOptions(updatedServiceOptions);
         } else {
           console.error("Failed to fetch service options:", response.data);
         }
@@ -51,8 +57,6 @@ const HelpSidebarContentsCreateDialogComponent = (props) => {
     set_entity(props.entity);
   }, [props.entity, props.show]);
 
-
-
   const onSave = async () => {
     let _data = {
       serviceName: _entity?.serviceName,
@@ -66,24 +70,43 @@ const HelpSidebarContentsCreateDialogComponent = (props) => {
 
     setLoading(true);
     try {
-
-      const result = await client.service("helpSidebarContents").patch(_entity._id, _data);
+      const result = await client
+        .service("helpSidebarContents")
+        .patch(_entity._id, _data);
       props.onHide();
-      props.alert({ type: "success", title: "Edit info", message: "Info helpSidebarContents updated successfully" });
+      props.alert({
+        type: "success",
+        title: "Edit info",
+        message: "Info helpSidebarContents updated successfully",
+      });
       props.onEditResult(result);
-
     } catch (error) {
       console.debug("error", error);
-      setError(getSchemaValidationErrorsStrings(error) || "Failed to update info");
-      props.alert({ type: "error", title: "Edit info", message: "Failed to update info" });
+      setError(
+        getSchemaValidationErrorsStrings(error) || "Failed to update info",
+      );
+      props.alert({
+        type: "error",
+        title: "Edit info",
+        message: "Failed to update info",
+      });
     }
     setLoading(false);
   };
 
   const renderFooter = () => (
     <div className="flex justify-content-end">
-      <Button label="save" className="p-button-text no-focus-effect" onClick={onSave} loading={loading} />
-      <Button label="close" className="p-button-text no-focus-effect p-button-secondary" onClick={props.onHide} />
+      <Button
+        label="save"
+        className="p-button-text no-focus-effect"
+        onClick={onSave}
+        loading={loading}
+      />
+      <Button
+        label="close"
+        className="p-button-text no-focus-effect p-button-secondary"
+        onClick={props.onHide}
+      />
     </div>
   );
 
@@ -93,12 +116,23 @@ const HelpSidebarContentsCreateDialogComponent = (props) => {
     setError({});
   };
 
-
-
   return (
-    <Dialog header="Edit HelpSidebarContents" visible={props.show} closable={false} onHide={props.onHide} modal style={{ width: "40vw" }} className="min-w-max scalein animation-ease-in-out animation-duration-1000" footer={renderFooter()} resizable={false}>
-      <div className="grid p-fluid overflow-y-auto"
-        style={{ maxWidth: "55vw" }} role="helpSidebarContents-edit-dialog-component">
+    <Dialog
+      header="Edit HelpSidebarContents"
+      visible={props.show}
+      closable={false}
+      onHide={props.onHide}
+      modal
+      style={{ width: "40vw" }}
+      className="min-w-max scalein animation-ease-in-out animation-duration-1000"
+      footer={renderFooter()}
+      resizable={false}
+    >
+      <div
+        className="grid p-fluid overflow-y-auto"
+        style={{ maxWidth: "55vw" }}
+        role="helpSidebarContents-edit-dialog-component"
+      >
         <div className="col-12 md:col-6 field">
           <span className="align-items-center">
             <label htmlFor="serviceName">Service Name:</label>
@@ -171,7 +205,7 @@ const HelpSidebarContentsCreateDialogComponent = (props) => {
               value={_entity?.content}
               onTextChange={(e) => setValByKey("content", e.htmlValue)} // Use htmlValue
               // headerTemplate={renderHeader()} // Add the header toolbar
-              style={{ height: '320px' }} // Important: Set a height!
+              style={{ height: "320px" }} // Important: Set a height!
               required
             />
           </span>
@@ -187,7 +221,13 @@ const HelpSidebarContentsCreateDialogComponent = (props) => {
         <div className="col-12 field">
           <span className="align-items-center">
             <label htmlFor="video">Video:</label>
-            <InputText id="video" className="w-full mb-3 p-inputtext-sm" value={_entity?.video} onChange={(e) => setValByKey("video", e.target.value)} required />
+            <InputText
+              id="video"
+              className="w-full mb-3 p-inputtext-sm"
+              value={_entity?.video}
+              onChange={(e) => setValByKey("video", e.target.value)}
+              required
+            />
           </span>
           <small className="p-error">
             {!_.isEmpty(error["video"]) && (
@@ -201,10 +241,10 @@ const HelpSidebarContentsCreateDialogComponent = (props) => {
         <small className="p-error">
           {Array.isArray(Object.keys(error))
             ? Object.keys(error).map((e, i) => (
-              <p className="m-0" key={i}>
-                {e}: {error[e]}
-              </p>
-            ))
+                <p className="m-0" key={i}>
+                  {e}: {error[e]}
+                </p>
+              ))
             : error}
         </small>
       </div>
@@ -220,4 +260,7 @@ const mapDispatch = (dispatch) => ({
   alert: (data) => dispatch.toast.alert(data),
 });
 
-export default connect(mapState, mapDispatch)(HelpSidebarContentsCreateDialogComponent);
+export default connect(
+  mapState,
+  mapDispatch,
+)(HelpSidebarContentsCreateDialogComponent);

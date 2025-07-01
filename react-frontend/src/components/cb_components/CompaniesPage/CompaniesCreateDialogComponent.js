@@ -11,7 +11,7 @@ import { InputNumber } from "primereact/inputnumber";
 import { Calendar } from "primereact/calendar";
 import { Checkbox } from "primereact/checkbox";
 import { getSchemaValidationErrorsStrings } from "../../../utils";
-import { Dropdown } from "primereact/dropdown"; 
+import { Dropdown } from "primereact/dropdown";
 
 const CompaniesCreateDialogComponent = (props) => {
   const [_entity, set_entity] = useState({});
@@ -25,6 +25,7 @@ const CompaniesCreateDialogComponent = (props) => {
     { label: "External", value: "external" },
     { label: "Customer", value: "customer" },
     { label: "CodeBridge", value: "codebridge" },
+    { label: "Mem", value: "mem" },
   ];
 
   useEffect(() => {
@@ -54,7 +55,7 @@ const CompaniesCreateDialogComponent = (props) => {
       name: _entity?.name,
       companyNo: _entity?.companyNo,
       newCompanyNumber: _entity?.newCompanyNumber,
-      companyType: _entity?.companyType, 
+      companyType: _entity?.companyType,
       DateIncorporated: _entity?.DateIncorporated,
       isdefault: _entity?.isdefault || false,
       createdBy: props.user._id,
@@ -114,7 +115,7 @@ const CompaniesCreateDialogComponent = (props) => {
       onHide={props.onHide}
       modal
       style={{ width: "40vw" }}
-      className="min-w-max"
+      className="min-w-max zoomin animation-duration-700"
       footer={renderFooter()}
       resizable={false}
     >

@@ -1,5 +1,5 @@
 const { PermissionFields } = require("./permissionFields.class");
-const createModel = require("../../models/permissionFields.model");
+const createModel = require("../../cbModels/permissionFields.model");
 const hooks = require("./permissionFields.hooks");
 
 module.exports = function (app) {

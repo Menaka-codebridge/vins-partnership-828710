@@ -9,14 +9,18 @@ import { Provider } from "react-redux";
 import * as models from "../../../models";
 
 test("renders textExtractionQueues page", async () => {
-    const store = init({ models });
-    render(
-        <Provider store={store}>
-            <MemoryRouter>
-                <TextExtractionQueuesPage />
-            </MemoryRouter>
-        </Provider>
-    );
-    expect(screen.getByRole("textExtractionQueues-datatable")).toBeInTheDocument();
-    expect(screen.getByRole("textExtractionQueues-add-button")).toBeInTheDocument();
+  const store = init({ models });
+  render(
+    <Provider store={store}>
+      <MemoryRouter>
+        <TextExtractionQueuesPage />
+      </MemoryRouter>
+    </Provider>,
+  );
+  expect(
+    screen.getByRole("textExtractionQueues-datatable"),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByRole("textExtractionQueues-add-button"),
+  ).toBeInTheDocument();
 });

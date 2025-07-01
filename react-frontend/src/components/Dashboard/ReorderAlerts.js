@@ -23,10 +23,12 @@ export default function ReorderAlerts() {
 
         const stockLevels = {};
         stockInResponse.data.forEach((item) => {
-          stockLevels[item.partName] = (stockLevels[item.partName] || 0) + (item.quantity || 0);
+          stockLevels[item.partName] =
+            (stockLevels[item.partName] || 0) + (item.quantity || 0);
         });
         stockOutResponse.data.forEach((item) => {
-          stockLevels[item.partName] = (stockLevels[item.partName] || 0) - (item.quantity || 0);
+          stockLevels[item.partName] =
+            (stockLevels[item.partName] || 0) - (item.quantity || 0);
         });
 
         const reorderAlerts = Object.keys(stockLevels).filter(
@@ -56,7 +58,9 @@ export default function ReorderAlerts() {
             marginLeft: "0.5rem",
           }}
         >
-          <span className="block text-900 font-medium mb-1">Reorder Alerts</span>
+          <span className="block text-900 font-medium mb-1">
+            Reorder Alerts
+          </span>
         </div>
       </div>
       {loading ? (

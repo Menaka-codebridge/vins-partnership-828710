@@ -1,5 +1,5 @@
 const { UserAddresses } = require("./userAddresses.class");
-const createModel = require("../../models/userAddresses.model");
+const createModel = require("../../cbModels/userAddresses.model");
 const hooks = require("./userAddresses.hooks");
 
 module.exports = function (app) {

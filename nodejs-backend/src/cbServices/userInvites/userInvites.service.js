@@ -1,5 +1,5 @@
 const { UserInvites } = require("./userInvites.class");
-const createModel = require("../../models/userInvites.model");
+const createModel = require("../../cbModels/userInvites.model");
 const hooks = require("./userInvites.hooks");
 
 module.exports = function (app) {

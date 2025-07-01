@@ -19,11 +19,8 @@ export default function LowStockItems() {
 
         // Identify low stock items
         const lowStockItems = partsMasterResponse.data
-          .filter(
-            (part) =>
-              part.quantity <= part.reOrderingPoint 
-          )
-          .map((part) => part.description); 
+          .filter((part) => part.quantity <= part.reOrderingPoint)
+          .map((part) => part.description);
 
         setLowStockItems(lowStockItems);
         setLoading(false);
@@ -48,7 +45,9 @@ export default function LowStockItems() {
             marginLeft: "0.5rem",
           }}
         >
-          <span className="block text-900 font-medium mb-1">Low Stock Items</span>
+          <span className="block text-900 font-medium mb-1">
+            Low Stock Items
+          </span>
         </div>
       </div>
       {loading ? (
@@ -66,7 +65,6 @@ export default function LowStockItems() {
           >
             {lowStockItems.join(", ")}
           </div>
-  
         </div>
       )}
     </div>

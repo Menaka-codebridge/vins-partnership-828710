@@ -1,5 +1,5 @@
 const { ErrorLogs } = require("./errorLogs.class");
-const createModel = require("../../models/errorLogs.model");
+const createModel = require("../../cbModels/errorLogs.model");
 const hooks = require("./errorLogs.hooks");
 
 module.exports = function (app) {

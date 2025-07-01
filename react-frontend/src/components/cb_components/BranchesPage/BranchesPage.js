@@ -15,11 +15,11 @@ import BranchesEditDialogComponent from "./BranchesEditDialogComponent";
 import BranchesCreateDialogComponent from "./BranchesCreateDialogComponent";
 import BranchesFakerDialogComponent from "./BranchesFakerDialogComponent";
 import BranchesSeederDialogComponent from "./BranchesSeederDialogComponent";
-import SortIcon from "../../../assets/media/Sort.png";
-import FilterIcon from "../../../assets/media/Filter.png";
 import FavouriteService from "../../../services/FavouriteService";
 import { v4 as uuidv4 } from "uuid";
 import HelpbarService from "../../../services/HelpbarService";
+import SortMenu from "../../../services/SortMenu";
+import FilterMenu from "../../../services/FilterMenu";
 
 const BranchesPage = (props) => {
   const navigate = useNavigate();
@@ -53,7 +53,6 @@ const BranchesPage = (props) => {
   const [refresh, setRefresh] = useState(false);
   const [paginatorRecordsNo, setPaginatorRecordsNo] = useState(10);
 
-
   const getOrSetTabId = () => {
     let tabId = sessionStorage.getItem("browserTabId");
     if (!tabId) {
@@ -70,7 +69,6 @@ const BranchesPage = (props) => {
     }
   }, [selectedUser]);
 
-  
   const toggleHelpSidebar = () => {
     setHelpSidebarVisible(!isHelpSidebarVisible);
   };
@@ -85,8 +83,35 @@ const BranchesPage = (props) => {
   useEffect(() => {
     const _getSchema = async () => {
       const _schema = await props.getSchema("branches");
-      const _fields = _schema.data.map((field, i) => i > 5 && field.field);
-      setSelectedHideFields(_fields);
+      const excludedFields = [
+        "_id",
+        "createdBy",
+        "updatedBy",
+        "createdAt",
+        "updatedAt",
+      ];
+      const _fields = _schema.data
+        .filter((field) => !excludedFields.includes(field.field))
+        .map((field) => {
+          const fieldName = field.field
+            .split(".")
+            .map((part) =>
+              part
+                .replace(/([A-Z])/g, " $1")
+                .trim()
+                .replace(/\b\w/g, (c) => c.toUpperCase()),
+            )
+            .join(" ");
+          return {
+            name: fieldName,
+            value: field.field,
+          };
+        });
+      setFields(_fields);
+      const _hideFields = _schema.data
+        .map((field, i) => i > 5 && field.field)
+        .filter(Boolean);
+      setSelectedHideFields(_hideFields);
     };
     _getSchema();
     if (location?.state?.action === "create") {
@@ -136,7 +161,7 @@ const BranchesPage = (props) => {
         setLoading(false);
       })
       .catch((error) => {
-        console.debug({ error });
+        // console.debug({ error });
         setLoading(false);
         props.hide();
         props.alert({
@@ -154,11 +179,12 @@ const BranchesPage = (props) => {
   ]);
 
   const onClickSaveFilteredfields = (ff) => {
-    console.debug(ff);
+    setSelectedFilterFields(ff);
+    setShowFilter(false);
   };
 
   const onClickSaveHiddenfields = (ff) => {
-    console.debug(ff);
+    // console.debug(ff);
   };
 
   const onEditRow = (rowData, rowIndex) => {
@@ -192,7 +218,7 @@ const BranchesPage = (props) => {
       setSelectedEntityIndex();
       setShowAreYouSureDialog(false);
     } catch (error) {
-      console.debug({ error });
+      // console.debug({ error });
       props.alert({
         title: "Branches",
         type: "error",
@@ -224,7 +250,7 @@ const BranchesPage = (props) => {
           });
           setLoading(false);
           props.hide();
-          console.debug({ error });
+          // console.debug({ error });
         }),
       ),
     );
@@ -259,7 +285,7 @@ const BranchesPage = (props) => {
           type: "error",
           message: "Failed to copy page link",
         });
-        console.error("Failed to copy: ", error);
+        // console.error("Failed to copy: ", error);
       });
   };
 
@@ -271,25 +297,25 @@ const BranchesPage = (props) => {
     },
     permissions.import
       ? {
-        label: "Import",
-        icon: "pi pi-upload",
-        command: () => setShowUpload(true),
-      }
+          label: "Import",
+          icon: "pi pi-upload",
+          command: () => setShowUpload(true),
+        }
       : null,
     permissions.export
       ? {
-        label: "Export",
-        icon: "pi pi-download",
-        command: () => {
-          data.length > 0
-            ? setTriggerDownload(true)
-            : props.alert({
-              title: "Export",
-              type: "warn",
-              message: "no data to export",
-            });
-        },
-      }
+          label: "Export",
+          icon: "pi pi-download",
+          command: () => {
+            data.length > 0
+              ? setTriggerDownload(true)
+              : props.alert({
+                  title: "Export",
+                  type: "warn",
+                  message: "no data to export",
+                });
+          },
+        }
       : null,
     {
       label: "Help",
@@ -297,123 +323,39 @@ const BranchesPage = (props) => {
       command: () => toggleHelpSidebar(),
     },
     { separator: true },
-    process.env.REACT_APP_ENV == "development"
+    process.env.REACT_APP_ENV === "development"
       ? {
-        label: "Testing",
-        icon: "pi pi-check-circle",
-        items: [
-          {
-            label: "Faker",
-            icon: "pi pi-bullseye",
-            command: (e) => {
-              setShowFakerDialog(true);
+          label: "Testing",
+          icon: "pi pi-check-circle",
+          items: [
+            {
+              label: "Faker",
+              icon: "pi pi-bullseye",
+              command: (e) => {
+                setShowFakerDialog(true);
+              },
+              show: true,
             },
-            show: true,
-          },
-          {
-            label: `Drop ${data?.length}`,
-            icon: "pi pi-trash",
-            command: (e) => {
-              setShowDeleteAllDialog(true);
+            {
+              label: `Drop ${data?.length}`,
+              icon: "pi pi-trash",
+              command: (e) => {
+                setShowDeleteAllDialog(true);
+              },
             },
-          },
-        ],
-      }
+          ],
+        }
       : null,
     permissions.seeder
       ? {
-        label: "Data seeder",
-        icon: "pi pi-database",
-        command: (e) => {
-          setShowSeederDialog(true);
-        },
-      }
+          label: "Data seeder",
+          icon: "pi pi-database",
+          command: (e) => {
+            setShowSeederDialog(true);
+          },
+        }
       : null,
   ].filter(Boolean);
-
-  const onMenuSort = (sortOption) => {
-    let sortedData;
-    switch (sortOption) {
-      case "nameAsc":
-        sortedData = _.orderBy(data, ["name"], ["asc"]);
-        break;
-      case "nameDesc":
-        sortedData = _.orderBy(data, ["name"], ["desc"]);
-        break;
-      case "createdAtAsc":
-        sortedData = _.orderBy(data, ["createdAt"], ["asc"]);
-        break;
-      case "createdAtDesc":
-        sortedData = _.orderBy(data, ["createdAt"], ["desc"]);
-        break;
-      default:
-        sortedData = data;
-    }
-    setData(sortedData);
-  };
-
-  const filterMenuItems = [
-    {
-      label: `Filter`,
-      icon: "pi pi-filter",
-      command: () => setShowFilter(true),
-    },
-    {
-      label: `Clear`,
-      icon: "pi pi-filter-slash",
-      command: () => setSelectedFilterFields([]),
-    },
-  ];
-
-  const sortMenuItems = [
-    {
-      label: "Sort by",
-      template: (item) => (
-        <div
-          style={{
-            fontWeight: "bold",
-            padding: "8px 16px",
-            backgroundColor: "#ffffff",
-            fontSize: "16px",
-          }}
-        >
-          {item.label}
-        </div>
-      ),
-      command: () => {},
-    },
-    { separator: true },
-    { label: "Name Ascending", command: () => onMenuSort("nameAsc") },
-    { label: "Name Descending", command: () => onMenuSort("nameDesc") },
-    {
-      label: "Created At Ascending",
-      command: () => onMenuSort("createdAtAsc"),
-    },
-    {
-      label: "Created At Descending",
-      command: () => onMenuSort("createdAtDesc"),
-    },
-    {
-      label: "Reset",
-      command: () => setData(_.cloneDeep(initialData)),
-      template: (item) => (
-        <div
-          style={{
-            color: "#d30000",
-            textAlign: "center",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            fontWeight: "bold",
-            padding: "8px 16px",
-            fontSize: "13px",
-          }}
-        >
-          {item.label}
-        </div>
-      ),
-    },
-  ];
 
   useEffect(() => {
     get();
@@ -423,14 +365,16 @@ const BranchesPage = (props) => {
     const tabId = getOrSetTabId();
     const response = await props.get();
     const currentCache = response?.results;
-    const selectedUser = localStorage.getItem(`selectedUser_${tabId}`) || currentCache?.selectedUser;
+    const selectedUser =
+      localStorage.getItem(`selectedUser_${tabId}`) ||
+      currentCache?.selectedUser;
     setSelectedUser(selectedUser);
-  
+
     if (currentCache && selectedUser) {
       const selectedUserProfile = currentCache.profiles.find(
         (profile) => profile.profileId === selectedUser,
       );
-  
+
       if (selectedUserProfile) {
         const paginatorRecordsNo = _.get(
           selectedUserProfile,
@@ -438,8 +382,8 @@ const BranchesPage = (props) => {
           10,
         );
         setPaginatorRecordsNo(paginatorRecordsNo);
-        console.log("PaginatorRecordsNo from cache:", paginatorRecordsNo);
-        return; 
+        //
+        return;
       }
     }
     try {
@@ -448,14 +392,14 @@ const BranchesPage = (props) => {
         .get(selectedUser, {
           query: { $populate: ["position"] },
         });
-  
+
       const paginatorRecordsNo = _.get(
         profileResponse,
         "preferences.settings.branches.paginatorRecordsNo",
         10,
       );
       setPaginatorRecordsNo(paginatorRecordsNo);
-      console.log("PaginatorRecordsNo from service:", paginatorRecordsNo);
+      //
     } catch (error) {
       console.error("Error fetching profile from profiles service:", error);
     }
@@ -468,7 +412,7 @@ const BranchesPage = (props) => {
       const currentCache = response?.results;
       const selectedUser = localStorage.getItem(`selectedUser_${tabId}`);
       setSelectedUser(selectedUser || currentCache.selectedUser);
-      
+
       if (currentCache && selectedUser) {
         const selectedUserProfileIndex = currentCache.profiles.findIndex(
           (profile) => profile.profileId === selectedUser,
@@ -483,16 +427,14 @@ const BranchesPage = (props) => {
 
           props.set(currentCache);
         } else {
-          console.warn("Selected user profile not found in cache.");
+          // console.warn("Selected user profile not found in cache.");
         }
       } else {
-        console.warn("Cache or selectedUser is not available.");
+        // console.warn("Cache or selectedUser is not available.");
       }
     };
-      updateCache();
-    
+    updateCache();
   }, [paginatorRecordsNo, selectedUser]);
-
 
   useEffect(() => {
     const fetchPermissions = async () => {
@@ -529,11 +471,11 @@ const BranchesPage = (props) => {
           if (userPermissions) {
             setPermissions(userPermissions);
           } else {
-            console.log("No permissions found for this user and service.");
+            // console.debug("No permissions found for this user and service.");
           }
         }
       } catch (error) {
-        console.error("Failed to fetch permissions", error);
+        // console.error("Failed to fetch permissions", error);
       }
     };
 
@@ -568,34 +510,20 @@ const BranchesPage = (props) => {
               favouriteItem={favouriteItem}
               serviceName="branches"
             />{" "}
-            <SplitButton
-              model={filterMenuItems.filter(
-                (m) => !(m.icon === "pi pi-trash" && data?.length === 0),
-              )}
-              dropdownIcon={
-                <img
-                  src={FilterIcon}
-                  style={{ marginRight: "4px", width: "1em", height: "1em" }}
-                />
-              }
-              buttonClassName="hidden"
-              menuButtonClassName="ml-1 p-button-text"
-              // menuStyle={{ width: "250px" }}
-            ></SplitButton>
-            <SplitButton
-              model={sortMenuItems.filter(
-                (m) => !(m.icon === "pi pi-trash" && data?.length === 0),
-              )}
-              dropdownIcon={
-                <img
-                  src={SortIcon}
-                  style={{ marginRight: "4px", width: "1em", height: "1em" }}
-                />
-              }
-              buttonClassName="hidden"
-              menuButtonClassName="ml-1 p-button-text"
-              menuStyle={{ width: "200px" }}
-            ></SplitButton>
+            <FilterMenu
+              fields={fields}
+              showFilter={showFilter}
+              setShowFilter={setShowFilter}
+              selectedFilterFields={selectedFilterFields}
+              setSelectedFilterFields={setSelectedFilterFields}
+              onClickSaveFilteredfields={onClickSaveFilteredfields}
+            />
+            <SortMenu
+              fields={fields}
+              data={data}
+              setData={setData}
+              initialData={initialData}
+            />
             <Button
               label="add"
               style={{ height: "30px", marginRight: "10px" }}
@@ -685,7 +613,11 @@ const BranchesPage = (props) => {
         onYes={() => deleteAll()}
         loading={loading}
       />
- <HelpbarService isVisible={isHelpSidebarVisible} onToggle={toggleHelpSidebar} serviceName="branches" />
+      <HelpbarService
+        isVisible={isHelpSidebarVisible}
+        onToggle={toggleHelpSidebar}
+        serviceName="branches"
+      />
     </div>
   );
 };

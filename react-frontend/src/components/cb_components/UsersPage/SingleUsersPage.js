@@ -34,7 +34,7 @@ const SingleUsersPage = (props) => {
   }, [props, urlParams.singleUsersId]);
 
   const goBack = () => {
-    navigate("/users");
+    navigate(-1);
   };
 
   return (

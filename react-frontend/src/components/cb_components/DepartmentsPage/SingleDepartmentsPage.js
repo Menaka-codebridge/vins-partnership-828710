@@ -72,7 +72,7 @@ const SingleDepartmentsPage = (props) => {
   }, [props, urlParams.singleDepartmentsId]);
 
   const goBack = () => {
-    navigate("/departments");
+    navigate(-1);
   };
 
   const helpSidebarRef = useRef(null);
@@ -192,29 +192,36 @@ const SingleDepartmentsPage = (props) => {
           </div>
         </div>
         <div className="mt-2">
-<TabView>                <TabPanel header="true" leftIcon="pi pi-building-columns mr-2">
+          <TabView>
+            <div className="mt-2">
+              <TabView>
+                <TabPanel header="true" leftIcon="pi pi-building-columns mr-2">
                   <SectionsPage />
                 </TabPanel>
 
                 <TabPanel header="true" leftIcon="pi pi-building-columns mr-2">
                   <ProfilesPage />
                 </TabPanel>
+              </TabView>
+            </div>
           </TabView>
-        </div>        <CommentsSection
+        </div>
+
+        <CommentsSection
           recordId={urlParams.singleDepartmentsId}
           user={props.user}
           alert={props.alert}
           serviceName="departments"
         />
 
-         {newRecentItem && (
-        <RecentService
-          companyId={departmentId}
-          get={props.get}
-          set={props.set}
-          newRecentItem={newRecentItem}
-        />
-      )}
+        {newRecentItem && (
+          <RecentService
+            companyId={departmentId}
+            get={props.get}
+            set={props.set}
+            newRecentItem={newRecentItem}
+          />
+        )}
         <div
           id="rightsidebar"
           className={classNames(

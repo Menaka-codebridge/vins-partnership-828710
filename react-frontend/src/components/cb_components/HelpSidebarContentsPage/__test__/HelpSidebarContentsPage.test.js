@@ -9,14 +9,16 @@ import { Provider } from "react-redux";
 import * as models from "../../../models";
 
 test("renders helpSidebarContents page", async () => {
-    const store = init({ models });
-    render(
-        <Provider store={store}>
-            <MemoryRouter>
-                <HelpSidebarContentsPage />
-            </MemoryRouter>
-        </Provider>
-    );
-    expect(screen.getByRole("helpSidebarContents-datatable")).toBeInTheDocument();
-    expect(screen.getByRole("helpSidebarContents-add-button")).toBeInTheDocument();
+  const store = init({ models });
+  render(
+    <Provider store={store}>
+      <MemoryRouter>
+        <HelpSidebarContentsPage />
+      </MemoryRouter>
+    </Provider>,
+  );
+  expect(screen.getByRole("helpSidebarContents-datatable")).toBeInTheDocument();
+  expect(
+    screen.getByRole("helpSidebarContents-add-button"),
+  ).toBeInTheDocument();
 });

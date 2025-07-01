@@ -58,7 +58,7 @@ const SingleNotificationsPage = (props) => {
   }, [props, urlParams.singleNotificationsId]);
 
   const goBack = () => {
-    navigate("/notifications");
+    navigate(-1);
   };
 
   return (

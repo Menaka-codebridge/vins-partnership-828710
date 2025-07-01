@@ -66,7 +66,7 @@ const SingleStepsPage = (props) => {
   }, [props, urlParams.singleStepsId]);
 
   const goBack = () => {
-    navigate("/steps");
+    navigate(-1);
   };
 
   const helpSidebarRef = useRef(null);

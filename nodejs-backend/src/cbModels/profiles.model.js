@@ -24,7 +24,6 @@ module.exports = function (app) {
       role: { type: Schema.Types.ObjectId, ref: "roles" },
       bio: {
         type: String,
-        minLength: 3,
         maxLength: 1000000,
         index: true,
         trim: true,

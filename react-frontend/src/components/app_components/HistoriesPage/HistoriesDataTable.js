@@ -1,12 +1,12 @@
-import { Column } from 'primereact/column';
-import { DataTable } from 'primereact/datatable';
-import React, { useState, useRef, useEffect} from 'react';
-import _ from 'lodash';
-import { Button } from 'primereact/button';
+import { Column } from "primereact/column";
+import { DataTable } from "primereact/datatable";
+import React, { useState, useRef, useEffect } from "react";
+import _ from "lodash";
+import { Button } from "primereact/button";
 import { useParams } from "react-router-dom";
 import moment from "moment";
 import UploadService from "../../../services/UploadService";
-import { InputText } from 'primereact/inputtext';
+import { InputText } from "primereact/inputtext";
 import { Dialog } from "primereact/dialog";
 import { MultiSelect } from "primereact/multiselect";
 import DownloadCSV from "../../../utils/DownloadCSV";
@@ -17,32 +17,72 @@ import CopyIcon from "../../../assets/media/Clipboard.png";
 import DuplicateIcon from "../../../assets/media/Duplicate.png";
 import DeleteIcon from "../../../assets/media/Trash.png";
 
-const HistoriesDataTable = ({ items, fields, onEditRow, onRowDelete, onRowClick, searchDialog, setSearchDialog,   showUpload, setShowUpload,
-    showFilter, setShowFilter,
-    showColumns, setShowColumns, onClickSaveFilteredfields ,
-    selectedFilterFields, setSelectedFilterFields,
-    selectedHideFields, setSelectedHideFields, onClickSaveHiddenfields, loading, user,   selectedDelete,
-  setSelectedDelete, onCreateResult}) => {
-    const dt = useRef(null);
-    const urlParams = useParams();
-    const [globalFilter, setGlobalFilter] = useState('');
+const HistoriesDataTable = ({
+  items,
+  fields,
+  onEditRow,
+  onRowDelete,
+  onRowClick,
+  searchDialog,
+  setSearchDialog,
+  showUpload,
+  setShowUpload,
+  showFilter,
+  setShowFilter,
+  showColumns,
+  setShowColumns,
+  onClickSaveFilteredfields,
+  selectedFilterFields,
+  setSelectedFilterFields,
+  selectedHideFields,
+  setSelectedHideFields,
+  onClickSaveHiddenfields,
+  loading,
+  user,
+  selectedDelete,
+  setSelectedDelete,
+  onCreateResult,
+}) => {
+  const dt = useRef(null);
+  const urlParams = useParams();
+  const [globalFilter, setGlobalFilter] = useState("");
   const [selectedItems, setSelectedItems] = useState([]);
   const [showDialog, setShowDialog] = useState(false);
   const [data, setData] = useState([]);
 
-const dropdownTemplate0 = (rowData, { rowIndex }) => <p >{rowData.caseNo?.caseNo}</p>
-const dropdownTemplate1 = (rowData, { rowIndex }) => <p >{rowData.users?.name}</p>
-const p_calendarTemplate2 = (rowData, { rowIndex }) => <p >{moment(rowData.timestamp).fromNow()}</p>
-const pTemplate3 = (rowData, { rowIndex }) => <p >{rowData.userPrompt}</p>
-const pTemplate4 = (rowData, { rowIndex }) => <p >{rowData.parametersUsed}</p>
-const pTemplate5 = (rowData, { rowIndex }) => <p >{rowData.synonymsUsed}</p>
-const pTemplate6 = (rowData, { rowIndex }) => <p >{rowData.responseReceived}</p>
-const pTemplate7 = (rowData, { rowIndex }) => <p >{rowData.section}</p>
-const pTemplate8 = (rowData, { rowIndex }) => <p >{rowData.subSection}</p>
-    const editTemplate = (rowData, { rowIndex }) => <Button onClick={() => onEditRow(rowData, rowIndex)} icon={`pi ${rowData.isEdit ? "pi-check" : "pi-pencil"}`} className={`p-button-rounded p-button-text ${rowData.isEdit ? "p-button-success" : "p-button-warning"}`} />;
-    const deleteTemplate = (rowData, { rowIndex }) => <Button onClick={() => onRowDelete(rowData._id)} icon="pi pi-times" className="p-button-rounded p-button-danger p-button-text" />;
-    
-      const checkboxTemplate = (rowData) => (
+  const dropdownTemplate0 = (rowData, { rowIndex }) => (
+    <p>{rowData.summonsNo?.summonsNo}</p>
+  );
+  const dropdownTemplate1 = (rowData, { rowIndex }) => (
+    <p>{rowData.users?.name}</p>
+  );
+  const p_calendarTemplate2 = (rowData, { rowIndex }) => (
+    <p>{rowData.timestamp}</p>
+  );
+  const pTemplate3 = (rowData, { rowIndex }) => <p>{rowData.userPrompt}</p>;
+  const pTemplate4 = (rowData, { rowIndex }) => <p>{rowData.parametersUsed}</p>;
+  const pTemplate5 = (rowData, { rowIndex }) => <p>{rowData.synonymsUsed}</p>;
+  const pTemplate6 = (rowData, { rowIndex }) => (
+    <p>{rowData.responseReceived}</p>
+  );
+  const pTemplate7 = (rowData, { rowIndex }) => <p>{rowData.section}</p>;
+  const pTemplate8 = (rowData, { rowIndex }) => <p>{rowData.subSection}</p>;
+  const editTemplate = (rowData, { rowIndex }) => (
+    <Button
+      onClick={() => onEditRow(rowData, rowIndex)}
+      icon={`pi ${rowData.isEdit ? "pi-check" : "pi-pencil"}`}
+      className={`p-button-rounded p-button-text ${rowData.isEdit ? "p-button-success" : "p-button-warning"}`}
+    />
+  );
+  const deleteTemplate = (rowData, { rowIndex }) => (
+    <Button
+      onClick={() => onRowDelete(rowData._id)}
+      icon="pi pi-times"
+      className="p-button-rounded p-button-danger p-button-text"
+    />
+  );
+
+  const checkboxTemplate = (rowData) => (
     <Checkbox
       checked={selectedItems.some((item) => item._id === rowData._id)}
       onChange={(e) => {
@@ -83,7 +123,7 @@ const pTemplate8 = (rowData, { rowIndex }) => <p >{rowData.subSection}</p>
       console.error("Failed to delete selected records", error);
     }
   };
-    
+
   const handleMessage = () => {
     setShowDialog(true); // Open the dialog
   };
@@ -92,10 +132,10 @@ const pTemplate8 = (rowData, { rowIndex }) => <p >{rowData.subSection}</p>
     setShowDialog(false); // Close the dialog
   };
 
-    return (
-        <>
-        <DataTable 
-           value={items}
+  return (
+    <>
+      <DataTable
+        value={items}
         ref={dt}
         removableSort
         onRowClick={onRowClick}
@@ -113,26 +153,94 @@ const pTemplate8 = (rowData, { rowIndex }) => <p >{rowData.subSection}</p>
         selection={selectedItems}
         onSelectionChange={(e) => setSelectedItems(e.value)}
         onCreateResult={onCreateResult}
-        >
-                <Column
+      >
+        <Column
           selectionMode="multiple"
           headerStyle={{ width: "3rem" }}
           body={checkboxTemplate}
         />
-<Column field="caseNo" header="Case No" body={dropdownTemplate0} filter={selectedFilterFields.includes("caseNo")} hidden={selectedHideFields?.includes("caseNo")}  style={{ minWidth: "8rem" }} />
-<Column field="users" header="Users" body={dropdownTemplate1} filter={selectedFilterFields.includes("users")} hidden={selectedHideFields?.includes("users")}  style={{ minWidth: "8rem" }} />
-<Column field="timestamp" header="Timestamp" body={p_calendarTemplate2} filter={selectedFilterFields.includes("timestamp")} hidden={selectedHideFields?.includes("timestamp")}  sortable style={{ minWidth: "8rem" }} />
-<Column field="userPrompt" header="User Prompt" body={pTemplate3} filter={selectedFilterFields.includes("userPrompt")} hidden={selectedHideFields?.includes("userPrompt")}  sortable style={{ minWidth: "8rem" }} />
-<Column field="parametersUsed" header="Parameters Used" body={pTemplate4} filter={selectedFilterFields.includes("parametersUsed")} hidden={selectedHideFields?.includes("parametersUsed")}  sortable style={{ minWidth: "8rem" }} />
-<Column field="synonymsUsed" header="Synonyms Used" body={pTemplate5} filter={selectedFilterFields.includes("synonymsUsed")} hidden={selectedHideFields?.includes("synonymsUsed")}  sortable style={{ minWidth: "8rem" }} />
-<Column field="responseReceived" header="Response Received" body={pTemplate6} filter={selectedFilterFields.includes("responseReceived")} hidden={selectedHideFields?.includes("responseReceived")}  sortable style={{ minWidth: "8rem" }} />
-<Column field="section" header="Section" body={pTemplate7} filter={selectedFilterFields.includes("section")} hidden={selectedHideFields?.includes("section")}  sortable style={{ minWidth: "8rem" }} />
-<Column field="subSection" header="Sub Section" body={pTemplate8} filter={selectedFilterFields.includes("subSection")} hidden={selectedHideFields?.includes("subSection")}  sortable style={{ minWidth: "8rem" }} />
-            <Column header="Edit" body={editTemplate} />
-            <Column header="Delete" body={deleteTemplate} />
-            
-        </DataTable>
-
+        <Column
+          field="summonsNo"
+          header="summons No"
+          body={dropdownTemplate0}
+          filter={selectedFilterFields.includes("summonsNo")}
+          hidden={selectedHideFields?.includes("summonsNo")}
+          style={{ minWidth: "8rem" }}
+        />
+        <Column
+          field="users"
+          header="Users"
+          body={dropdownTemplate1}
+          filter={selectedFilterFields.includes("users")}
+          hidden={selectedHideFields?.includes("users")}
+          style={{ minWidth: "8rem" }}
+        />
+        <Column
+          field="timestamp"
+          header="Timestamp"
+          body={p_calendarTemplate2}
+          filter={selectedFilterFields.includes("timestamp")}
+          hidden={selectedHideFields?.includes("timestamp")}
+          sortable
+          style={{ minWidth: "8rem" }}
+        />
+        <Column
+          field="userPrompt"
+          header="User Prompt"
+          body={pTemplate3}
+          filter={selectedFilterFields.includes("userPrompt")}
+          hidden={selectedHideFields?.includes("userPrompt")}
+          sortable
+          style={{ minWidth: "8rem" }}
+        />
+        <Column
+          field="parametersUsed"
+          header="Parameters Used"
+          body={pTemplate4}
+          filter={selectedFilterFields.includes("parametersUsed")}
+          hidden={selectedHideFields?.includes("parametersUsed")}
+          sortable
+          style={{ minWidth: "8rem" }}
+        />
+        <Column
+          field="synonymsUsed"
+          header="Synonyms Used"
+          body={pTemplate5}
+          filter={selectedFilterFields.includes("synonymsUsed")}
+          hidden={selectedHideFields?.includes("synonymsUsed")}
+          sortable
+          style={{ minWidth: "8rem" }}
+        />
+        <Column
+          field="responseReceived"
+          header="Response Received"
+          body={pTemplate6}
+          filter={selectedFilterFields.includes("responseReceived")}
+          hidden={selectedHideFields?.includes("responseReceived")}
+          sortable
+          style={{ minWidth: "8rem" }}
+        />
+        <Column
+          field="section"
+          header="Section"
+          body={pTemplate7}
+          filter={selectedFilterFields.includes("section")}
+          hidden={selectedHideFields?.includes("section")}
+          sortable
+          style={{ minWidth: "8rem" }}
+        />
+        <Column
+          field="subSection"
+          header="Sub Section"
+          body={pTemplate8}
+          filter={selectedFilterFields.includes("subSection")}
+          hidden={selectedHideFields?.includes("subSection")}
+          sortable
+          style={{ minWidth: "8rem" }}
+        />
+        <Column header="Edit" body={editTemplate} />
+        <Column header="Delete" body={deleteTemplate} />
+      </DataTable>
 
       {selectedItems.length > 0 ? (
         <div
@@ -308,20 +416,28 @@ const pTemplate8 = (rowData, { rowIndex }) => <p >{rowData.subSection}</p>
         </div>
       ) : null}
 
-
-        <Dialog header="Upload Histories Data" visible={showUpload} onHide={() => setShowUpload(false)}>
-        <UploadService 
-          user={user} 
-          serviceName="histories"            
+      <Dialog
+        header="Upload Histories Data"
+        visible={showUpload}
+        onHide={() => setShowUpload(false)}
+      >
+        <UploadService
+          user={user}
+          serviceName="histories"
           onUploadComplete={() => {
             setShowUpload(false); // Close the dialog after upload
-          }}/>
+          }}
+        />
       </Dialog>
 
-      <Dialog header="Search Histories" visible={searchDialog} onHide={() => setSearchDialog(false)}>
-      Search
-    </Dialog>
-    <Dialog
+      <Dialog
+        header="Search Histories"
+        visible={searchDialog}
+        onHide={() => setSearchDialog(false)}
+      >
+        Search
+      </Dialog>
+      <Dialog
         header="Filter Users"
         visible={showFilter}
         onHide={() => setShowFilter(false)}
@@ -346,7 +462,7 @@ const pTemplate8 = (rowData, { rowIndex }) => <p >{rowData.subSection}</p>
             console.log(selectedFilterFields);
             onClickSaveFilteredfields(selectedFilterFields);
             setSelectedFilterFields(selectedFilterFields);
-            setShowFilter(false)
+            setShowFilter(false);
           }}
         ></Button>
       </Dialog>
@@ -376,12 +492,12 @@ const pTemplate8 = (rowData, { rowIndex }) => <p >{rowData.subSection}</p>
             console.log(selectedHideFields);
             onClickSaveHiddenfields(selectedHideFields);
             setSelectedHideFields(selectedHideFields);
-            setShowColumns(false)
+            setShowColumns(false);
           }}
         ></Button>
       </Dialog>
-        </>
-    );
+    </>
+  );
 };
 
 export default HistoriesDataTable;

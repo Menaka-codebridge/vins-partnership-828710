@@ -100,9 +100,9 @@ const UserChangePasswordPage = (props) => {
   }, [showFakerDialog, showDeleteAllDialog]);
 
   const onClickSaveFilteredfields = (ff) => {
-    console.debug(ff);
+    setSelectedFilterFields(ff);
+    setShowFilter(false);
   };
-
   const onClickSaveHiddenfields = (ff) => {
     console.debug(ff);
   };

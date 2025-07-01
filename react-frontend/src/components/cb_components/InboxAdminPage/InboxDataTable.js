@@ -231,7 +231,7 @@ const InboxDataTable = ({
   const deleteTemplate = (rowData) => (
     <Button
       onClick={() => onRowDelete(rowData._id)}
-    icon="pi pi-trash"
+      icon="pi pi-trash"
       className="p-button-danger p-button-text"
       style={{ fontSize: "0.6rem", padding: "0.2rem 0.4rem" }}
     />

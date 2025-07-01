@@ -49,7 +49,7 @@ const SingleDynaLoaderPage = (props) => {
   }, [props, urlParams.singleDynaLoaderId]);
 
   const goBack = () => {
-    navigate("/dynaLoader");
+    navigate(-1);
   };
 
   return (

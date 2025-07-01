@@ -225,7 +225,6 @@ const PermissionFieldsDataTable = ({
           text
           label="save as pref"
           onClick={() => {
-            console.log(selectedFilterFields);
             onClickSaveFilteredfields(selectedFilterFields);
             setSelectedFilterFields(selectedFilterFields);
             setShowFilter(false);
@@ -255,7 +254,6 @@ const PermissionFieldsDataTable = ({
           text
           label="save as pref"
           onClick={() => {
-            console.log(selectedHideFields);
             onClickSaveHiddenfields(selectedHideFields);
             setSelectedHideFields(selectedHideFields);
             setShowColumns(false);

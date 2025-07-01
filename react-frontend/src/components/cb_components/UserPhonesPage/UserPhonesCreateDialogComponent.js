@@ -9,21 +9,12 @@ import { Button } from "primereact/button";
 import { InputText } from "primereact/inputtext";
 import { Dropdown } from "primereact/dropdown";
 import { Checkbox } from "primereact/checkbox";
-import { InputMask } from "primereact/inputmask";
 const typeArray = ["Land line", "Mobile", "Fax", "WA Only", "SMS Only"];
 const typeOptions = typeArray.map((x) => ({ name: x, value: x }));
 import countries from "../../../resources/countries.json";
-import parsePhoneNumber from "libphonenumber-js";
+import { AsYouType, getExampleNumber } from "libphonenumber-js";
+import examples from "libphonenumber-js/mobile/examples";
 import { getSchemaValidationErrorsStrings, updateMany } from "../../../utils";
-
-// (possible exports: AsYouType, AsYouTypeCustom, DIGITS, DIGIT_PLACEHOLDER, Metadata, ParseError,
-//   PhoneNumberMatcher, PhoneNumberSearch, PhoneNumberSearchCustom, default, findNumbers, findPhoneNumbers, findPhoneNumbersCustom,
-// findPhoneNumbersInText, format, formatCustom, formatIncompletePhoneNumber, formatNumber, formatRFC3966, getCountries,
-// getCountryCallingCode, getCountryCallingCodeCustom, getExampleNumber, getExtPrefix, getNumberType, getNumberTypeCustom, getPhoneCode,
-//   getPhoneCodeCustom, isPossibleNumber, isPossiblePhoneNumber, isSupportedCountry, isValidNumber, isValidNumberCustom,
-// isValidNumberForRegion, isValidPhoneNumber, parse, parseCustom, parseDigits, parseIncompletePhoneNumber, parseNumber,
-// parsePhoneNumber, parsePhoneNumberCharacter, parsePhoneNumberFromString, parsePhoneNumberWithError, parseRFC3966,
-// searchNumbers, searchPhoneNumbers, searchPhoneNumbersCustom, searchPhoneNumbersInText, validatePhoneNumberLength)
 
 const UserPhonesCreateDialogComponent = (props) => {
   const [_entity, set_entity] = useState({});
@@ -32,7 +23,29 @@ const UserPhonesCreateDialogComponent = (props) => {
   const urlParams = useParams();
   const [userId, setUserId] = useState([]);
   const [selectedCountry, setSelectedCountry] = useState(null);
+  const [phoneInput, setPhoneInput] = useState("");
+  const [formattedPhone, setFormattedPhone] = useState("");
+  const [exampleNumber, setExampleNumber] = useState("");
+
   countries.sort((a, b) => a.name.localeCompare(b.name));
+
+  // Update example number when country changes
+  useEffect(() => {
+    if (selectedCountry) {
+      try {
+        const example = getExampleNumber(selectedCountry.code, examples);
+        if (example) {
+          setExampleNumber(example.formatNational());
+        } else {
+          setExampleNumber(`Enter ${selectedCountry.name} phone number`);
+        }
+      } catch (e) {
+        setExampleNumber(`Enter ${selectedCountry.name} phone number`);
+      }
+    } else {
+      setExampleNumber("Select a country first");
+    }
+  }, [selectedCountry]);
 
   useEffect(() => {
     let init = { isDefault: false };
@@ -47,6 +60,37 @@ const UserPhonesCreateDialogComponent = (props) => {
     set_entity({});
   }, [props.onHide]);
 
+  // Handle phone number input changes
+  const handlePhoneInput = (e) => {
+    const value = e.target.value;
+    setPhoneInput(value);
+
+    if (selectedCountry) {
+      const formatter = new AsYouType(selectedCountry.code);
+      const formatted = formatter.input(value);
+      setFormattedPhone(formatted);
+
+      // Get the parsed phone number
+      const phoneNumber = formatter.getNumber();
+      if (phoneNumber) {
+        set_entity({
+          ..._entity,
+          countryCode: phoneNumber.countryCallingCode,
+          operatorCode: phoneNumber.nationalNumber.substring(0, 3),
+          number: phoneNumber.number,
+        });
+      } else {
+        // Clear entity if number becomes invalid
+        set_entity({
+          ..._entity,
+          countryCode: undefined,
+          operatorCode: undefined,
+          number: undefined,
+        });
+      }
+    }
+  };
+
   const validate = () => {
     let ret = true;
     const error = {};
@@ -54,6 +98,15 @@ const UserPhonesCreateDialogComponent = (props) => {
     if (_.isEmpty(_entity?.number)) {
       error["number"] = `Phone number is required`;
       ret = false;
+    } else if (selectedCountry) {
+      const formatter = new AsYouType(selectedCountry.code);
+      formatter.input(phoneInput);
+      const phoneNumber = formatter.getNumber();
+
+      if (!phoneNumber || !phoneNumber.isPossible()) {
+        error["number"] = `Invalid phone number for ${selectedCountry.name}`;
+        ret = false;
+      }
     }
 
     if (_.isEmpty(_entity?.userId)) {
@@ -143,7 +196,6 @@ const UserPhonesCreateDialogComponent = (props) => {
   };
 
   useEffect(() => {
-    // on mount users
     client
       .service("users")
       .find({
@@ -202,32 +254,6 @@ const UserPhonesCreateDialogComponent = (props) => {
     );
   };
 
-  const setPhoneNumber = (number) => {
-    setError({});
-    const phoneNumber = parsePhoneNumber(
-      number,
-      selectedCountry.code.toUpperCase(),
-    );
-
-    if (phoneNumber && phoneNumber.isPossible()) {
-      set_entity({
-        countryCode: phoneNumber?.countryCallingCode,
-        operatorCode: number.substring(1, 3),
-        number: phoneNumber?.number,
-      });
-    } else {
-      props.alert({
-        title: "Phone Number",
-        type: "error",
-        message: "Phone invalid",
-      });
-      if (phoneNumber && !phoneNumber.isValid()) {
-        error["number"] = `Phone number is required`;
-        setError(error);
-      }
-    }
-  };
-
   const renderFooter = () => (
     <div className="flex justify-content-end">
       <Button
@@ -263,7 +289,7 @@ const UserPhonesCreateDialogComponent = (props) => {
       onHide={props.onHide}
       modal
       style={{ width: "40vw" }}
-      className="min-w-max"
+      className="min-w-max zoomin animation-duration-700"
       footer={renderFooter()}
       resizable={false}
     >
@@ -302,7 +328,11 @@ const UserPhonesCreateDialogComponent = (props) => {
               id="country"
               key="country"
               value={selectedCountry}
-              onChange={(e) => setSelectedCountry(e.value)}
+              onChange={(e) => {
+                setSelectedCountry(e.value);
+                setPhoneInput("");
+                setFormattedPhone("");
+              }}
               options={countries}
               optionLabel="name"
               placeholder="Select a Country"
@@ -312,6 +342,11 @@ const UserPhonesCreateDialogComponent = (props) => {
               className="w-full md:w-14rem"
             />
           </span>
+          {selectedCountry && (
+            <small className="text-500">
+              Country code: +{selectedCountry.callingCode}
+            </small>
+          )}
           <small className="p-error">
             {!_.isEmpty(error["countryCode"]) ? (
               <p className="m-0" key="error-countryCode">
@@ -324,15 +359,31 @@ const UserPhonesCreateDialogComponent = (props) => {
         <div className="col-6 field">
           <span className="align-items-center">
             <label htmlFor="phone" className="font-bold block mb-2">
-              Enter Phone:
+              Phone Number:
             </label>
-            <InputMask
-              id="phone"
-              mask="(99) 999 - 9999?"
-              placeholder="+(99) 999 - 99999"
-              onComplete={(e) => setPhoneNumber(e.value)}
-            ></InputMask>
+            <div className="p-inputgroup">
+              {selectedCountry && (
+                <span className="p-inputgroup-addon">
+                  +{selectedCountry.callingCode}
+                </span>
+              )}
+              <InputText
+                id="phone"
+                value={formattedPhone}
+                onChange={handlePhoneInput}
+                disabled={!selectedCountry}
+                placeholder={exampleNumber}
+                className={!selectedCountry ? "p-disabled" : ""}
+              />
+            </div>
           </span>
+          <small className="p-error">
+            {!_.isEmpty(error["number"]) ? (
+              <p className="m-0" key="error-number">
+                {error["number"]}
+              </p>
+            ) : null}
+          </small>
         </div>
 
         <div className="col-12 md:col-4 field">
@@ -357,21 +408,14 @@ const UserPhonesCreateDialogComponent = (props) => {
         </div>
         <div className="col-12 md:col-6 field">
           <span className="align-items-center">
-            <label htmlFor="number">Dailing Number:</label>
+            <label htmlFor="number">Dialing Number:</label>
             <InputText
               id="number"
               className="w-full mb-3 p-inputtext-sm"
-              value={_entity?.number}
+              value={_entity?.number || ""}
               disabled={true}
             />
           </span>
-          <small className="p-error">
-            {!_.isEmpty(error["number"]) ? (
-              <p className="m-0" key="error-countryCode">
-                {error["number"]}
-              </p>
-            ) : null}
-          </small>
         </div>
 
         <div className="col-12 md:col-2 field flex">

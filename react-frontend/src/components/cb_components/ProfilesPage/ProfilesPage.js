@@ -19,6 +19,8 @@ import FilterIcon from "../../../assets/media/Filter.png";
 import FavouriteService from "../../../services/FavouriteService";
 import { v4 as uuidv4 } from "uuid";
 import HelpbarService from "../../../services/HelpbarService";
+import SortMenu from "../../../services/SortMenu";
+import FilterMenu from "../../../services/FilterMenu";
 
 const ProfilesPage = (props) => {
   const navigate = useNavigate();
@@ -68,7 +70,6 @@ const ProfilesPage = (props) => {
     }
   }, [selectedUser]);
 
-
   const calendar_24Template5 = (rowData, { rowIndex }) => (
     <p>
       {rowData.startTime
@@ -84,7 +85,6 @@ const ProfilesPage = (props) => {
     </p>
   );
 
-
   const toggleHelpSidebar = () => {
     setHelpSidebarVisible(!isHelpSidebarVisible);
   };
@@ -99,8 +99,35 @@ const ProfilesPage = (props) => {
   useEffect(() => {
     const _getSchema = async () => {
       const _schema = await props.getSchema("profiles");
-      const _fields = _schema.data.map((field, i) => i > 5 && field.field);
-      setSelectedHideFields(_fields);
+      const excludedFields = [
+        "_id",
+        "createdBy",
+        "updatedBy",
+        "createdAt",
+        "updatedAt",
+      ];
+      const _fields = _schema.data
+        .filter((field) => !excludedFields.includes(field.field))
+        .map((field) => {
+          const fieldName = field.field
+            .split(".")
+            .map((part) =>
+              part
+                .replace(/([A-Z])/g, " $1")
+                .trim()
+                .replace(/\b\w/g, (c) => c.toUpperCase()),
+            )
+            .join(" ");
+          return {
+            name: fieldName,
+            value: field.field,
+          };
+        });
+      setFields(_fields);
+      const _hideFields = _schema.data
+        .map((field, i) => i > 5 && field.field)
+        .filter(Boolean);
+      setSelectedHideFields(_hideFields);
     };
     _getSchema();
     if (location?.state?.action === "create") {
@@ -112,113 +139,124 @@ const ProfilesPage = (props) => {
   }, []);
 
   useEffect(() => {
-    //on mount
+    // on mount
     setLoading(true);
     props.show();
-    client
-      .service("profiles")
-      .find({
-        query: {
-          $limit: 10000,
-          $sort: { name: 1 },
-          userId: urlParams.singleUsersId,
-          // department: urlParams.singleDepartmentsId,
-          // section: urlParams.singleSectionsId,
-          // position: urlParams.singlePositionsId,
-          // manager: urlParams.singleUsersId,
-          // company: urlParams.singleCompaniesId,
-          // branch: urlParams.singleBranchesId,
-          // address: urlParams.singleUserAddressesId,
-          // phone: urlParams.singleUserPhonesId,
-          $populate: [
-            // {
-            //   path: "createdBy",
-            //   service: "users",
-            //   select: ["name"],
-            // },
-            // {
-            //   path: "updatedBy",
-            //   service: "users",
-            //   select: ["name"],
-            // },
-            {
-              path: "userId",
-              service: "users",
-              select: ["name"],
-            },
-            {
-              path: "department",
-              service: "departments",
-              select: ["name"],
-            },
-            {
-              path: "section",
-              service: "sections",
-              select: ["name"],
-            },
-            {
-              path: "position",
-              service: "positions",
-              select: ["name"],
-              $populate: [
-                {
-                  path: "roleId",
-                  service: "roles",
-                  select: ["name"],
-                },
-              ],
-            },
-            {
-              path: "manager",
-              service: "users",
-              select: ["name"],
-            },
-            {
-              path: "company",
-              service: "companies",
-              select: ["name"],
-            },
-            {
-              path: "branch",
-              service: "branches",
-              select: ["name"],
-            },
-            {
-              path: "address",
-              service: "user_addresses",
-              select: ["Street1"],
-            },
-            {
-              path: "phone",
-              service: "user_phones",
-              select: ["number"],
-            },
-          ],
-        },
-      })
-      .then((res) => {
+    const fetchData = async () => {
+      try {
+        // Fetch companyPositionMappings to get valid positions for the company
+        let validPositionIds = [];
+        if (urlParams.singleCompaniesId) {
+          const mappings = await client
+            .service("companyPositionMappings")
+            .find({
+              query: {
+                company: urlParams.singleCompaniesId,
+                $limit: 1,
+              },
+            });
+          if (mappings.data.length > 0) {
+            validPositionIds = mappings.data[0].position || [];
+          }
+        }
+
+        // Fetch profiles with filtered positions
+        const res = await client.service("profiles").find({
+          query: {
+            $limit: 10000,
+            $sort: { name: 1 },
+            userId: urlParams.singleUsersId,
+            company: urlParams.singleCompaniesId,
+            ...(validPositionIds.length > 0 && {
+              position: { $in: validPositionIds },
+            }),
+            $populate: [
+              {
+                path: "userId",
+                service: "users",
+                select: ["name"],
+              },
+              {
+                path: "department",
+                service: "departments",
+                select: ["name"],
+              },
+              {
+                path: "section",
+                service: "sections",
+                select: ["name"],
+              },
+              {
+                path: "position",
+                service: "positions",
+                select: ["name"],
+                $populate: [
+                  {
+                    path: "roleId",
+                    service: "roles",
+                    select: ["name"],
+                  },
+                ],
+              },
+              {
+                path: "manager",
+                service: "users",
+                select: ["name"],
+              },
+              {
+                path: "company",
+                service: "companies",
+                select: ["name"],
+              },
+              {
+                path: "branch",
+                service: "branches",
+                select: ["name"],
+              },
+              {
+                path: "address",
+                service: "user_addresses",
+                select: ["Street1"],
+              },
+              {
+                path: "phone",
+                service: "user_phones",
+                select: ["number"],
+              },
+            ],
+          },
+        });
+
         let results = res.data;
-        console.log(results);
         setData(results);
+        setInitialData(_.cloneDeep(results));
         props.hide();
         setLoading(false);
-      })
-      .catch((error) => {
+      } catch (error) {
         console.debug({ error });
         setLoading(false);
         props.hide();
         props.alert({
           title: "Profiles",
           type: "error",
-          message: error.message || "Failed get Profiles",
+          message: error.message || "Failed to get Profiles",
         });
-      });
-  }, [showFakerDialog, showDeleteAllDialog, showEditDialog, showCreateDialog, refresh]);
+      }
+    };
+    fetchData();
+  }, [
+    showFakerDialog,
+    showDeleteAllDialog,
+    showEditDialog,
+    showCreateDialog,
+    refresh,
+    urlParams.singleCompaniesId,
+  ]);
 
   const onClickSaveFilteredfields = (ff) => {
-    console.debug(ff);
+    setSelectedFilterFields(ff);
+    setShowFilter(false);
   };
-
   const onClickSaveHiddenfields = (ff) => {
     console.debug(ff);
   };
@@ -311,27 +349,26 @@ const ProfilesPage = (props) => {
       command: () => copyPageLink(),
     },
     permissions.import
-      ?
-      {
-        label: "Import",
-        icon: "pi pi-upload",
-        command: () => setShowUpload(true),
-      }
+      ? {
+          label: "Import",
+          icon: "pi pi-upload",
+          command: () => setShowUpload(true),
+        }
       : null,
     permissions.export
       ? {
-        label: "Export",
-        icon: "pi pi-download",
-        command: () => {
-          data.length > 0
-            ? setTriggerDownload(true)
-            : props.alert({
-              title: "Export",
-              type: "warn",
-              message: "no data to export",
-            });
-        },
-      }
+          label: "Export",
+          icon: "pi pi-download",
+          command: () => {
+            data.length > 0
+              ? setTriggerDownload(true)
+              : props.alert({
+                  title: "Export",
+                  type: "warn",
+                  message: "no data to export",
+                });
+          },
+        }
       : null,
     {
       label: "Help",
@@ -341,35 +378,35 @@ const ProfilesPage = (props) => {
     { separator: true },
     process.env.REACT_APP_ENV == "development"
       ? {
-        label: "Testing",
-        icon: "pi pi-check-circle",
-        items: [
-          {
-            label: "Faker",
-            icon: "pi pi-bullseye",
-            command: (e) => {
-              setShowFakerDialog(true);
+          label: "Testing",
+          icon: "pi pi-check-circle",
+          items: [
+            {
+              label: "Faker",
+              icon: "pi pi-bullseye",
+              command: (e) => {
+                setShowFakerDialog(true);
+              },
+              show: true,
             },
-            show: true,
-          },
-          {
-            label: `Drop ${data?.length}`,
-            icon: "pi pi-trash",
-            command: (e) => {
-              setShowDeleteAllDialog(true);
+            {
+              label: `Drop ${data?.length}`,
+              icon: "pi pi-trash",
+              command: (e) => {
+                setShowDeleteAllDialog(true);
+              },
             },
-          },
-        ],
-      }
+          ],
+        }
       : null,
     permissions.seeder
       ? {
-        label: "Data seeder",
-        icon: "pi pi-database",
-        command: (e) => {
-          setShowSeederDialog(true);
-        },
-      }
+          label: "Data seeder",
+          icon: "pi pi-database",
+          command: (e) => {
+            setShowSeederDialog(true);
+          },
+        }
       : null,
   ].filter(Boolean);
 
@@ -394,69 +431,6 @@ const ProfilesPage = (props) => {
     setData(sortedData);
   };
 
-  const filterMenuItems = [
-    {
-      label: `Filter`,
-      icon: "pi pi-filter",
-      command: () => setShowFilter(true),
-    },
-    {
-      label: `Clear`,
-      icon: "pi pi-filter-slash",
-      command: () => setSelectedFilterFields([]),
-    },
-  ];
-
-  const sortMenuItems = [
-    {
-      label: "Sort by",
-      template: (item) => (
-        <div
-          style={{
-            fontWeight: "bold",
-            padding: "8px 16px",
-            backgroundColor: "#ffffff",
-            fontSize: "16px",
-          }}
-        >
-          {item.label}
-        </div>
-      ),
-      command: () => { },
-    },
-    { separator: true },
-    { label: "Name Ascending", command: () => onMenuSort("nameAsc") },
-    { label: "Name Descending", command: () => onMenuSort("nameDesc") },
-    {
-      label: "Created At Ascending",
-      command: () => onMenuSort("createdAtAsc"),
-    },
-    {
-      label: "Created At Descending",
-      command: () => onMenuSort("createdAtDesc"),
-    },
-    {
-      label: "Reset",
-      command: () => setData(_.cloneDeep(initialData)), // Reset to original data if you want
-      template: (item) => (
-        <div
-          style={{
-            color: "#d30000",
-            textAlign: "center",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            fontWeight: "bold",
-            padding: "8px 16px",
-            fontSize: "13px",
-          }}
-        >
-          {item.label}
-        </div>
-      ),
-    },
-  ];
-
   useEffect(() => {
     get();
   }, []);
@@ -465,7 +439,9 @@ const ProfilesPage = (props) => {
     const tabId = getOrSetTabId();
     const response = await props.get();
     const currentCache = response?.results;
-    const selectedUser = localStorage.getItem(`selectedUser_${tabId}`) || currentCache?.selectedUser;
+    const selectedUser =
+      localStorage.getItem(`selectedUser_${tabId}`) ||
+      currentCache?.selectedUser;
     setSelectedUser(selectedUser);
 
     if (currentCache && selectedUser) {
@@ -480,7 +456,7 @@ const ProfilesPage = (props) => {
           10,
         );
         setPaginatorRecordsNo(paginatorRecordsNo);
-        console.log("PaginatorRecordsNo from cache:", paginatorRecordsNo);
+
         return;
       }
     }
@@ -497,7 +473,6 @@ const ProfilesPage = (props) => {
         10,
       );
       setPaginatorRecordsNo(paginatorRecordsNo);
-      console.log("PaginatorRecordsNo from service:", paginatorRecordsNo);
     } catch (error) {
       console.error("Error fetching profile from profiles service:", error);
     }
@@ -532,7 +507,6 @@ const ProfilesPage = (props) => {
       }
     };
     updateCache();
-
   }, [paginatorRecordsNo, selectedUser]);
 
   useEffect(() => {
@@ -545,7 +519,7 @@ const ProfilesPage = (props) => {
             .find({
               query: { service: "profiles" },
             });
-          console.log("companyPermissions", companyPermissions);
+          // console.log("companyPermissions", companyPermissions);
           let userPermissions = null;
 
           // Priority 1: Profile
@@ -569,9 +543,8 @@ const ProfilesPage = (props) => {
 
           if (userPermissions) {
             setPermissions(userPermissions);
-            console.log("userPermissions", userPermissions);
           } else {
-            console.log("No permissions found for this user and service.");
+            console.debug("No permissions found for this user and service.");
           }
         }
       } catch (error) {
@@ -603,43 +576,29 @@ const ProfilesPage = (props) => {
               dropdownIcon="pi pi-ellipsis-h"
               buttonClassName="hidden"
               menuButtonClassName="ml-1 p-button-text"
-            />) : null}
+            />
+          ) : null}
         </div>
         <div className="col-6 flex justify-content-end">
           <>
             <FavouriteService
               favouriteItem={favouriteItem}
               serviceName="profiles"
+            />{" "}
+            <FilterMenu
+              fields={fields}
+              showFilter={showFilter}
+              setShowFilter={setShowFilter}
+              selectedFilterFields={selectedFilterFields}
+              setSelectedFilterFields={setSelectedFilterFields}
+              onClickSaveFilteredfields={onClickSaveFilteredfields}
             />
-            {" "}
-            <SplitButton
-              model={filterMenuItems.filter(
-                (m) => !(m.icon === "pi pi-trash" && data?.length === 0),
-              )}
-              dropdownIcon={
-                <img
-                  src={FilterIcon}
-                  style={{ marginRight: "4px", width: "1em", height: "1em" }}
-                />
-              }
-              buttonClassName="hidden"
-              menuButtonClassName="ml-1 p-button-text"
-            // menuStyle={{ width: "250px" }}
-            ></SplitButton>
-            <SplitButton
-              model={sortMenuItems.filter(
-                (m) => !(m.icon === "pi pi-trash" && data?.length === 0),
-              )}
-              dropdownIcon={
-                <img
-                  src={SortIcon}
-                  style={{ marginRight: "4px", width: "1em", height: "1em" }}
-                />
-              }
-              buttonClassName="hidden"
-              menuButtonClassName="ml-1 p-button-text"
-              menuStyle={{ width: "200px" }}
-            ></SplitButton>
+            <SortMenu
+              fields={fields}
+              data={data}
+              setData={setData}
+              initialData={initialData}
+            />
             {permissions.create ? (
               <Button
                 label="add"
@@ -649,7 +608,8 @@ const ProfilesPage = (props) => {
                 icon="pi pi-plus"
                 onClick={() => setShowCreateDialog(true)}
                 role="profiles-add-button"
-              />) : null}
+              />
+            ) : null}
           </>
         </div>
       </div>
@@ -730,7 +690,11 @@ const ProfilesPage = (props) => {
         onYes={() => deleteAll()}
         loading={loading}
       />
-      <HelpbarService isVisible={isHelpSidebarVisible} onToggle={toggleHelpSidebar} serviceName="profiles" />
+      <HelpbarService
+        isVisible={isHelpSidebarVisible}
+        onToggle={toggleHelpSidebar}
+        serviceName="profiles"
+      />
     </div>
   );
 };

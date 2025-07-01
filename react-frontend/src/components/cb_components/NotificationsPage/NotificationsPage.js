@@ -106,9 +106,9 @@ const NotificationsPage = (props) => {
   }, [showFakerDialog, showDeleteAllDialog]);
 
   const onClickSaveFilteredfields = (ff) => {
-    console.debug(ff);
+    setSelectedFilterFields(ff);
+    setShowFilter(false);
   };
-
   const onClickSaveHiddenfields = (ff) => {
     console.debug(ff);
   };
@@ -152,6 +152,7 @@ const NotificationsPage = (props) => {
       });
     }
   };
+
   const onRowDelete = (index) => {
     setSelectedEntityIndex(index);
     setShowAreYouSureDialog(true);
@@ -288,7 +289,6 @@ const NotificationsPage = (props) => {
               icon="pi pi-plus"
               onClick={() => setShowCreateDialog(true)}
               role="notifications-add-button"
-              disabled={true}
             />
             <SplitButton
               model={menuItems.filter(

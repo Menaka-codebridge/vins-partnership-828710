@@ -11,6 +11,7 @@ import { Dropdown } from "primereact/dropdown";
 import { InputTextarea } from "primereact/inputtextarea";
 import { Checkbox } from "primereact/checkbox";
 import { getSchemaValidationErrorsStrings, updateMany } from "../../../utils";
+import countryList from "country-list-js";
 
 const UserAddressesCreateDialogComponent = (props) => {
   const [_entity, set_entity] = useState({});
@@ -18,6 +19,19 @@ const UserAddressesCreateDialogComponent = (props) => {
   const [loading, setLoading] = useState(false);
   const urlParams = useParams();
   const [userId, setUserId] = useState([]);
+  const [countryOptions, setCountryOptions] = useState([]);
+
+  useEffect(() => {
+    // Initialize country options
+    const countryNames = countryList.names();
+    const countryArray = countryNames
+      .map((name) => ({
+        name,
+        value: name,
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+    setCountryOptions(countryArray);
+  }, []);
 
   useEffect(() => {
     let init = {};
@@ -30,6 +44,11 @@ const UserAddressesCreateDialogComponent = (props) => {
   const validate = () => {
     let ret = true;
     const error = {};
+
+    if (!_entity?.Country) {
+      error["Country"] = "Country is required";
+      ret = false;
+    }
 
     if (!ret) setError(error);
     return ret;
@@ -54,7 +73,7 @@ const UserAddressesCreateDialogComponent = (props) => {
     setLoading(true);
 
     if (_entity?.isDefault) {
-      const updated = await updateMany({
+      await updateMany({
         collection: "user_addresses",
         query: {
           userId: _entity?.userId?._id,
@@ -66,7 +85,7 @@ const UserAddressesCreateDialogComponent = (props) => {
       const validResult = await client.service("userAddresses").find({
         query: { userId: _entity?.userId?._id },
       });
-      if (validResult.total <= 1) _entity.isDefault = true;
+      if (validResult.total <= 1) _data.isDfault = true;
     }
 
     try {
@@ -92,7 +111,6 @@ const UserAddressesCreateDialogComponent = (props) => {
       });
       props.onCreateResult(eagerResult.data[0]);
     } catch (error) {
-      console.debug("error", error);
       setError(getSchemaValidationErrorsStrings(error) || "Failed to create");
       props.alert({
         type: "error",
@@ -104,7 +122,7 @@ const UserAddressesCreateDialogComponent = (props) => {
   };
 
   useEffect(() => {
-    // on mount users
+    // Fetch users for userId dropdown
     client
       .service("users")
       .find({
@@ -116,13 +134,13 @@ const UserAddressesCreateDialogComponent = (props) => {
       })
       .then((res) => {
         setUserId(
-          res.data.map((e) => {
-            return { name: e["name"], value: e._id };
-          }),
+          res.data.map((e) => ({
+            name: e["name"],
+            value: e._id,
+          })),
         );
       })
       .catch((error) => {
-        console.debug({ error });
         props.alert({
           title: "Users",
           type: "error",
@@ -134,13 +152,13 @@ const UserAddressesCreateDialogComponent = (props) => {
   const renderFooter = () => (
     <div className="flex justify-content-end">
       <Button
-        label="save"
+        label="Save"
         className="p-button-text no-focus-effect"
         onClick={onSave}
         loading={loading}
       />
       <Button
-        label="close"
+        label="Close"
         className="p-button-text no-focus-effect p-button-secondary"
         onClick={props.onHide}
       />
@@ -150,7 +168,7 @@ const UserAddressesCreateDialogComponent = (props) => {
   const setValByKey = (key, val) => {
     let new_entity = { ..._entity, [key]: val };
     set_entity(new_entity);
-    setError({});
+    setError((prev) => ({ ...prev, [key]: null }));
   };
 
   const userIdOptions = userId.map((elem) => ({
@@ -160,13 +178,13 @@ const UserAddressesCreateDialogComponent = (props) => {
 
   return (
     <Dialog
-      header="Create User Addresses"
+      header="Create User Address"
       visible={props.show}
       closable={false}
       onHide={props.onHide}
       modal
       style={{ width: "40vw" }}
-      className="min-w-max"
+      className="min-w-max zoomin animation-duration-700"
       footer={renderFooter()}
       resizable={false}
     >
@@ -185,14 +203,16 @@ const UserAddressesCreateDialogComponent = (props) => {
               optionValue="value"
               options={userIdOptions}
               onChange={(e) => setValByKey("userId", { _id: e.value })}
+              placeholder="Select a user"
+              className="w-full"
             />
           </span>
           <small className="p-error">
-            {!_.isEmpty(error["userId"]) ? (
+            {error["userId"] && (
               <p className="m-0" key="error-userId">
                 {error["userId"]}
               </p>
-            ) : null}
+            )}
           </small>
         </div>
 
@@ -210,7 +230,7 @@ const UserAddressesCreateDialogComponent = (props) => {
 
         <div className="col-12 field">
           <span className="align-items-center">
-            <label htmlFor="Street1">Street1:</label>
+            <label htmlFor="Street1">Street 1:</label>
             <InputTextarea
               id="Street1"
               rows={3}
@@ -218,19 +238,20 @@ const UserAddressesCreateDialogComponent = (props) => {
               value={_entity?.Street1}
               onChange={(e) => setValByKey("Street1", e.target.value)}
               autoResize
+              className="w-full"
             />
           </span>
           <small className="p-error">
-            {!_.isEmpty(error["Street1"]) ? (
+            {error["Street1"] && (
               <p className="m-0" key="error-Street1">
                 {error["Street1"]}
               </p>
-            ) : null}
+            )}
           </small>
         </div>
-        <div className="col-12  field">
+        <div className="col-12 field">
           <span className="align-items-center">
-            <label htmlFor="Street2">Street2:</label>
+            <label htmlFor="Street2">Street 2:</label>
             <InputTextarea
               id="Street2"
               rows={3}
@@ -238,20 +259,21 @@ const UserAddressesCreateDialogComponent = (props) => {
               value={_entity?.Street2}
               onChange={(e) => setValByKey("Street2", e.target.value)}
               autoResize
+              className="w-full"
             />
           </span>
           <small className="p-error">
-            {!_.isEmpty(error["Street2"]) ? (
+            {error["Street2"] && (
               <p className="m-0" key="error-Street2">
                 {error["Street2"]}
               </p>
-            ) : null}
+            )}
           </small>
         </div>
 
         <div className="col-12 md:col-6 field">
           <span className="align-items-center">
-            <label htmlFor="Poscode">Poscode:</label>
+            <label htmlFor="Poscode">Postcode:</label>
             <InputText
               id="Poscode"
               className="w-full mb-3 p-inputtext-sm"
@@ -260,11 +282,11 @@ const UserAddressesCreateDialogComponent = (props) => {
             />
           </span>
           <small className="p-error">
-            {!_.isEmpty(error["Poscode"]) ? (
+            {error["Poscode"] && (
               <p className="m-0" key="error-Poscode">
                 {error["Poscode"]}
               </p>
-            ) : null}
+            )}
           </small>
         </div>
         <div className="col-12 md:col-6 field">
@@ -278,11 +300,11 @@ const UserAddressesCreateDialogComponent = (props) => {
             />
           </span>
           <small className="p-error">
-            {!_.isEmpty(error["City"]) ? (
+            {error["City"] && (
               <p className="m-0" key="error-City">
                 {error["City"]}
               </p>
-            ) : null}
+            )}
           </small>
         </div>
         <div className="col-12 md:col-4 field">
@@ -296,11 +318,11 @@ const UserAddressesCreateDialogComponent = (props) => {
             />
           </span>
           <small className="p-error">
-            {!_.isEmpty(error["State"]) ? (
+            {error["State"] && (
               <p className="m-0" key="error-State">
                 {error["State"]}
               </p>
-            ) : null}
+            )}
           </small>
         </div>
         <div className="col-12 md:col-4 field">
@@ -314,29 +336,35 @@ const UserAddressesCreateDialogComponent = (props) => {
             />
           </span>
           <small className="p-error">
-            {!_.isEmpty(error["Province"]) ? (
+            {error["Province"] && (
               <p className="m-0" key="error-Province">
                 {error["Province"]}
               </p>
-            ) : null}
+            )}
           </small>
         </div>
         <div className="col-12 md:col-4 field">
           <span className="align-items-center">
             <label htmlFor="Country">Country:</label>
-            <InputText
+            <Dropdown
               id="Country"
-              className="w-full mb-3 p-inputtext-sm"
               value={_entity?.Country}
-              onChange={(e) => setValByKey("Country", e.target.value)}
+              optionLabel="name"
+              optionValue="value"
+              options={countryOptions}
+              onChange={(e) => setValByKey("Country", e.value)}
+              placeholder="Select a country"
+              className="w-full"
+              filter
+              showClear
             />
           </span>
           <small className="p-error">
-            {!_.isEmpty(error["Country"]) ? (
+            {error["Country"] && (
               <p className="m-0" key="error-Country">
                 {error["Country"]}
               </p>
-            ) : null}
+            )}
           </small>
         </div>
       </div>
@@ -348,6 +376,7 @@ const mapState = (state) => {
   const { user } = state.auth;
   return { user };
 };
+
 const mapDispatch = (dispatch) => ({
   alert: (data) => dispatch.toast.alert(data),
 });

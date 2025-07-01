@@ -90,7 +90,7 @@ const SinglePermissionServicesPage = (props) => {
   }, [props, urlParams.singlePermissionServicesId]);
 
   const goBack = () => {
-    navigate("/permissionServices");
+    navigate(-1);
   };
 
   return (

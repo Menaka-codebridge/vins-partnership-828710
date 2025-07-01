@@ -47,7 +47,7 @@ const SingleErrorLogsPage = (props) => {
   }, [props, urlParams.singleErrorLogsId]);
 
   const goBack = () => {
-    navigate("/errorLogs");
+    navigate(-1);
   };
 
   return (

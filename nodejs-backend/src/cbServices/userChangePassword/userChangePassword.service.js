@@ -1,5 +1,5 @@
 const { UserChangePassword } = require("./userChangePassword.class");
-const createModel = require("../../models/userChangePassword.model");
+const createModel = require("../../cbModels/userChangePassword.model");
 const hooks = require("./userChangePassword.hooks");
 
 module.exports = function (app) {

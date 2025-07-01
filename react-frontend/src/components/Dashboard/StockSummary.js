@@ -259,7 +259,8 @@ export default function StockSummary() {
           currentStockLevel += part.quantity || 0;
 
           // Group by serialNo + itemNo
-          stockValueByGroup[groupKey] = (stockValueByGroup[groupKey] || 0) + value;
+          stockValueByGroup[groupKey] =
+            (stockValueByGroup[groupKey] || 0) + value;
         });
 
         setTotalStockValue(totalStockValue);
@@ -315,7 +316,8 @@ export default function StockSummary() {
                     0,
                   );
                   const totalValue = items.reduce(
-                    (acc, part) => acc + (part.costAmount || 0) * (part.quantity || 0),
+                    (acc, part) =>
+                      acc + (part.costAmount || 0) * (part.quantity || 0),
                     0,
                   );
 

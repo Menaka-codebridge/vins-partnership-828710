@@ -1,5 +1,5 @@
 const { Templates } = require("./templates.class");
-const createModel = require("../../models/templates.model");
+const createModel = require("../../cbModels/templates.model");
 const hooks = require("./templates.hooks");
 
 module.exports = function (app) {

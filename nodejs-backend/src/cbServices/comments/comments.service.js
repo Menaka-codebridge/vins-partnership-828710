@@ -1,5 +1,5 @@
 const { Audits } = require("./comments.class");
-const createModel = require("../../models/comments.model");
+const createModel = require("../../cbModels/comments.model");
 const hooks = require("./comments.hooks");
 
 module.exports = function (app) {

@@ -20,4 +20,7 @@ const mapDispatch = (dispatch) => ({
   alert: (data) => dispatch.toast.alert(data),
 });
 
-export default connect(mapState, mapDispatch)(TextExtractionQueueProjectLayoutPage);
+export default connect(
+  mapState,
+  mapDispatch,
+)(TextExtractionQueueProjectLayoutPage);

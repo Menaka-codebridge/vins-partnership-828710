@@ -1,5 +1,5 @@
 const { Departments } = require("./departments.class");
-const createModel = require("../../models/departments.model");
+const createModel = require("../../cbModels/departments.model");
 const hooks = require("./departments.hooks");
 
 module.exports = function (app) {

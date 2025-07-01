@@ -1,5 +1,5 @@
 const { Branches } = require("./branches.class");
-const createModel = require("../../models/branches.model");
+const createModel = require("../../cbModels/branches.model");
 const hooks = require("./branches.hooks");
 
 module.exports = function (app) {

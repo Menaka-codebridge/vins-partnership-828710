@@ -39,7 +39,7 @@ const SingleAuditsPage = (props) => {
         set_entity(res || {});
       })
       .catch((error) => {
-        console.debug({ error });
+        // console.debug({ error });
         props.alert({
           title: "Audits",
           type: "error",
@@ -49,7 +49,7 @@ const SingleAuditsPage = (props) => {
   }, [props, urlParams.singleAuditsId]);
 
   const goBack = () => {
-    navigate("/audits");
+    navigate(-1);
   };
 
   const toggleHelpSidebar = () => {
@@ -69,7 +69,7 @@ const SingleAuditsPage = (props) => {
         });
       })
       .catch((err) => {
-        console.error("Failed to copy link: ", err);
+        // console.error("Failed to copy link: ", err);
         props.alert({
           title: "Error",
           type: "error",

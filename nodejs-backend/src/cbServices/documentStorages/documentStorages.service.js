@@ -1,5 +1,5 @@
 const { DocumentStorages } = require("./documentStorages.class");
-const createModel = require("../../models/documentStorages.model");
+const createModel = require("../../cbModels/documentStorages.model");
 const hooks = require("./documentStorages.hooks");
 
 module.exports = function (app) {

@@ -1,5 +1,5 @@
 const { Config } = require("./config.class");
-const createModel = require("../../models/config.model");
+const createModel = require("../../cbModels/config.model");
 const hooks = require("./config.hooks");
 
 module.exports = function (app) {

@@ -60,7 +60,7 @@ const SingleUserPhonesPage = (props) => {
   }, [props, urlParams.singleUserPhonesId]);
 
   const goBack = () => {
-    navigate("/userPhones");
+    navigate(-1);
   };
 
   const helpSidebarRef = useRef(null);
@@ -190,11 +190,18 @@ const SingleUserPhonesPage = (props) => {
           </div>
         </div>
         <div className="mt-2">
-<TabView>                <TabPanel header="true" leftIcon="pi pi-building-columns mr-2">
+          <TabView>
+            <div className="mt-2">
+              <TabView>
+                <TabPanel header="true" leftIcon="pi pi-building-columns mr-2">
                   <ProfilesPage />
                 </TabPanel>
+              </TabView>
+            </div>
           </TabView>
-        </div>        <CommentsSection
+        </div>
+
+        <CommentsSection
           recordId={urlParams.singleUserPhonesId}
           user={props.user}
           alert={props.alert}

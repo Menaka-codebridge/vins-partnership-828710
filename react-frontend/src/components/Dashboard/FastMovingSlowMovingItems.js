@@ -36,7 +36,8 @@ export default function FastMovingSlowMovingItems() {
         stockOutResponse.data.forEach((item) => {
           const partName = item.partName;
           const description = partNameToDescription[partName] || "Unknown Item";
-          itemMovements[description] = (itemMovements[description] || 0) + (item.quantity || 0);
+          itemMovements[description] =
+            (itemMovements[description] || 0) + (item.quantity || 0);
         });
 
         // Sort items by movement quantity

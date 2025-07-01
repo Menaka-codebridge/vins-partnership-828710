@@ -58,7 +58,7 @@ const SingleCompanyPhonesPage = (props) => {
   }, [props, urlParams.singleCompanyPhonesId]);
 
   const goBack = () => {
-    navigate("/companyPhones");
+    navigate(-1);
   };
 
   const helpSidebarRef = useRef(null);

@@ -35,7 +35,8 @@ export default function TopUsedSpareParts() {
         stockOutResponse.data.forEach((item) => {
           const partName = item.partName;
           const description = partNameToDescription[partName] || "Unknown Item";
-          itemUsage[description] = (itemUsage[description] || 0) + (item.quantity || 0);
+          itemUsage[description] =
+            (itemUsage[description] || 0) + (item.quantity || 0);
         });
 
         // Sort items by usage quantity

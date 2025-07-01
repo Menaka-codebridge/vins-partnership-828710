@@ -19,6 +19,8 @@ import FilterIcon from "../../../assets/media/Filter.png";
 import FavouriteService from "../../../services/FavouriteService";
 import { v4 as uuidv4 } from "uuid";
 import HelpbarService from "../../../services/HelpbarService";
+import SortMenu from "../../../services/SortMenu";
+import FilterMenu from "../../../services/FilterMenu";
 
 const CompaniesPage = (props) => {
   const navigate = useNavigate();
@@ -50,6 +52,7 @@ const CompaniesPage = (props) => {
   const [permissions, setPermissions] = useState({});
   const [refresh, setRefresh] = useState(false);
   const [paginatorRecordsNo, setPaginatorRecordsNo] = useState(10);
+  const [activeSort, setActiveSort] = useState(null);
 
   const getOrSetTabId = () => {
     let tabId = sessionStorage.getItem("browserTabId");
@@ -67,7 +70,6 @@ const CompaniesPage = (props) => {
     }
   }, [selectedUser]);
 
-
   const toggleHelpSidebar = () => {
     setHelpSidebarVisible(!isHelpSidebarVisible);
   };
@@ -82,8 +84,35 @@ const CompaniesPage = (props) => {
   useEffect(() => {
     const _getSchema = async () => {
       const _schema = await props.getSchema("companies");
-      const _fields = _schema.data.map((field, i) => i > 5 && field.field);
-      setSelectedHideFields(_fields);
+      const excludedFields = [
+        "_id",
+        "createdBy",
+        "updatedBy",
+        "createdAt",
+        "updatedAt",
+      ];
+      const _fields = _schema.data
+        .filter((field) => !excludedFields.includes(field.field))
+        .map((field) => {
+          const fieldName = field.field
+            .split(".")
+            .map((part) =>
+              part
+                .replace(/([A-Z])/g, " $1")
+                .trim()
+                .replace(/\b\w/g, (c) => c.toUpperCase()),
+            )
+            .join(" ");
+          return {
+            name: fieldName,
+            value: field.field,
+          };
+        });
+      setFields(_fields);
+      const _hideFields = _schema.data
+        .map((field, i) => i > 5 && field.field)
+        .filter(Boolean);
+      setSelectedHideFields(_hideFields);
     };
     _getSchema();
     if (location?.state?.action === "create") {
@@ -145,13 +174,14 @@ const CompaniesPage = (props) => {
   ]);
 
   const onClickSaveFilteredfields = (ff) => {
-    console.log(ff);
+    setSelectedFilterFields(ff);
+    setShowFilter(false);
   };
 
   const onClickSaveHiddenfields = (ff) => {
-    console.log(ff);
+    // setSelectedHideFields(ff);
+    // setShowColumns(false);
   };
-
   const onEditRow = (rowData, rowIndex) => {
     setSelectedEntityIndex(rowData._id);
     setShowEditDialog(true);
@@ -270,25 +300,25 @@ const CompaniesPage = (props) => {
     },
     permissions.import
       ? {
-        label: "Import",
-        icon: "pi pi-upload",
-        command: () => setShowUpload(true),
-      }
+          label: "Import",
+          icon: "pi pi-upload",
+          command: () => setShowUpload(true),
+        }
       : null,
     permissions.export
       ? {
-        label: "Export",
-        icon: "pi pi-download",
-        command: () => {
-          data.length > 0
-            ? setTriggerDownload(true)
-            : props.alert({
-              title: "Export",
-              type: "warn",
-              message: "no data to export",
-            });
-        },
-      }
+          label: "Export",
+          icon: "pi pi-download",
+          command: () => {
+            data.length > 0
+              ? setTriggerDownload(true)
+              : props.alert({
+                  title: "Export",
+                  type: "warn",
+                  message: "no data to export",
+                });
+          },
+        }
       : null,
     {
       label: "Help",
@@ -298,57 +328,47 @@ const CompaniesPage = (props) => {
     { separator: true },
     process.env.REACT_APP_ENV == "development"
       ? {
-        label: "Testing",
-        icon: "pi pi-check-circle",
-        items: [
-          {
-            label: "Faker",
-            icon: "pi pi-bullseye",
-            command: (e) => {
-              setShowFakerDialog(true);
+          label: "Testing",
+          icon: "pi pi-check-circle",
+          items: [
+            {
+              label: "Faker",
+              icon: "pi pi-bullseye",
+              command: (e) => {
+                setShowFakerDialog(true);
+              },
+              show: true,
             },
-            show: true,
-          },
-          {
-            label: `Drop ${data?.length}`,
-            icon: "pi pi-trash",
-            command: (e) => {
-              setShowDeleteAllDialog(true);
+            {
+              label: `Drop ${data?.length}`,
+              icon: "pi pi-trash",
+              command: (e) => {
+                setShowDeleteAllDialog(true);
+              },
             },
-          },
-        ],
-      }
+          ],
+        }
       : null,
     permissions.seeder
       ? {
-        label: "Data seeder",
-        icon: "pi pi-database",
-        command: (e) => {
-          setShowSeederDialog(true);
-        },
-      }
+          label: "Data seeder",
+          icon: "pi pi-database",
+          command: (e) => {
+            setShowSeederDialog(true);
+          },
+        }
       : null,
   ].filter(Boolean);
 
-  const onMenuSort = (sortOption) => {
+  const onMenuSort = (field, order) => {
     let sortedData;
-    switch (sortOption) {
-      case "nameAsc":
-        sortedData = _.orderBy(data, ["name"], ["asc"]);
-        break;
-      case "nameDesc":
-        sortedData = _.orderBy(data, ["name"], ["desc"]);
-        break;
-      case "createdAtAsc":
-        sortedData = _.orderBy(data, ["createdAt"], ["asc"]);
-        break;
-      case "createdAtDesc":
-        sortedData = _.orderBy(data, ["createdAt"], ["desc"]);
-        break;
-      default:
-        sortedData = data;
+    if (field.includes(".")) {
+      sortedData = _.orderBy(data, [(item) => _.get(item, field, "")], [order]);
+    } else {
+      sortedData = _.orderBy(data, [field], [order]);
     }
     setData(sortedData);
+    setActiveSort(`${field}-${order}`);
   };
 
   const filterMenuItems = [
@@ -372,29 +392,77 @@ const CompaniesPage = (props) => {
           style={{
             fontWeight: "bold",
             padding: "8px 16px",
-            backgroundColor: "#ffffff",
-            fontSize: "16px",
+            backgroundColor: "#f8f9fa",
+            fontSize: "14px",
+            color: "#333",
           }}
         >
           {item.label}
         </div>
       ),
-      command: () => { },
+      command: () => {},
     },
     { separator: true },
-    { label: "Name Ascending", command: () => onMenuSort("nameAsc") },
-    { label: "Name Descending", command: () => onMenuSort("nameDesc") },
-    {
-      label: "Created At Ascending",
-      command: () => onMenuSort("createdAtAsc"),
-    },
-    {
-      label: "Created At Descending",
-      command: () => onMenuSort("createdAtDesc"),
-    },
+    ...fields.flatMap((field) => [
+      {
+        label: `${field.name} (Ascending)`,
+        icon: activeSort === `${field.value}-asc` ? "pi pi-check" : null,
+        command: () => onMenuSort(field.value, "asc"),
+        template: (item) => (
+          <div
+            style={{
+              padding: "8px 16px",
+              fontSize: "13px",
+              color: activeSort === `${field.value}-asc` ? "#007bff" : "#333",
+              backgroundColor:
+                activeSort === `${field.value}-asc` ? "#e6f3ff" : "transparent",
+            }}
+          >
+            {item.icon && (
+              <i
+                className={item.icon}
+                style={{ marginRight: "8px", color: "#007bff" }}
+              />
+            )}
+            {item.label}
+          </div>
+        ),
+      },
+      {
+        label: `${field.name} (Descending)`,
+        icon: activeSort === `${field.value}-desc` ? "pi pi-check" : null,
+        command: () => onMenuSort(field.value, "desc"),
+        template: (item) => (
+          <div
+            style={{
+              padding: "8px 16px",
+              fontSize: "13px",
+              color: activeSort === `${field.value}-desc` ? "#007bff" : "#333",
+              backgroundColor:
+                activeSort === `${field.value}-desc`
+                  ? "#e6f3ff"
+                  : "transparent",
+            }}
+          >
+            {item.icon && (
+              <i
+                className={item.icon}
+                style={{ marginRight: "8px", color: "#007bff" }}
+              />
+            )}
+            {item.label}
+          </div>
+        ),
+      },
+    ]),
+    { separator: true },
     {
       label: "Reset",
-      command: () => setData(_.cloneDeep(initialData)),
+      icon: "pi pi-refresh",
+      command: () => {
+        setData(_.cloneDeep(initialData));
+        setActiveSort(null);
+      },
       template: (item) => (
         <div
           style={{
@@ -408,6 +476,7 @@ const CompaniesPage = (props) => {
             fontSize: "13px",
           }}
         >
+          <i className={item.icon} style={{ marginRight: "8px" }} />
           {item.label}
         </div>
       ),
@@ -422,14 +491,16 @@ const CompaniesPage = (props) => {
     const tabId = getOrSetTabId();
     const response = await props.get();
     const currentCache = response?.results;
-    const selectedUser = localStorage.getItem(`selectedUser_${tabId}`) || currentCache?.selectedUser;
+    const selectedUser =
+      localStorage.getItem(`selectedUser_${tabId}`) ||
+      currentCache?.selectedUser;
     setSelectedUser(selectedUser);
-  
+
     if (currentCache && selectedUser) {
       const selectedUserProfile = currentCache.profiles.find(
         (profile) => profile.profileId === selectedUser,
       );
-  
+
       if (selectedUserProfile) {
         const paginatorRecordsNo = _.get(
           selectedUserProfile,
@@ -437,8 +508,8 @@ const CompaniesPage = (props) => {
           10,
         );
         setPaginatorRecordsNo(paginatorRecordsNo);
-        console.log("PaginatorRecordsNo from cache:", paginatorRecordsNo);
-        return; 
+
+        return;
       }
     }
     try {
@@ -447,14 +518,13 @@ const CompaniesPage = (props) => {
         .get(selectedUser, {
           query: { $populate: ["position"] },
         });
-  
+
       const paginatorRecordsNo = _.get(
         profileResponse,
         "preferences.settings.companies.paginatorRecordsNo",
         10,
       );
       setPaginatorRecordsNo(paginatorRecordsNo);
-      console.log("PaginatorRecordsNo from service:", paginatorRecordsNo);
     } catch (error) {
       console.error("Error fetching profile from profiles service:", error);
     }
@@ -467,7 +537,7 @@ const CompaniesPage = (props) => {
       const currentCache = response?.results;
       const selectedUser = localStorage.getItem(`selectedUser_${tabId}`);
       setSelectedUser(selectedUser || currentCache.selectedUser);
-      
+
       if (currentCache && selectedUser) {
         const selectedUserProfileIndex = currentCache.profiles.findIndex(
           (profile) => profile.profileId === selectedUser,
@@ -488,8 +558,7 @@ const CompaniesPage = (props) => {
         console.warn("Cache or selectedUser is not available.");
       }
     };
-      updateCache();
-    
+    updateCache();
   }, [paginatorRecordsNo, selectedUser]);
 
   useEffect(() => {
@@ -527,7 +596,7 @@ const CompaniesPage = (props) => {
           if (userPermissions) {
             setPermissions(userPermissions);
           } else {
-            console.log("No permissions found for this user and service.");
+            console.debug("No permissions found for this user and service.");
           }
         }
       } catch (error) {
@@ -539,7 +608,6 @@ const CompaniesPage = (props) => {
       fetchPermissions();
     }
   }, [selectedUser]);
-
 
   return (
     <div className="mt-5">
@@ -578,7 +646,7 @@ const CompaniesPage = (props) => {
               }
               buttonClassName="hidden"
               menuButtonClassName="ml-1 p-button-text"
-            // menuStyle={{ width: "250px" }}
+              // menuStyle={{ width: "250px" }}
             ></SplitButton>
             <SplitButton
               model={sortMenuItems.filter(
@@ -685,7 +753,11 @@ const CompaniesPage = (props) => {
         onYes={() => deleteAll()}
         loading={loading}
       />
-      <HelpbarService isVisible={isHelpSidebarVisible} onToggle={toggleHelpSidebar} serviceName="companies" />
+      <HelpbarService
+        isVisible={isHelpSidebarVisible}
+        onToggle={toggleHelpSidebar}
+        serviceName="companies"
+      />
     </div>
   );
 };

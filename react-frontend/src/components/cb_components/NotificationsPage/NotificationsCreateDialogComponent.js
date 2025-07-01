@@ -11,6 +11,7 @@ import { Dropdown } from "primereact/dropdown";
 import { Checkbox } from "primereact/checkbox";
 import { Calendar } from "primereact/calendar";
 import { getSchemaValidationErrorsStrings } from "../../../utils";
+import { InputTextarea } from "primereact/inputtextarea";
 const NotificationsCreateDialogComponent = (props) => {
   const [_entity, set_entity] = useState({});
   const [error, setError] = useState({});
@@ -142,13 +143,13 @@ const NotificationsCreateDialogComponent = (props) => {
 
   return (
     <Dialog
-      header="Create Notifications"
+      header="Create Mobile Push Notification"
       visible={props.show}
       closable={false}
       onHide={props.onHide}
       modal
       style={{ width: "40vw" }}
-      className="min-w-max"
+      className="min-w-max zoomin animation-duration-700"
       footer={renderFooter()}
       resizable={false}
     >
@@ -159,7 +160,7 @@ const NotificationsCreateDialogComponent = (props) => {
       >
         <div className="col-12 md:col-6 field mt-5">
           <span className="align-items-center">
-            <label htmlFor="toUser">ToUser:</label>
+            <label htmlFor="toUser">Select To User:</label>
             <Dropdown
               id="toUser"
               value={_entity?.toUser?._id}
@@ -177,14 +178,16 @@ const NotificationsCreateDialogComponent = (props) => {
             ) : null}
           </small>
         </div>
-        <div className="col-12 md:col-6 field mt-5">
+        <div className="col-12 md:col-12 field mt-5">
           <span className="align-items-center">
-            <label htmlFor="content">Content:</label>
-            <InputText
+            <label htmlFor="content">Message Content here:</label>
+            <InputTextarea
               id="content"
               className="w-full mb-3 p-inputtext-sm"
               value={_entity?.content}
               onChange={(e) => setValByKey("content", e.target.value)}
+              rows={5}
+              cols={30}
               required
             />
           </span>
@@ -198,12 +201,13 @@ const NotificationsCreateDialogComponent = (props) => {
         </div>
         <div className="col-12 md:col-6 field flex mt-5">
           <span className="align-items-center">
-            <label htmlFor="read">Read:</label>
+            <label htmlFor="read">Has Been Read/Received:</label>
             <Checkbox
               id="read"
               className="ml-3"
               checked={_entity?.read}
               onChange={(e) => setValByKey("read", e.checked)}
+              disabled={true}
             />
           </span>
           <small className="p-error">
@@ -216,13 +220,14 @@ const NotificationsCreateDialogComponent = (props) => {
         </div>
         <div className="col-12 md:col-6 field mt-5">
           <span className="align-items-center">
-            <label htmlFor="sent">Sent:</label>
+            <label htmlFor="sent">Date time sent:</label>
             <Calendar
               id="sent"
               value={_entity?.sent ? new Date(_entity?.sent) : new Date()}
               onChange={(e) => setValByKey("sent", e.value)}
               showTime
               hourFormat="12"
+              disabled={true}
             />
           </span>
           <small className="p-error">

@@ -1,5 +1,5 @@
 const { JobQues } = require("./jobQues.class");
-const createModel = require("../../models/jobQues.model");
+const createModel = require("../../cbModels/jobQues.model");
 const hooks = require("./jobQues.hooks");
 
 module.exports = function (app) {

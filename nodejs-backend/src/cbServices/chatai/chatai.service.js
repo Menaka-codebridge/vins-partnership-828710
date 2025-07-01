@@ -1,5 +1,5 @@
 const { Chatai } = require("./chatai.class");
-const createModel = require("../../models/chatai.model");
+const createModel = require("../../cbModels/chatai.model");
 const hooks = require("./chatai.hooks");
 
 module.exports = function (app) {

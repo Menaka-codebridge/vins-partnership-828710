@@ -22,6 +22,7 @@ import DashboardHRControls from '../components/Dashboard/DashboardHRControls';
 import SingleUsersPage from '../components/cb_components/UsersPage/SingleUsersPage';
 import UserProjectLayoutPage from '../components/cb_components/UsersPage/UserProjectLayoutPage';
 import Account from '../components/cb_components/Account/Account';
+import DashboardPage from "../components/app_components/CasePage/DashboardPage";
 import CBRouter from './CBRouter';
 import AppRouter from './AppRouter';
 
@@ -30,15 +31,15 @@ import AppRouter from './AppRouter';
 const MyRouter = (props) => {
     return (
         <Routes>
-            <Route path="/" exact element={props.isLoggedIn ? <DashboardAdminControl /> : <LoginPage />} />
-            <Route path="/login" exact element={props.isLoggedIn === true ? <DashboardAdminControl /> : <LoginPage />} />
+              <Route path="/" exact element={props.isLoggedIn ? <DashboardPage /> : <LoginPage />} />
+            <Route path="/login" exact element={props.isLoggedIn === true ? <DashboardPage /> : <LoginPage />} />
             <Route path="/reset/:singleChangeForgotPasswordId" exact element={<ResetPage />} />
             <Route path="/signup" exact element={<SignUpPage />} />
             <Route path="/maintenance" exact element={<MaintenancePage />} />
             <Route path="/login-faq" exact element={<LoginFaqPage />} />
 
             <Route element={<ProtectedRoute redirectPath={'/login'} />}>
-                <Route path="/project" exact element={<DashboardAdminControl />} />
+                <Route path="/project" exact element={<DashboardPage />} />
                 // user details
                 <Route path="/account" exact element={<Account />} />
                 <Route path="/users/:singleUsersId" exact element={<SingleUsersPage />} />

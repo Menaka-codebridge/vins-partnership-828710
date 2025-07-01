@@ -1,148 +1,88 @@
 const { Queue, Worker } = require("bullmq");
-const connection = require("../services/redis/config");
-const jobQueue = new Queue("createUserProfile", { connection });
-
-const createUserProfileInDB = async (app, superAdmin, data) => {
-  if (superAdmin === data.email) {
-    // Super Admin: Single profile with "Super" role and "Admin" position
-    const userAdminRole = await app
-      .service("roles")
-      .find({ query: { name: "Super" } });
-    const userAdminPosition = await app
-      .service("positions")
-      .find({ query: { name: "Super" } });
-
-    await app.service("profiles").create({
-      name: `${data.name} - Admin`, 
-      userId: data._id,
-      role: userAdminRole.data[0]._id,
-      position: userAdminPosition.data[0]._id,
-    });
-  } else {
-    // Regular User: Fetch userInvites to get roles/positions
-    const userInvite = await app.service("userInvites").find({
-      query: { emailToInvite: data.email },
-    });
-    // console.log("User Invite Data:", userInvite.data);
-    if (userInvite.data.length > 0) {
-      const { roles = [], positions = [] } = userInvite.data[0];
-
-      // If roles and positions are available, create profiles for each position
-      if (positions.length > 0) {
-        for (const positionId of positions) {
-          // Get position details (including name)
-          const position = await app.service("positions").get(positionId);
-
-          // Get role ID (use corresponding role or default)
-          let roleId = roles[positions.indexOf(positionId)]; 
-          if (!roleId) {
-            const defaultRole = await app
-              .service("roles")
-              .find({ query: { isDefault: true } });
-            roleId = defaultRole.data[0]._id;
-          }
-          // console.log("Positions Array:", positions);
-          // Create profile
-          await app.service("profiles").create({
-            name: `${data.name} - ${position.name}`, // username + position name
-            userId: data._id,
-            role: roleId,
-            position: positionId,
-          });
-        }
-      } else {
-        // If no positions are available, create a profile with default role/position
-        const defaultRole = await app
-          .service("roles")
-          .find({ query: { isDefault: true } });
-        const defaultPosition = await app
-          .service("positions")
-          .find({ query: { isDefault: true } });
-
-        await app.service("profiles").create({
-          name: `${data.name} - ${defaultPosition.data[0].name}`, 
-          userId: data._id,
-          role: defaultRole.data[0]._id,
-          position: defaultPosition.data[0]._id,
-        });
-      }
-    } else {
-      // No userInvites: Use default role/position
-      const defaultRole = await app
-        .service("roles")
-        .find({ query: { isDefault: true } });
-      const defaultPosition = await app
-        .service("positions")
-        .find({ query: { isDefault: true } });
-
-      await app.service("profiles").create({
-        name: `${data.name} - ${defaultPosition.data[0].name}`, 
-        userId: data._id,
-        role: defaultRole.data[0]._id,
-        position: defaultPosition.data[0]._id,
-      });
-    }
-  }
-};
-
+const connection = require("../cbServices/redis/config");
+const jobQueue = new Queue("createUserProfile", {
+  connection,
+  prefix: `${process.env.PROJECT_NAME}:bull`,
+});
 
 // Create and export the worker
 const createUserProfile = (app) => {
-  const superAdmin = "mehalamohan1999@gmail.com";
+  const superAdmin = "kana.sabaratnam@gmail.com";
   const worker = new Worker(
     "createUserProfile",
     async (job) => {
       const { data } = job;
-      if (Array.isArray(data)) {
-        data.forEach(
-          async (data) => await createUserProfileInDB(app, superAdmin, data),
-        );
-      } else await createUserProfileInDB(app, superAdmin, data);
+      const _profile = {
+        name: data.name,
+        userId: data._id,
+      };
+      let userData = await app.service("userLogin").find({
+        query: {
+          loginEmail: data.email,
+        },
+      });
+
+      if (userData.data.length === 0) {
+        userData = await app.service("userInvites").find({
+          query: {
+            emailToInvite: data.email,
+          },
+        });
+        if (userData.data.length === 0) {
+          // no user found is improbable
+          // todo create user in userLogin
+          app.service("userLogin").create({
+            loginEmail: data.email,
+            code: 100000,
+            access: data.accessToken,
+            sendMailCounter: 1,
+          });
+        } else {
+          // superAdmin
+          if (superAdmin === data.email) {
+            _profile["role"] = "66b9c8b1dc0d1ef9ac30a8a7";
+            _profile["position"] = "66e678d947480b243fc573fd";
+          } else if (userData.data[0].position) {
+            // custom role and position
+            _profile["role"] = userData.data[0].role;
+            _profile["position"] = userData.data[0].position;
+          } else {
+            // admin
+            _profile["role"] = "66b9c8b1dc0d1ef9ac30a89e";
+            _profile["position"] = "66e678d947480b243fc573fc";
+          }
+        }
+      } else {
+        //external external
+        _profile["role"] = "66b9c8b1dc0d1ef9ac30a8a1";
+        _profile["position"] = "66e678d947480b243fc573fb";
+
+        // todo get user profile from user invites
+      }
+
+      app.service("profiles").create(_profile);
     },
-    { connection },
+    { connection, prefix: `${process.env.PROJECT_NAME}:bull` },
   );
 
   // Event listeners for worker
   worker.on("completed", (job) => {
     console.debug(`Job createUserProfile ${job.id} completed successfully`);
     if (job.data) {
-      if (Array.isArray(job.data)) {
-        job.data.forEach((data) => {
-          const _mail = {
-            name: "on_new_user_welcome_email",
-            type: "firstimelogin",
-            from: process.env.MAIL_USERNAME,
-            recipients: [data.email],
-            data: {
-              name: data.name,
-              projectLabel: process.env.PROJECT_LABEL
-                ? process.env.PROJECT_LABEL
-                : process.env.PROJECT_NAME,
-            },
-            status: true,
-            subject: "First Time Login",
-            templateId: "onWelcomeEmail",
-          };
-          app.service("mailQues").create(_mail);
-        });
-      } else {
-        const _mail = {
-          name: "on_new_user_welcome_email",
-          type: "firstimelogin",
-          from: process.env.MAIL_USERNAME,
-          recipients: [job.data.email],
-          data: {
-            name: job.data.name,
-            projectLabel: process.env.PROJECT_LABEL
-              ? process.env.PROJECT_LABEL
-              : process.env.PROJECT_NAME,
-          },
-          status: true,
-          subject: "First Time Login",
-          templateId: "onWelcomeEmail",
-        };
-        app.service("mailQues").create(_mail);
-      }
+      const _mail = {
+        name: "on_new_user_welcome_email",
+        type: "firstimelogin",
+        from: "admin@cloudbasha.com",
+        recipients: [job.data.email],
+        data: {
+          name: job.data.name,
+          projectLabel: process.env.PROJECT_LABEL ?? process.env.PROJECT_NAME,
+        },
+        status: true,
+        subject: "First Time Login",
+        templateId: "onWelcomeEmail",
+      };
+      app.service("mailQues").create(_mail);
     } else {
       console.debug(`Job error and ${job.data} data not found`);
     }
@@ -153,43 +93,18 @@ const createUserProfile = (app) => {
       `Job createUserProfile ${job.id} failed with error ${err.message}`,
     );
     if (job.data) {
-      if (Array.isArray(job.data)) {
-        job.data.forEach((data) => {
-          const _mail = {
-            name: "on_send_welcome_email",
-            type: "userInvitationOnCreateOnLoginQues",
-            from: process.env.MAIL_USERNAME,
-            recipients: [superAdmin],
-            status: false,
-            data: {
-              ...data,
-              projectLabel:
-                process.env.PROJECT_LABEL ?? process.env.PROJECT_NAME,
-            },
-            subject: "login processing failed",
-            templateId: "onError",
-            errorMessage: err.message,
-          };
-          app.service("mailQues").create(_mail);
-        });
-      } else {
-        const _mail = {
-          name: "on_send_welcome_email",
-          type: "userInvitationOnCreateOnLoginQues",
-          from: process.env.MAIL_USERNAME,
-          recipients: [superAdmin],
-          status: false,
-          data: {
-            ...job.data,
-            projectLabel: process.env.PROJECT_LABEL ?? process.env.PROJECT_NAME,
-          },
-          subject: "login processing failed",
-          templateId: "onError",
-          errorMessage: err.message,
-          hook: job.data.hook ?? null,
-        };
-        app.service("mailQues").create(_mail);
-      }
+      const _mail = {
+        name: "on_send_welcome_email",
+        type: "userInvitationOnCreateOnLoginQues",
+        from: "info@cloudbasha.com",
+        recipients: ["kana@cloudbasha.com"],
+        status: false,
+        data: { ...job.data },
+        subject: "login processing failed",
+        templateId: "onError",
+        errorMessage: err.message,
+      };
+      app.service("mailQues").create(_mail);
     } else {
       console.error(`Job error and ${job.data} data not found`);
     }
@@ -207,8 +122,7 @@ const createUserProfile = (app) => {
     after: {
       create: async (context) => {
         const { result } = context;
-        if (typeof result.hook === "undefined")
-          await jobQueue.add("createUserProfile", result);
+        await jobQueue.add("createUserProfile", result);
         return context;
       },
     },

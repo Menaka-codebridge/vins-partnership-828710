@@ -1,5 +1,5 @@
 const { Roles } = require("./roles.class");
-const createModel = require("../../models/roles.model");
+const createModel = require("../../cbModels/roles.model");
 const hooks = require("./roles.hooks");
 
 module.exports = function (app) {

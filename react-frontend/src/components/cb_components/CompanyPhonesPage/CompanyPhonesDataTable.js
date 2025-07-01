@@ -20,7 +20,7 @@ import { Toast } from "primereact/toast";
 import DeleteImage from "../../../assets/media/Delete.png";
 import client from "../../../services/restClient";
 import { Dropdown } from "primereact/dropdown";
-import { Skeleton } from 'primereact/skeleton';
+import { Skeleton } from "primereact/skeleton";
 
 const CompanyPhonesDataTable = ({
   items,
@@ -63,6 +63,7 @@ const CompanyPhonesDataTable = ({
   const [permissions, setPermissions] = useState({});
   const [fieldPermissions, setFieldPermissions] = useState({});
   const [isLoadingPermissions, setIsLoadingPermissions] = useState(true);
+  const [filters, setFilters] = useState({});
 
   const header = (
     <div
@@ -182,8 +183,6 @@ const CompanyPhonesDataTable = ({
       );
     },
     JumpToPageInput: (options) => {
-      console.log("option", options);
-
       return (
         <div>
           <span>Page</span>
@@ -260,7 +259,7 @@ const CompanyPhonesDataTable = ({
           if (userPermissions) {
             setPermissions(userPermissions);
           } else {
-            console.log("No permissions found for this user and service.");
+            console.debug("No permissions found for this user and service.");
           }
         }
       } catch (error) {
@@ -287,7 +286,7 @@ const CompanyPhonesDataTable = ({
         if (filteredPermissions.length > 0) {
           setFieldPermissions(filteredPermissions[0]);
         }
-        console.log("FieldPermissions", fieldPermissions);
+        console.debug("FieldPermissions", fieldPermissions);
       } catch (error) {
         console.error("Failed to fetch permissions", error);
       }
@@ -390,13 +389,42 @@ const CompanyPhonesDataTable = ({
 
   const renderSkeleton = () => {
     return (
-      <DataTable value={Array.from({ length: 5 })} className="p-datatable-striped">
+      <DataTable
+        value={Array.from({ length: 5 })}
+        className="p-datatable-striped"
+      >
         <Column body={<Skeleton />} />
         <Column body={<Skeleton />} />
         <Column body={<Skeleton />} />
         <Column body={<Skeleton />} />
         <Column body={<Skeleton />} />
       </DataTable>
+    );
+  };
+
+  // Initialize filters based on selectedFilterFields
+  useEffect(() => {
+    const initialFilters = {};
+    selectedFilterFields.forEach((field) => {
+      initialFilters[field] = {
+        value: null,
+        matchMode: "contains",
+      };
+    });
+    setFilters(initialFilters);
+  }, [selectedFilterFields]);
+
+  const onFilter = (e) => {
+    setFilters(e.filters);
+  };
+
+  const filterTemplate = (options) => {
+    return (
+      <InputText
+        value={options.value || ""}
+        onChange={(e) => options.filterCallback(e.target.value)}
+        placeholder={`Filter ${options.field}`}
+      />
     );
   };
 
@@ -426,6 +454,9 @@ const CompanyPhonesDataTable = ({
             globalFilter={globalFilter}
             header={header}
             user={user}
+            filters={filters}
+            onFilter={onFilter}
+            filterDisplay="menu"
           >
             <Column
               selectionMode="multiple"
@@ -437,6 +468,7 @@ const CompanyPhonesDataTable = ({
               header="Company"
               body={dropdownTemplate0}
               filter={selectedFilterFields.includes("companyId")}
+              filterElement={filterTemplate}
               hidden={selectedHideFields?.includes("companyId")}
               style={{ minWidth: "8rem" }}
             />
@@ -445,6 +477,7 @@ const CompanyPhonesDataTable = ({
               header="Country code"
               body={defaultTemplate1}
               filter={selectedFilterFields.includes("countryCode")}
+              filterElement={filterTemplate}
               hidden={selectedHideFields?.includes("countryCode")}
               sortable
               style={{ minWidth: "8rem" }}
@@ -454,6 +487,7 @@ const CompanyPhonesDataTable = ({
               header="Operator code"
               body={defaultTemplate2}
               filter={selectedFilterFields.includes("operatorCode")}
+              filterElement={filterTemplate}
               hidden={selectedHideFields?.includes("operatorCode")}
               sortable
               style={{ minWidth: "8rem" }}
@@ -463,6 +497,7 @@ const CompanyPhonesDataTable = ({
               header="Number"
               body={defaultTemplate3}
               filter={selectedFilterFields.includes("number")}
+              filterElement={filterTemplate}
               hidden={selectedHideFields?.includes("number")}
               sortable
               style={{ minWidth: "8rem" }}
@@ -472,6 +507,7 @@ const CompanyPhonesDataTable = ({
               header="Type"
               body={dropdownArrayTemplate4}
               filter={selectedFilterFields.includes("type")}
+              filterElement={filterTemplate}
               hidden={selectedHideFields?.includes("type")}
               style={{ minWidth: "8rem" }}
             />
@@ -480,6 +516,7 @@ const CompanyPhonesDataTable = ({
               header="Is Default"
               body={p_booleanTemplate5}
               filter={selectedFilterFields.includes("isDefault")}
+              filterElement={filterTemplate}
               hidden={selectedHideFields?.includes("isDefault")}
               style={{ minWidth: "8rem" }}
             />
@@ -669,7 +706,11 @@ const CompanyPhonesDataTable = ({
                   icon={
                     <img
                       src={DeleteIcon}
-                      style={{ marginRight: "4px", width: "1em", height: "1em" }}
+                      style={{
+                        marginRight: "4px",
+                        width: "1em",
+                        height: "1em",
+                      }}
                     />
                   }
                   onClick={handleDelete}
@@ -707,35 +748,6 @@ const CompanyPhonesDataTable = ({
             onHide={() => setSearchDialog(false)}
           >
             Search
-          </Dialog>
-          <Dialog
-            header="Filter Users"
-            visible={showFilter}
-            onHide={() => setShowFilter(false)}
-          >
-            <div className="card flex justify-content-center">
-              <MultiSelect
-                value={selectedFilterFields}
-                onChange={(e) => setSelectedFilterFields(e.value)}
-                options={fields}
-                optionLabel="name"
-                optionValue="value"
-                filter
-                placeholder="Select Fields"
-                maxSelectedLabels={6}
-                className="w-full md:w-20rem"
-              />
-            </div>
-            <Button
-              text
-              label="save as pref"
-              onClick={() => {
-                console.debug(selectedFilterFields);
-                onClickSaveFilteredfields(selectedFilterFields);
-                setSelectedFilterFields(selectedFilterFields);
-                setShowFilter(false);
-              }}
-            ></Button>
           </Dialog>
 
           <Dialog
@@ -839,6 +851,5 @@ const CompanyPhonesDataTable = ({
     </>
   );
 };
-
 
 export default CompanyPhonesDataTable;

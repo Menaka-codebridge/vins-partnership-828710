@@ -1,5 +1,5 @@
 const { DynaLoader } = require("./dynaLoader.class");
-const createModel = require("../../models/dynaLoader.model");
+const createModel = require("../../cbModels/dynaLoader.model");
 const hooks = require("./dynaLoader.hooks");
 
 module.exports = function (app) {

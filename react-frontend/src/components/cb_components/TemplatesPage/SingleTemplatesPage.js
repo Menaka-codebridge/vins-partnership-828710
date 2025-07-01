@@ -34,7 +34,7 @@ const SingleTemplatesPage = (props) => {
   }, [props, urlParams.singleTemplatesId]);
 
   const goBack = () => {
-    navigate("/templates");
+    navigate(-1);
   };
 
   const helpSidebarRef = useRef(null);
@@ -128,7 +128,7 @@ const SingleTemplatesPage = (props) => {
                 <label className="text-sm text-gray-600">Subject</label>
                 <p className="m-0 ml-3">{_entity?.subject}</p>
               </div>
-              <div className="col-12 md:col-6 lg:col-3 mb-10">
+              <div className="col-12 md:col-12 lg:col-12 mb-10">
                 <label className="text-sm text-gray-600">Body</label>
                 <p
                   className="m-0 ml-3"

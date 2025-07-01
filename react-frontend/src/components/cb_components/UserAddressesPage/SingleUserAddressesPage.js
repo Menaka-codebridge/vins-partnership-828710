@@ -60,7 +60,7 @@ const SingleUserAddressesPage = (props) => {
   }, [props, urlParams.singleUserAddressesId]);
 
   const goBack = () => {
-    navigate("/userAddresses");
+    navigate(-1);
   };
 
   const helpSidebarRef = useRef(null);
@@ -191,11 +191,18 @@ const SingleUserAddressesPage = (props) => {
           </div>
         </div>
         <div className="mt-2">
-<TabView>                <TabPanel header="true" leftIcon="pi pi-building-columns mr-2">
+          <TabView>
+            <div className="mt-2">
+              <TabView>
+                <TabPanel header="true" leftIcon="pi pi-building-columns mr-2">
                   <ProfilesPage />
                 </TabPanel>
+              </TabView>
+            </div>
           </TabView>
-        </div>        <CommentsSection
+        </div>
+
+        <CommentsSection
           recordId={urlParams.singleUserAddressesId}
           user={props.user}
           alert={props.alert}

@@ -1,5 +1,5 @@
 const { Inbox } = require("./inbox.class");
-const createModel = require("../../models/inbox.model");
+const createModel = require("../../cbModels/inbox.model");
 const hooks = require("./inbox.hooks");
 
 module.exports = function (app) {

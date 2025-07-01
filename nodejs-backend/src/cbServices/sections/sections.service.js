@@ -1,5 +1,5 @@
 const { Sections } = require("./sections.class");
-const createModel = require("../../models/sections.model");
+const createModel = require("../../cbModels/sections.model");
 const hooks = require("./sections.hooks");
 
 module.exports = function (app) {

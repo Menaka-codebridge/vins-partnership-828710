@@ -1,5 +1,5 @@
 const { MailWH } = require("./mailWH.class");
-const createModel = require("../../models/mailWH.model");
+const createModel = require("../../cbModels/mailWH.model");
 const hooks = require("./mailWH.hooks");
 
 module.exports = function (app) {

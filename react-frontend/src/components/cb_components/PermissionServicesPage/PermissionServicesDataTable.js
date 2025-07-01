@@ -130,8 +130,6 @@ const PermissionServicesDataTable = ({
       );
     },
     JumpToPageInput: (options) => {
-      console.log("option", options);
-
       return (
         <div>
           <span>Page</span>

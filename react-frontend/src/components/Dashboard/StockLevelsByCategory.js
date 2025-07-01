@@ -26,11 +26,13 @@ export default function StockLevelsByCategory() {
         });
 
         // Fetch vending machines data from machine_master
-        const machineMasterResponse = await client.service("machineMaster").find({
-          query: {
-            $limit: 10000,
-          },
-        });
+        const machineMasterResponse = await client
+          .service("machineMaster")
+          .find({
+            query: {
+              $limit: 10000,
+            },
+          });
 
         // Calculate total spare parts quantity
         const totalSpareParts = partsMasterResponse.data.reduce(
@@ -50,7 +52,12 @@ export default function StockLevelsByCategory() {
         });
 
         // Prepare chart data
-        const categories = ["Spare Parts", "Vending Machines", "Payment Devices", "Consumables"];
+        const categories = [
+          "Spare Parts",
+          "Vending Machines",
+          "Payment Devices",
+          "Consumables",
+        ];
         const values = [
           totalSpareParts,
           totalVendingMachines,

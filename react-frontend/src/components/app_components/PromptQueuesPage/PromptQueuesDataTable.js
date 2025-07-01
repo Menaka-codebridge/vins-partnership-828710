@@ -1,12 +1,12 @@
-import { Column } from 'primereact/column';
-import { DataTable } from 'primereact/datatable';
-import React, { useState, useRef, useEffect} from 'react';
-import _ from 'lodash';
-import { Button } from 'primereact/button';
+import { Column } from "primereact/column";
+import { DataTable } from "primereact/datatable";
+import React, { useState, useRef, useEffect } from "react";
+import _ from "lodash";
+import { Button } from "primereact/button";
 import { useParams } from "react-router-dom";
 import moment from "moment";
 import UploadService from "../../../services/UploadService";
-import { InputText } from 'primereact/inputtext';
+import { InputText } from "primereact/inputtext";
 import { Dialog } from "primereact/dialog";
 import { MultiSelect } from "primereact/multiselect";
 import DownloadCSV from "../../../utils/DownloadCSV";
@@ -17,28 +17,64 @@ import CopyIcon from "../../../assets/media/Clipboard.png";
 import DuplicateIcon from "../../../assets/media/Duplicate.png";
 import DeleteIcon from "../../../assets/media/Trash.png";
 
-const PromptQueuesDataTable = ({ items, fields, onEditRow, onRowDelete, onRowClick, searchDialog, setSearchDialog,   showUpload, setShowUpload,
-    showFilter, setShowFilter,
-    showColumns, setShowColumns, onClickSaveFilteredfields ,
-    selectedFilterFields, setSelectedFilterFields,
-    selectedHideFields, setSelectedHideFields, onClickSaveHiddenfields, loading, user,   selectedDelete,
-  setSelectedDelete, onCreateResult}) => {
-    const dt = useRef(null);
-    const urlParams = useParams();
-    const [globalFilter, setGlobalFilter] = useState('');
+const PromptQueuesDataTable = ({
+  items,
+  fields,
+  onEditRow,
+  onRowDelete,
+  onRowClick,
+  searchDialog,
+  setSearchDialog,
+  showUpload,
+  setShowUpload,
+  showFilter,
+  setShowFilter,
+  showColumns,
+  setShowColumns,
+  onClickSaveFilteredfields,
+  selectedFilterFields,
+  setSelectedFilterFields,
+  selectedHideFields,
+  setSelectedHideFields,
+  onClickSaveHiddenfields,
+  loading,
+  user,
+  selectedDelete,
+  setSelectedDelete,
+  onCreateResult,
+}) => {
+  const dt = useRef(null);
+  const urlParams = useParams();
+  const [globalFilter, setGlobalFilter] = useState("");
   const [selectedItems, setSelectedItems] = useState([]);
   const [showDialog, setShowDialog] = useState(false);
   const [data, setData] = useState([]);
 
-const dropdownTemplate0 = (rowData, { rowIndex }) => <p >{rowData.sectionContentId?.subsection}</p>
-const dropdownTemplate1 = (rowData, { rowIndex }) => <p >{rowData.summonsNo?.insuranceRef}</p>
-const pTemplate2 = (rowData, { rowIndex }) => <p >{rowData.promptUsed}</p>
-const pTemplate3 = (rowData, { rowIndex }) => <p >{rowData.status}</p>
-const pTemplate4 = (rowData, { rowIndex }) => <p >{rowData.errorMessage}</p>
-    const editTemplate = (rowData, { rowIndex }) => <Button onClick={() => onEditRow(rowData, rowIndex)} icon={`pi ${rowData.isEdit ? "pi-check" : "pi-pencil"}`} className={`p-button-rounded p-button-text ${rowData.isEdit ? "p-button-success" : "p-button-warning"}`} />;
-    const deleteTemplate = (rowData, { rowIndex }) => <Button onClick={() => onRowDelete(rowData._id)} icon="pi pi-times" className="p-button-rounded p-button-danger p-button-text" />;
-    
-      const checkboxTemplate = (rowData) => (
+  const dropdownTemplate0 = (rowData, { rowIndex }) => (
+    <p>{rowData.sectionContentId?.subsection}</p>
+  );
+  const dropdownTemplate1 = (rowData, { rowIndex }) => (
+    <p>{rowData.summonsNo?.insuranceRef}</p>
+  );
+  const pTemplate2 = (rowData, { rowIndex }) => <p>{rowData.promptUsed}</p>;
+  const pTemplate3 = (rowData, { rowIndex }) => <p>{rowData.status}</p>;
+  const pTemplate4 = (rowData, { rowIndex }) => <p>{rowData.errorMessage}</p>;
+  const editTemplate = (rowData, { rowIndex }) => (
+    <Button
+      onClick={() => onEditRow(rowData, rowIndex)}
+      icon={`pi ${rowData.isEdit ? "pi-check" : "pi-pencil"}`}
+      className={`p-button-rounded p-button-text ${rowData.isEdit ? "p-button-success" : "p-button-warning"}`}
+    />
+  );
+  const deleteTemplate = (rowData, { rowIndex }) => (
+    <Button
+      onClick={() => onRowDelete(rowData._id)}
+      icon="pi pi-times"
+      className="p-button-rounded p-button-danger p-button-text"
+    />
+  );
+
+  const checkboxTemplate = (rowData) => (
     <Checkbox
       checked={selectedItems.some((item) => item._id === rowData._id)}
       onChange={(e) => {
@@ -79,7 +115,7 @@ const pTemplate4 = (rowData, { rowIndex }) => <p >{rowData.errorMessage}</p>
       console.error("Failed to delete selected records", error);
     }
   };
-    
+
   const handleMessage = () => {
     setShowDialog(true); // Open the dialog
   };
@@ -88,10 +124,10 @@ const pTemplate4 = (rowData, { rowIndex }) => <p >{rowData.errorMessage}</p>
     setShowDialog(false); // Close the dialog
   };
 
-    return (
-        <>
-        <DataTable 
-           value={items}
+  return (
+    <>
+      <DataTable
+        value={items}
         ref={dt}
         removableSort
         onRowClick={onRowClick}
@@ -109,22 +145,58 @@ const pTemplate4 = (rowData, { rowIndex }) => <p >{rowData.errorMessage}</p>
         selection={selectedItems}
         onSelectionChange={(e) => setSelectedItems(e.value)}
         onCreateResult={onCreateResult}
-        >
-                <Column
+      >
+        <Column
           selectionMode="multiple"
           headerStyle={{ width: "3rem" }}
           body={checkboxTemplate}
         />
-<Column field="sectionContentId" header="Section Content Id" body={dropdownTemplate0} filter={selectedFilterFields.includes("sectionContentId")} hidden={selectedHideFields?.includes("sectionContentId")}  style={{ minWidth: "8rem" }} />
-<Column field="summonsNo" header="Summons No" body={dropdownTemplate1} filter={selectedFilterFields.includes("summonsNo")} hidden={selectedHideFields?.includes("summonsNo")}  style={{ minWidth: "8rem" }} />
-<Column field="promptUsed" header="Prompt Used" body={pTemplate2} filter={selectedFilterFields.includes("promptUsed")} hidden={selectedHideFields?.includes("promptUsed")}  sortable style={{ minWidth: "8rem" }} />
-<Column field="status" header="Status" body={pTemplate3} filter={selectedFilterFields.includes("status")} hidden={selectedHideFields?.includes("status")}  sortable style={{ minWidth: "8rem" }} />
-<Column field="errorMessage" header="Error Message" body={pTemplate4} filter={selectedFilterFields.includes("errorMessage")} hidden={selectedHideFields?.includes("errorMessage")}  sortable style={{ minWidth: "8rem" }} />
-            <Column header="Edit" body={editTemplate} />
-            <Column header="Delete" body={deleteTemplate} />
-            
-        </DataTable>
-
+        <Column
+          field="sectionContentId"
+          header="Section Content Id"
+          body={dropdownTemplate0}
+          filter={selectedFilterFields.includes("sectionContentId")}
+          hidden={selectedHideFields?.includes("sectionContentId")}
+          style={{ minWidth: "8rem" }}
+        />
+        <Column
+          field="summonsNo"
+          header="Summons No"
+          body={dropdownTemplate1}
+          filter={selectedFilterFields.includes("summonsNo")}
+          hidden={selectedHideFields?.includes("summonsNo")}
+          style={{ minWidth: "8rem" }}
+        />
+        <Column
+          field="promptUsed"
+          header="Prompt Used"
+          body={pTemplate2}
+          filter={selectedFilterFields.includes("promptUsed")}
+          hidden={selectedHideFields?.includes("promptUsed")}
+          sortable
+          style={{ minWidth: "8rem" }}
+        />
+        <Column
+          field="status"
+          header="Status"
+          body={pTemplate3}
+          filter={selectedFilterFields.includes("status")}
+          hidden={selectedHideFields?.includes("status")}
+          sortable
+          style={{ minWidth: "8rem" }}
+        />
+        <Column
+          field="errorMessage"
+          header="Error Message"
+          body={pTemplate4}
+          filter={selectedFilterFields.includes("errorMessage")}
+          hidden={selectedHideFields?.includes("errorMessage")}
+          sortable
+          style={{ minWidth: "8rem" }}
+        />
+        <Column header="Edit" body={editTemplate} />
+        <Column header="Delete" body={deleteTemplate} />
+      </DataTable>
 
       {selectedItems.length > 0 ? (
         <div
@@ -300,20 +372,28 @@ const pTemplate4 = (rowData, { rowIndex }) => <p >{rowData.errorMessage}</p>
         </div>
       ) : null}
 
-
-        <Dialog header="Upload PromptQueues Data" visible={showUpload} onHide={() => setShowUpload(false)}>
-        <UploadService 
-          user={user} 
-          serviceName="promptQueues"            
+      <Dialog
+        header="Upload PromptQueues Data"
+        visible={showUpload}
+        onHide={() => setShowUpload(false)}
+      >
+        <UploadService
+          user={user}
+          serviceName="promptQueues"
           onUploadComplete={() => {
             setShowUpload(false); // Close the dialog after upload
-          }}/>
+          }}
+        />
       </Dialog>
 
-      <Dialog header="Search PromptQueues" visible={searchDialog} onHide={() => setSearchDialog(false)}>
-      Search
-    </Dialog>
-    <Dialog
+      <Dialog
+        header="Search PromptQueues"
+        visible={searchDialog}
+        onHide={() => setSearchDialog(false)}
+      >
+        Search
+      </Dialog>
+      <Dialog
         header="Filter Users"
         visible={showFilter}
         onHide={() => setShowFilter(false)}
@@ -338,7 +418,7 @@ const pTemplate4 = (rowData, { rowIndex }) => <p >{rowData.errorMessage}</p>
             console.log(selectedFilterFields);
             onClickSaveFilteredfields(selectedFilterFields);
             setSelectedFilterFields(selectedFilterFields);
-            setShowFilter(false)
+            setShowFilter(false);
           }}
         ></Button>
       </Dialog>
@@ -368,12 +448,12 @@ const pTemplate4 = (rowData, { rowIndex }) => <p >{rowData.errorMessage}</p>
             console.log(selectedHideFields);
             onClickSaveHiddenfields(selectedHideFields);
             setSelectedHideFields(selectedHideFields);
-            setShowColumns(false)
+            setShowColumns(false);
           }}
         ></Button>
       </Dialog>
-        </>
-    );
+    </>
+  );
 };
 
 export default PromptQueuesDataTable;

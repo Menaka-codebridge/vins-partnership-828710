@@ -1,5 +1,5 @@
 const { UserPhones } = require("./userPhones.class");
-const createModel = require("../../models/userPhones.model");
+const createModel = require("../../cbModels/userPhones.model");
 const hooks = require("./userPhones.hooks");
 
 module.exports = function (app) {

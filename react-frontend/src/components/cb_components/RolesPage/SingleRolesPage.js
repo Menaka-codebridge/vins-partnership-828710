@@ -36,7 +36,7 @@ const SingleRolesPage = (props) => {
   }, [props, urlParams.singleRolesId]);
 
   const goBack = () => {
-    navigate("/roles");
+    navigate(-1);
   };
 
   const helpSidebarRef = useRef(null);
@@ -145,11 +145,18 @@ const SingleRolesPage = (props) => {
           </div>
         </div>
         <div className="mt-2">
-<TabView>                <TabPanel header="true" leftIcon="pi pi-building-columns mr-2">
+          <TabView>
+            <div className="mt-2">
+              <TabView>
+                <TabPanel header="true" leftIcon="pi pi-building-columns mr-2">
                   <PositionsPage />
                 </TabPanel>
+              </TabView>
+            </div>
           </TabView>
-        </div>        <CommentsSection
+        </div>
+
+        <CommentsSection
           recordId={urlParams.singleRolesId}
           user={props.user}
           alert={props.alert}

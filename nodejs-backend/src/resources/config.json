@@ -16,13 +16,7 @@
   "stack": [
     {
       "appName": "nodejs-backend",
-      "environments": [
-        null,
-        null,
-        null,
-        null,
-        null
-      ],
+      "environments": [null, null, null, null, null],
       "pathToLogo": {
         "s": "/assets/applications_logos/nodejs-s.png",
         "l": "/assets/applications_logos/nodejs.png"
@@ -34,13 +28,7 @@
     },
     {
       "appName": "react-frontend",
-      "environments": [
-        null,
-        null,
-        null,
-        null,
-        null
-      ],
+      "environments": [null, null, null, null, null],
       "pathToLogo": {
         "s": "/assets/applications_logos/react-s.png",
         "l": "/assets/applications_logos/react.png"
@@ -781,9 +769,7 @@
             "refServiceName": "users",
             "refDatabaseName": "users",
             "relationshipType": "one-to-one",
-            "identifierFieldName": [
-              "name"
-            ]
+            "identifierFieldName": ["name"]
           }
         },
         {
@@ -921,9 +907,7 @@
             "refServiceName": "accidentCases",
             "refDatabaseName": "accident_cases",
             "relationshipType": "one-to-one",
-            "identifierFieldName": [
-              "caseNo"
-            ]
+            "identifierFieldName": ["caseNo"]
           }
         },
         {
@@ -1220,9 +1204,7 @@
             "refServiceName": "accidentCases",
             "refDatabaseName": "accident_cases",
             "relationshipType": "one-to-one",
-            "identifierFieldName": [
-              "caseNo"
-            ]
+            "identifierFieldName": ["caseNo"]
           }
         },
         {
@@ -1430,9 +1412,7 @@
             "refServiceName": "accidentCases",
             "refDatabaseName": "accident_cases",
             "relationshipType": "one-to-one",
-            "identifierFieldName": [
-              "caseNo"
-            ]
+            "identifierFieldName": ["caseNo"]
           }
         },
         {
@@ -1480,9 +1460,7 @@
             "refServiceName": "users",
             "refDatabaseName": "users",
             "relationshipType": "one-to-one",
-            "identifierFieldName": [
-              "name"
-            ]
+            "identifierFieldName": ["name"]
           }
         },
         {
@@ -1868,9 +1846,7 @@
             "refServiceName": "caseDocuments",
             "refDatabaseName": "case_documents",
             "relationshipType": "one-to-one",
-            "identifierFieldName": [
-              "caseNo"
-            ]
+            "identifierFieldName": ["caseNo"]
           }
         },
         {
@@ -1918,9 +1894,7 @@
             "refServiceName": "caseDocuments",
             "refDatabaseName": "case_documents",
             "relationshipType": "one-to-one",
-            "identifierFieldName": [
-              "caseNo"
-            ]
+            "identifierFieldName": ["caseNo"]
           }
         },
         {
@@ -2013,9 +1987,7 @@
             "refServiceName": "accidentCases",
             "refDatabaseName": "accident_cases",
             "relationshipType": "one-to-one",
-            "identifierFieldName": [
-              "caseNo"
-            ]
+            "identifierFieldName": ["caseNo"]
           }
         }
       ],
@@ -2084,9 +2056,7 @@
             "refServiceName": "caseDocuments",
             "refDatabaseName": "case_documents",
             "relationshipType": "one-to-one",
-            "identifierFieldName": [
-              "caseNo"
-            ]
+            "identifierFieldName": ["caseNo"]
           }
         },
         {
@@ -2134,9 +2104,7 @@
             "refServiceName": "accidentCases",
             "refDatabaseName": "accident_cases",
             "relationshipType": "one-to-one",
-            "identifierFieldName": [
-              "caseNo"
-            ]
+            "identifierFieldName": ["caseNo"]
           }
         },
         {
@@ -2295,9 +2263,7 @@
             "refServiceName": "sectionContents",
             "refDatabaseName": "section_contents",
             "relationshipType": "one-to-one",
-            "identifierFieldName": [
-              "subsection"
-            ]
+            "identifierFieldName": ["subsection"]
           }
         },
         {
@@ -2345,9 +2311,7 @@
             "refServiceName": "accidentCases",
             "refDatabaseName": "accident_cases",
             "relationshipType": "one-to-one",
-            "identifierFieldName": [
-              "insuranceRef"
-            ]
+            "identifierFieldName": ["insuranceRef"]
           }
         },
         {

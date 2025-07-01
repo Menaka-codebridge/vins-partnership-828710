@@ -68,7 +68,7 @@ const SingleInboxPage = (props) => {
   }, [props, urlParams.singleInboxId]);
 
   const goBack = () => {
-    navigate("/inbox");
+    navigate(-1);
   };
 
   const handleLinkClick = (url) => {

@@ -16,7 +16,11 @@ import UserInvitesEditDialogComponent from "./UserInvitesEditDialogComponent";
 import UserInvitesCreateDialogComponent from "./UserInvitesCreateDialogComponent";
 import UserInvitesFakerDialogComponent from "./UserInvitesFakerDialogComponent";
 import UserInvitesSeederDialogComponent from "./UserInvitesSeederDialogComponent";
+import FavouriteService from "../../../services/FavouriteService";
 import { v4 as uuidv4 } from "uuid";
+import HelpbarService from "../../../services/HelpbarService";
+import SortMenu from "../../../services/SortMenu";
+import FilterMenu from "../../../services/FilterMenu";
 
 const UserInvitesPage = (props) => {
   const navigate = useNavigate();
@@ -49,8 +53,6 @@ const UserInvitesPage = (props) => {
   const urlParams = useParams();
   const filename = "userInvites";
 
-  const helpSidebarRef = useRef(null);
-
   const getOrSetTabId = () => {
     let tabId = sessionStorage.getItem("browserTabId");
     if (!tabId) {
@@ -66,24 +68,16 @@ const UserInvitesPage = (props) => {
       localStorage.setItem(`selectedUser_${tabId}`, selectedUser);
     }
   }, [selectedUser]);
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (
-        helpSidebarRef.current &&
-        !helpSidebarRef.current.contains(event.target) &&
-        isHelpSidebarVisible
-      ) {
-        setHelpSidebarVisible(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [isHelpSidebarVisible]);
 
   const toggleHelpSidebar = () => {
     setHelpSidebarVisible(!isHelpSidebarVisible);
+  };
+
+  const favouriteItem = {
+    icon: "pi pi-users",
+    label: "userInvites",
+    url: "/userInvites",
+    mainMenu: "users",
   };
 
   useEffect(() => {
@@ -146,11 +140,13 @@ const UserInvitesPage = (props) => {
 
         setData(results);
         setInitialData(results);
+        props.hide();
         setLoading(false);
       })
       .catch((error) => {
         console.debug({ error });
         setLoading(false);
+        props.hide();
         props.alert({
           title: "User Invites",
           type: "error",
@@ -166,9 +162,9 @@ const UserInvitesPage = (props) => {
   ]);
 
   const onClickSaveFilteredfields = (ff) => {
-    console.debug(ff);
+    setSelectedFilterFields(ff);
+    setShowFilter(false);
   };
-
   const onClickSaveHiddenfields = (ff) => {
     console.debug(ff);
   };
@@ -431,6 +427,54 @@ const UserInvitesPage = (props) => {
     }
   }, [paginatorRecordsNo, selectedUser]);
 
+  useEffect(() => {
+    const fetchPermissions = async () => {
+      try {
+        if (selectedUser) {
+          const profile = await client.service("profiles").get(selectedUser);
+          const userInvitesPermissions = await client
+            .service("permissionServices")
+            .find({
+              query: { service: "userInvites" },
+            });
+
+          let userPermissions = null;
+
+          // Priority 1: Profile
+          userPermissions = userInvitesPermissions.data.find(
+            (perm) => perm.profile === profile._id,
+          );
+
+          // Priority 2: Position
+          if (!userPermissions) {
+            userPermissions = userInvitesPermissions.data.find(
+              (perm) => perm.positionId === profile.position,
+            );
+          }
+
+          // Priority 3: Role
+          if (!userPermissions) {
+            userPermissions = userInvitesPermissions.data.find(
+              (perm) => perm.roleId === profile.role,
+            );
+          }
+
+          if (userPermissions) {
+            setPermissions(userPermissions);
+          } else {
+            console.debug("No permissions found for this user and service.");
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch permissions", error);
+      }
+    };
+
+    if (selectedUser) {
+      fetchPermissions();
+    }
+  }, [selectedUser]);
+
   return (
     <div className="mt-5">
       <div className="grid">
@@ -453,6 +497,10 @@ const UserInvitesPage = (props) => {
         </div>
         <div className="col-6 flex justify-content-end">
           <>
+            <FavouriteService
+              favouriteItem={favouriteItem}
+              serviceName="userInvites"
+            />{" "}
             <Button
               label="add"
               style={{ height: "30px", marginRight: "10px" }}
@@ -541,29 +589,11 @@ const UserInvitesPage = (props) => {
         onHide={() => setShowDeleteAllDialog(false)}
         onYes={() => deleteAll()}
       />
-      <div
-        ref={helpSidebarRef}
-        id="rightsidebar"
-        className={classNames(
-          "overlay-auto z-10 surface-overlay shadow-2 fixed top-0 right-0 w-20rem animation-duration-150 animation-ease-in-out",
-          { hidden: !isHelpSidebarVisible, block: isHelpSidebarVisible },
-        )}
-        style={{
-          height: "100%",
-          backgroundColor: "rgba(0, 0, 0, 0.5)",
-        }}
-      >
-        <div
-          className="flex flex-column h-full p-4 bg-white"
-          style={{ height: "calc(100% - 60px)", marginTop: "60px" }}
-        >
-          <span className="text-xl font-medium text-900 mb-3">Help bar</span>
-          <div className="border-2 border-dashed surface-border border-round surface-section flex-auto">
-            {/* Help Content */}
-            <div className="p-3"></div>
-          </div>
-        </div>
-      </div>
+      <HelpbarService
+        isVisible={isHelpSidebarVisible}
+        onToggle={toggleHelpSidebar}
+        serviceName="userinvites"
+      />
     </div>
   );
 };

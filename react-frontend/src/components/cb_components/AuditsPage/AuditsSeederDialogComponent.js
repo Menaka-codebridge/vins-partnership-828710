@@ -43,7 +43,7 @@ const AuditsSeederDialogComponent = (props) => {
       });
       props.onSeederResults(results);
     } catch (error) {
-      console.debug("error", error);
+      // console.debug("error", error);
       setError(
         getSchemaValidationErrorsStrings(error) || "Failed to run seeder",
       );
@@ -81,7 +81,7 @@ const AuditsSeederDialogComponent = (props) => {
       onHide={props.onHide}
       modal
       style={{ width: "40vw" }}
-      className="min-w-max"
+      className="min-w-max zoomin animation-duration-700"
       footer={renderFooter()}
       resizable={false}
     >

@@ -1,5 +1,5 @@
 const { Audits } = require("./audits.class");
-const createModel = require("../../models/audits.model");
+const createModel = require("../../cbModels/audits.model");
 const hooks = require("./audits.hooks");
 
 module.exports = function (app) {

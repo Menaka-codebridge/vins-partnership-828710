@@ -1,12 +1,12 @@
-import { Column } from 'primereact/column';
-import { DataTable } from 'primereact/datatable';
-import React, { useState, useRef, useEffect} from 'react';
-import _ from 'lodash';
-import { Button } from 'primereact/button';
+import { Column } from "primereact/column";
+import { DataTable } from "primereact/datatable";
+import React, { useState, useRef, useEffect } from "react";
+import _ from "lodash";
+import { Button } from "primereact/button";
 import { useParams } from "react-router-dom";
 import moment from "moment";
 import UploadService from "../../../services/UploadService";
-import { InputText } from 'primereact/inputtext';
+import { InputText } from "primereact/inputtext";
 import { Dialog } from "primereact/dialog";
 import { MultiSelect } from "primereact/multiselect";
 import DownloadCSV from "../../../utils/DownloadCSV";
@@ -17,36 +17,77 @@ import CopyIcon from "../../../assets/media/Clipboard.png";
 import DuplicateIcon from "../../../assets/media/Duplicate.png";
 import DeleteIcon from "../../../assets/media/Trash.png";
 
-const AccidentCasesDataTable = ({ items, fields, onEditRow, onRowDelete, onRowClick, searchDialog, setSearchDialog,   showUpload, setShowUpload,
-    showFilter, setShowFilter,
-    showColumns, setShowColumns, onClickSaveFilteredfields ,
-    selectedFilterFields, setSelectedFilterFields,
-    selectedHideFields, setSelectedHideFields, onClickSaveHiddenfields, loading, user,   selectedDelete,
-  setSelectedDelete, onCreateResult}) => {
-    const dt = useRef(null);
-    const urlParams = useParams();
-    const [globalFilter, setGlobalFilter] = useState('');
+const AccidentCasesDataTable = ({
+  items,
+  fields,
+  onEditRow,
+  onRowDelete,
+  onRowClick,
+  searchDialog,
+  setSearchDialog,
+  showUpload,
+  setShowUpload,
+  showFilter,
+  setShowFilter,
+  showColumns,
+  setShowColumns,
+  onClickSaveFilteredfields,
+  selectedFilterFields,
+  setSelectedFilterFields,
+  selectedHideFields,
+  setSelectedHideFields,
+  onClickSaveHiddenfields,
+  loading,
+  user,
+  selectedDelete,
+  setSelectedDelete,
+  onCreateResult,
+}) => {
+  const dt = useRef(null);
+  const urlParams = useParams();
+  const [globalFilter, setGlobalFilter] = useState("");
   const [selectedItems, setSelectedItems] = useState([]);
   const [showDialog, setShowDialog] = useState(false);
   const [data, setData] = useState([]);
 
-const pTemplate0 = (rowData, { rowIndex }) => <p >{rowData.insuranceRef}</p>
-const pTemplate1 = (rowData, { rowIndex }) => <p >{rowData.caseNo}</p>
-const pTemplate2 = (rowData, { rowIndex }) => <p >{rowData.court}</p>
-const pTemplate3 = (rowData, { rowIndex }) => <p >{rowData.plaintiffSolicitors}</p>
-const pTemplate4 = (rowData, { rowIndex }) => <p >{rowData.plaintiff}</p>
-const pTemplate5 = (rowData, { rowIndex }) => <p >{rowData.insuredDriver}</p>
-const pTemplate6 = (rowData, { rowIndex }) => <p >{rowData.insured}</p>
-const pTemplate7 = (rowData, { rowIndex }) => <p >{rowData.insuredVehicle}</p>
-const p_calendarTemplate8 = (rowData, { rowIndex }) => <p >{moment(rowData.collisionDateTime).fromNow()}</p>
-const pTemplate9 = (rowData, { rowIndex }) => <p >{rowData.claimStatus}</p>
-const dropdownTemplate10 = (rowData, { rowIndex }) => <p >{rowData.user?.name}</p>
-const pTemplate11 = (rowData, { rowIndex }) => <p >{rowData.synonyms}</p>
-const pTemplate12 = (rowData, { rowIndex }) => <p >{rowData.parameters}</p>
-    const editTemplate = (rowData, { rowIndex }) => <Button onClick={() => onEditRow(rowData, rowIndex)} icon={`pi ${rowData.isEdit ? "pi-check" : "pi-pencil"}`} className={`p-button-rounded p-button-text ${rowData.isEdit ? "p-button-success" : "p-button-warning"}`} />;
-    const deleteTemplate = (rowData, { rowIndex }) => <Button onClick={() => onRowDelete(rowData._id)} icon="pi pi-times" className="p-button-rounded p-button-danger p-button-text" />;
-    
-      const checkboxTemplate = (rowData) => (
+  const pTemplate0 = (rowData, { rowIndex }) => <p>{rowData.insuranceRef}</p>;
+  const pTemplate1 = (rowData, { rowIndex }) => <p>{rowData.summonsNo}</p>;
+  const pTemplate10 = (rowData, { rowIndex }) => (
+    <p>{rowData.vinsPartnershipReference}</p>
+  );
+  const pTemplate2 = (rowData, { rowIndex }) => <p>{rowData.court}</p>;
+  const pTemplate3 = (rowData, { rowIndex }) => (
+    <p>{rowData.plaintiffSolicitors}</p>
+  );
+  const pTemplate4 = (rowData, { rowIndex }) => <p>{rowData.plaintiff}</p>;
+  const pTemplate5 = (rowData, { rowIndex }) => <p>{rowData.insuredDriver}</p>;
+  const pTemplate6 = (rowData, { rowIndex }) => <p>{rowData.insured}</p>;
+  const pTemplate7 = (rowData, { rowIndex }) => <p>{rowData.insuredVehicle}</p>;
+  const p_calendarTemplate8 = (rowData, { rowIndex }) => (
+    <p>{rowData.collisionDateTime}</p>
+  );
+  const pTemplate9 = (rowData, { rowIndex }) => <p>{rowData.claimStatus}</p>;
+  const dropdownTemplate10 = (rowData, { rowIndex }) => (
+    <p>{rowData.user?.name}</p>
+  );
+  const pTemplate11 = (rowData, { rowIndex }) => <p>{rowData.synonyms}</p>;
+  const pTemplate12 = (rowData, { rowIndex }) => <p>{rowData.parameters}</p>;
+  const editTemplate = (rowData, { rowIndex }) => (
+    <Button
+      onClick={() => onEditRow(rowData, rowIndex)}
+      icon={`pi ${rowData.isEdit ? "pi-check" : "pi-pencil"}`}
+      className={`p-button-rounded p-button-text ${rowData.isEdit ? "p-button-success" : "p-button-warning"}`}
+    />
+  );
+  const deleteTemplate = (rowData, { rowIndex }) => (
+    <Button
+      onClick={() => onRowDelete(rowData._id)}
+      icon="pi pi-times"
+      className="p-button-rounded p-button-danger p-button-text"
+    />
+  );
+
+  const checkboxTemplate = (rowData) => (
     <Checkbox
       checked={selectedItems.some((item) => item._id === rowData._id)}
       onChange={(e) => {
@@ -87,7 +128,7 @@ const pTemplate12 = (rowData, { rowIndex }) => <p >{rowData.parameters}</p>
       console.error("Failed to delete selected records", error);
     }
   };
-    
+
   const handleMessage = () => {
     setShowDialog(true); // Open the dialog
   };
@@ -96,10 +137,10 @@ const pTemplate12 = (rowData, { rowIndex }) => <p >{rowData.parameters}</p>
     setShowDialog(false); // Close the dialog
   };
 
-    return (
-        <>
-        <DataTable 
-           value={items}
+  return (
+    <>
+      <DataTable
+        value={items}
         ref={dt}
         removableSort
         onRowClick={onRowClick}
@@ -117,30 +158,140 @@ const pTemplate12 = (rowData, { rowIndex }) => <p >{rowData.parameters}</p>
         selection={selectedItems}
         onSelectionChange={(e) => setSelectedItems(e.value)}
         onCreateResult={onCreateResult}
-        >
-                <Column
+      >
+        <Column
           selectionMode="multiple"
           headerStyle={{ width: "3rem" }}
           body={checkboxTemplate}
         />
-<Column field="insuranceRef" header="Insurance Ref" body={pTemplate0} filter={selectedFilterFields.includes("insuranceRef")} hidden={selectedHideFields?.includes("insuranceRef")}  sortable style={{ minWidth: "8rem" }} />
-<Column field="caseNo" header="Case No" body={pTemplate1} filter={selectedFilterFields.includes("caseNo")} hidden={selectedHideFields?.includes("caseNo")}  sortable style={{ minWidth: "8rem" }} />
-<Column field="court" header="Court" body={pTemplate2} filter={selectedFilterFields.includes("court")} hidden={selectedHideFields?.includes("court")}  sortable style={{ minWidth: "8rem" }} />
-<Column field="plaintiffSolicitors" header="Plaintiff Solicitors" body={pTemplate3} filter={selectedFilterFields.includes("plaintiffSolicitors")} hidden={selectedHideFields?.includes("plaintiffSolicitors")}  sortable style={{ minWidth: "8rem" }} />
-<Column field="plaintiff" header="Plaintiff" body={pTemplate4} filter={selectedFilterFields.includes("plaintiff")} hidden={selectedHideFields?.includes("plaintiff")}  sortable style={{ minWidth: "8rem" }} />
-<Column field="insuredDriver" header="Insured Driver" body={pTemplate5} filter={selectedFilterFields.includes("insuredDriver")} hidden={selectedHideFields?.includes("insuredDriver")}  sortable style={{ minWidth: "8rem" }} />
-<Column field="insured" header="Insured" body={pTemplate6} filter={selectedFilterFields.includes("insured")} hidden={selectedHideFields?.includes("insured")}  sortable style={{ minWidth: "8rem" }} />
-<Column field="insuredVehicle" header="Insured Vehicle" body={pTemplate7} filter={selectedFilterFields.includes("insuredVehicle")} hidden={selectedHideFields?.includes("insuredVehicle")}  sortable style={{ minWidth: "8rem" }} />
-<Column field="collisionDateTime" header="Collision Date Time" body={p_calendarTemplate8} filter={selectedFilterFields.includes("collisionDateTime")} hidden={selectedHideFields?.includes("collisionDateTime")}  sortable style={{ minWidth: "8rem" }} />
-<Column field="claimStatus" header="ClaimStatus" body={pTemplate9} filter={selectedFilterFields.includes("claimStatus")} hidden={selectedHideFields?.includes("claimStatus")}  sortable style={{ minWidth: "8rem" }} />
-<Column field="user" header="User" body={dropdownTemplate10} filter={selectedFilterFields.includes("user")} hidden={selectedHideFields?.includes("user")}  style={{ minWidth: "8rem" }} />
-<Column field="synonyms" header="Synonyms" body={pTemplate11} filter={selectedFilterFields.includes("synonyms")} hidden={selectedHideFields?.includes("synonyms")}  sortable style={{ minWidth: "8rem" }} />
-<Column field="parameters" header="Parameters" body={pTemplate12} filter={selectedFilterFields.includes("parameters")} hidden={selectedHideFields?.includes("parameters")}  sortable style={{ minWidth: "8rem" }} />
-            <Column header="Edit" body={editTemplate} />
-            <Column header="Delete" body={deleteTemplate} />
-            
-        </DataTable>
-
+        <Column
+          field="insuranceRef"
+          header="Insurance Ref"
+          body={pTemplate0}
+          filter={selectedFilterFields.includes("insuranceRef")}
+          hidden={selectedHideFields?.includes("insuranceRef")}
+          sortable
+          style={{ minWidth: "8rem" }}
+        />
+        <Column
+          field="vinsPartnershipReference"
+          header="Vins Partnership Reference"
+          body={pTemplate10}
+          filter={selectedFilterFields.includes("vinsPartnershipReference")}
+          hidden={selectedHideFields?.includes("vinsPartnershipReference")}
+          sortable
+          style={{ minWidth: "8rem" }}
+        />
+        <Column
+          field="summonsNo"
+          header="summons No"
+          body={pTemplate1}
+          filter={selectedFilterFields.includes("summonsNo")}
+          hidden={selectedHideFields?.includes("summonsNo")}
+          sortable
+          style={{ minWidth: "8rem" }}
+        />
+        {/* <Column
+          field="court"
+          header="Court"
+          body={pTemplate2}
+          filter={selectedFilterFields.includes("court")}
+          hidden={selectedHideFields?.includes("court")}
+          sortable
+          style={{ minWidth: "8rem" }}
+        />
+        <Column
+          field="plaintiffSolicitors"
+          header="Plaintiff Solicitors"
+          body={pTemplate3}
+          filter={selectedFilterFields.includes("plaintiffSolicitors")}
+          hidden={selectedHideFields?.includes("plaintiffSolicitors")}
+          sortable
+          style={{ minWidth: "8rem" }}
+        />
+        <Column
+          field="plaintiff"
+          header="Plaintiff"
+          body={pTemplate4}
+          filter={selectedFilterFields.includes("plaintiff")}
+          hidden={selectedHideFields?.includes("plaintiff")}
+          sortable
+          style={{ minWidth: "8rem" }}
+        />
+        <Column
+          field="insuredDriver"
+          header="Insured Driver"
+          body={pTemplate5}
+          filter={selectedFilterFields.includes("insuredDriver")}
+          hidden={selectedHideFields?.includes("insuredDriver")}
+          sortable
+          style={{ minWidth: "8rem" }}
+        />
+        <Column
+          field="insured"
+          header="Insured"
+          body={pTemplate6}
+          filter={selectedFilterFields.includes("insured")}
+          hidden={selectedHideFields?.includes("insured")}
+          sortable
+          style={{ minWidth: "8rem" }}
+        />
+        <Column
+          field="insuredVehicle"
+          header="Insured Vehicle"
+          body={pTemplate7}
+          filter={selectedFilterFields.includes("insuredVehicle")}
+          hidden={selectedHideFields?.includes("insuredVehicle")}
+          sortable
+          style={{ minWidth: "8rem" }}
+        /> */}
+        {/* <Column
+          field="collisionDateTime"
+          header="Collision Date Time"
+          body={p_calendarTemplate8}
+          filter={selectedFilterFields.includes("collisionDateTime")}
+          hidden={selectedHideFields?.includes("collisionDateTime")}
+          sortable
+          style={{ minWidth: "8rem" }}
+        /> */}
+        {/* <Column
+          field="claimStatus"
+          header="ClaimStatus"
+          body={pTemplate9}
+          filter={selectedFilterFields.includes("claimStatus")}
+          hidden={selectedHideFields?.includes("claimStatus")}
+          sortable
+          style={{ minWidth: "8rem" }}
+        /> */}
+        {/* <Column
+          field="user"
+          header="User"
+          body={dropdownTemplate10}
+          filter={selectedFilterFields.includes("user")}
+          hidden={selectedHideFields?.includes("user")}
+          style={{ minWidth: "8rem" }}
+        /> */}
+        {/* <Column
+          field="synonyms"
+          header="Synonyms"
+          body={pTemplate11}
+          filter={selectedFilterFields.includes("synonyms")}
+          hidden={selectedHideFields?.includes("synonyms")}
+          sortable
+          style={{ minWidth: "8rem" }}
+        /> */}
+        {/* <Column
+          field="parameters"
+          header="Parameters"
+          body={pTemplate12}
+          filter={selectedFilterFields.includes("parameters")}
+          hidden={selectedHideFields?.includes("parameters")}
+          sortable
+          style={{ minWidth: "8rem" }}
+        /> */}
+        <Column header="Edit" body={editTemplate} />
+        <Column header="Delete" body={deleteTemplate} />
+      </DataTable>
 
       {selectedItems.length > 0 ? (
         <div
@@ -316,20 +467,28 @@ const pTemplate12 = (rowData, { rowIndex }) => <p >{rowData.parameters}</p>
         </div>
       ) : null}
 
-
-        <Dialog header="Upload AccidentCases Data" visible={showUpload} onHide={() => setShowUpload(false)}>
-        <UploadService 
-          user={user} 
-          serviceName="accidentCases"            
+      <Dialog
+        header="Upload AccidentCases Data"
+        visible={showUpload}
+        onHide={() => setShowUpload(false)}
+      >
+        <UploadService
+          user={user}
+          serviceName="accidentCases"
           onUploadComplete={() => {
             setShowUpload(false); // Close the dialog after upload
-          }}/>
+          }}
+        />
       </Dialog>
 
-      <Dialog header="Search AccidentCases" visible={searchDialog} onHide={() => setSearchDialog(false)}>
-      Search
-    </Dialog>
-    <Dialog
+      <Dialog
+        header="Search AccidentCases"
+        visible={searchDialog}
+        onHide={() => setSearchDialog(false)}
+      >
+        Search
+      </Dialog>
+      <Dialog
         header="Filter Users"
         visible={showFilter}
         onHide={() => setShowFilter(false)}
@@ -354,7 +513,7 @@ const pTemplate12 = (rowData, { rowIndex }) => <p >{rowData.parameters}</p>
             console.log(selectedFilterFields);
             onClickSaveFilteredfields(selectedFilterFields);
             setSelectedFilterFields(selectedFilterFields);
-            setShowFilter(false)
+            setShowFilter(false);
           }}
         ></Button>
       </Dialog>
@@ -384,12 +543,12 @@ const pTemplate12 = (rowData, { rowIndex }) => <p >{rowData.parameters}</p>
             console.log(selectedHideFields);
             onClickSaveHiddenfields(selectedHideFields);
             setSelectedHideFields(selectedHideFields);
-            setShowColumns(false)
+            setShowColumns(false);
           }}
         ></Button>
       </Dialog>
-        </>
-    );
+    </>
+  );
 };
 
 export default AccidentCasesDataTable;

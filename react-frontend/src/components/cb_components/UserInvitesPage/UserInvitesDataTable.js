@@ -1,7 +1,8 @@
 import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import _ from "lodash";
+import client from "../../../services/restClient";
 import { Button } from "primereact/button";
 import { useParams } from "react-router-dom";
 import moment from "moment";
@@ -49,7 +50,6 @@ const UserInvitesDataTable = ({
   setPaginatorRecordsNo,
   paginatorRecordsNo,
 }) => {
-  console.log("Items in DataTable:", items);
   const dt = useRef(null);
   const urlParams = useParams();
   const [globalFilter, setGlobalFilter] = useState("");
@@ -60,6 +60,8 @@ const UserInvitesDataTable = ({
   const [permissions, setPermissions] = useState({});
   const [fieldPermissions, setFieldPermissions] = useState({});
   const [triggerDownload, setTriggerDownload] = useState(false);
+  const [isLoadingPermissions, setIsLoadingPermissions] = useState(true);
+  const [filters, setFilters] = useState({});
 
   const header = (
     <div
@@ -168,8 +170,6 @@ const UserInvitesDataTable = ({
       );
     },
     JumpToPageInput: (options) => {
-      console.log("option", options);
-
       return (
         <div>
           <span>Page</span>
@@ -214,7 +214,7 @@ const UserInvitesDataTable = ({
   const confirmDelete = async () => {
     try {
       const promises = selectedItems.map((item) =>
-        client.service("companies").remove(item._id),
+        client.service("userInvites").remove(item._id),
       );
       await Promise.all(promises);
       const updatedData = data.filter(
@@ -322,7 +322,7 @@ const UserInvitesDataTable = ({
       life: 3000,
     });
   };
-  console.log("Hidden Fields:", selectedHideFields);
+
   return (
     <>
       <DataTable
@@ -560,7 +560,6 @@ const UserInvitesDataTable = ({
               onHide={handleHideDialog}
               serviceInbox="userInvites"
               onCreateResult={onCreateResult}
-              // selectedItemsId={selectedItems.map(item => item._id)}
               selectedItemsId={selectedItems}
             />
 

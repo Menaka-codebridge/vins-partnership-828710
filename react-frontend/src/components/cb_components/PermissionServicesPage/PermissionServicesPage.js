@@ -356,69 +356,6 @@ const PermissionServicesPage = (props) => {
     setData(sortedData);
   };
 
-  const filterMenuItems = [
-    {
-      label: `Filter`,
-      icon: "pi pi-filter",
-      command: () => setShowFilter(true),
-    },
-    {
-      label: `Clear`,
-      icon: "pi pi-filter-slash",
-      command: () => setSelectedFilterFields([]),
-    },
-  ];
-
-  const sortMenuItems = [
-    {
-      label: "Sort by",
-      template: (item) => (
-        <div
-          style={{
-            fontWeight: "bold",
-            padding: "8px 16px",
-            backgroundColor: "#ffffff",
-            fontSize: "16px",
-          }}
-        >
-          {item.label}
-        </div>
-      ),
-      command: () => {},
-    },
-    { separator: true },
-    { label: "Name Ascending", command: () => onMenuSort("nameAsc") },
-    { label: "Name Descending", command: () => onMenuSort("nameDesc") },
-    {
-      label: "Created At Ascending",
-      command: () => onMenuSort("createdAtAsc"),
-    },
-    {
-      label: "Created At Descending",
-      command: () => onMenuSort("createdAtDesc"),
-    },
-    {
-      label: "Reset",
-      command: () => setData(_.cloneDeep(initialData)),
-      template: (item) => (
-        <div
-          style={{
-            color: "#d30000",
-            textAlign: "center",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            fontWeight: "bold",
-            padding: "8px 16px",
-            fontSize: "13px",
-          }}
-        >
-          {item.label}
-        </div>
-      ),
-    },
-  ];
-
   useEffect(() => {
     get();
   }, []);

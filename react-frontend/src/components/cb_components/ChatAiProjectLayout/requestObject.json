@@ -218,8 +218,6 @@
     "temperature": 0.5,
     "top_k": 250,
     "top_p": 1,
-    "stop_sequences": [
-      "Human"
-    ]
+    "stop_sequences": ["Human"]
   }
 }

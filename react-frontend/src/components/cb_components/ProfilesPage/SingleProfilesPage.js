@@ -241,7 +241,7 @@ const SingleProfilesPage = (props) => {
   }, [position, company, _entity]);
 
   const goBack = () => {
-    navigate("/profiles");
+    navigate(-1);
   };
 
   const helpSidebarRef = useRef(null);

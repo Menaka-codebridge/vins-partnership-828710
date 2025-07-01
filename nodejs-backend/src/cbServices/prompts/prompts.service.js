@@ -1,5 +1,5 @@
 const { Prompts } = require("./prompts.class");
-const createModel = require("../../models/prompts.model");
+const createModel = require("../../cbModels/prompts.model");
 const hooks = require("./prompts.hooks");
 
 module.exports = function (app) {

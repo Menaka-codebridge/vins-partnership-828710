@@ -72,7 +72,7 @@ const BranchesCreateDialogComponent = (props) => {
       });
       props.onCreateResult(eagerResult.data[0]);
     } catch (error) {
-      console.debug("error", error);
+      // console.debug("error", error);
       setError(getSchemaValidationErrorsStrings(error) || "Failed to create");
       props.alert({
         type: "error",
@@ -102,7 +102,7 @@ const BranchesCreateDialogComponent = (props) => {
         );
       })
       .catch((error) => {
-        console.debug({ error });
+        // console.debug({ error });
         props.alert({
           title: "Companies",
           type: "error",
@@ -146,7 +146,7 @@ const BranchesCreateDialogComponent = (props) => {
       onHide={props.onHide}
       modal
       style={{ width: "40vw" }}
-      className="min-w-max"
+      className="min-w-max zoomin animation-duration-700"
       footer={renderFooter()}
       resizable={false}
     >

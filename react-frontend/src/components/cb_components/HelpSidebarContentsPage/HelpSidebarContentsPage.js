@@ -14,9 +14,8 @@ import HelpSidebarContentsEditDialogComponent from "./HelpSidebarContentsEditDia
 import HelpSidebarContentsCreateDialogComponent from "./HelpSidebarContentsCreateDialogComponent";
 import HelpSidebarContentsFakerDialogComponent from "./HelpSidebarContentsFakerDialogComponent";
 import HelpSidebarContentsSeederDialogComponent from "./HelpSidebarContentsSeederDialogComponent";
-import SortIcon from "../../../assets/media/Sort.png";
-import FilterIcon from "../../../assets/media/Filter.png";
-
+import SortMenu from "../../../services/SortMenu";
+import FilterMenu from "../../../services/FilterMenu";
 
 const HelpSidebarContentsPage = (props) => {
   const navigate = useNavigate();
@@ -50,12 +49,38 @@ const HelpSidebarContentsPage = (props) => {
     setHelpSidebarVisible(!isHelpSidebarVisible);
   };
 
-
   useEffect(() => {
     const _getSchema = async () => {
       const _schema = await props.getSchema("helpSidebarContents");
-      const _fields = _schema.data.map((field, i) => i > 5 && field.field);
-      setSelectedHideFields(_fields);
+      const excludedFields = [
+        "_id",
+        "createdBy",
+        "updatedBy",
+        "createdAt",
+        "updatedAt",
+      ];
+      const _fields = _schema.data
+        .filter((field) => !excludedFields.includes(field.field))
+        .map((field) => {
+          const fieldName = field.field
+            .split(".")
+            .map((part) =>
+              part
+                .replace(/([A-Z])/g, " $1")
+                .trim()
+                .replace(/\b\w/g, (c) => c.toUpperCase()),
+            )
+            .join(" ");
+          return {
+            name: fieldName,
+            value: field.field,
+          };
+        });
+      setFields(_fields);
+      const _hideFields = _schema.data
+        .map((field, i) => i > 5 && field.field)
+        .filter(Boolean);
+      setSelectedHideFields(_hideFields);
     };
     _getSchema();
     if (location?.state?.action === "create") {
@@ -74,18 +99,20 @@ const HelpSidebarContentsPage = (props) => {
       .service("helpSidebarContents")
       .find({
         query: {
-          $limit: 10000, $populate: [
+          $limit: 10000,
+          $populate: [
             {
               path: "createdBy",
               service: "users",
               select: ["name"],
-            }, {
+            },
+            {
               path: "updatedBy",
               service: "users",
               select: ["name"],
-            }
-          ]
-        }
+            },
+          ],
+        },
       })
       .then((res) => {
         let results = res.data;
@@ -98,19 +125,21 @@ const HelpSidebarContentsPage = (props) => {
         console.debug({ error });
         setLoading(false);
         props.hide();
-        props.alert({ title: "HelpSidebarContents", type: "error", message: error.message || "Failed get HelpSidebarContents" });
+        props.alert({
+          title: "HelpSidebarContents",
+          type: "error",
+          message: error.message || "Failed get HelpSidebarContents",
+        });
       });
   }, [showFakerDialog, showDeleteAllDialog, showEditDialog, showCreateDialog]);
 
   const onClickSaveFilteredfields = (ff) => {
-    console.debug(ff);
-  }
-
-
+    setSelectedFilterFields(ff);
+    setShowFilter(false);
+  };
   const onClickSaveHiddenfields = (ff) => {
     console.debug(ff);
-  }
-
+  };
 
   const onEditRow = (rowData, rowIndex) => {
     setSelectedEntityIndex(rowData._id);
@@ -141,10 +170,14 @@ const HelpSidebarContentsPage = (props) => {
       let _newData = data.filter((data) => data._id !== selectedEntityIndex);
       setData(_newData);
       setSelectedEntityIndex();
-      setShowAreYouSureDialog(false)
+      setShowAreYouSureDialog(false);
     } catch (error) {
       console.debug({ error });
-      props.alert({ title: "HelpSidebarContents", type: "error", message: error.message || "Failed delete record" });
+      props.alert({
+        title: "HelpSidebarContents",
+        type: "error",
+        message: error.message || "Failed delete record",
+      });
     }
   };
   const onRowDelete = (index) => {
@@ -160,7 +193,9 @@ const HelpSidebarContentsPage = (props) => {
     setLoading(true);
     props.show();
     const countDataItems = data?.length;
-    const promises = data.map((e) => client.service("helpSidebarContents").remove(e._id));
+    const promises = data.map((e) =>
+      client.service("helpSidebarContents").remove(e._id),
+    );
     await Promise.all(
       promises.map((p) =>
         p.catch((error) => {
@@ -172,8 +207,8 @@ const HelpSidebarContentsPage = (props) => {
           setLoading(false);
           props.hide();
           console.debug({ error });
-        })
-      )
+        }),
+      ),
     );
     props.hide();
     setLoading(false);
@@ -186,7 +221,6 @@ const HelpSidebarContentsPage = (props) => {
   };
 
   const onRowClick = ({ data }) => {
-
     navigate(`/helpSidebarContents/${data._id}`);
   };
 
@@ -232,7 +266,13 @@ const HelpSidebarContentsPage = (props) => {
       icon: "pi pi-download",
       command: () => {
         // Trigger the download by setting the triggerDownload state
-        data.length > 0 ? setTriggerDownload(true) : props.alert({ title: "Export", type: "warn", message: "no data to export" });
+        data.length > 0
+          ? setTriggerDownload(true)
+          : props.alert({
+              title: "Export",
+              type: "warn",
+              message: "no data to export",
+            });
       },
     },
     {
@@ -321,7 +361,7 @@ const HelpSidebarContentsPage = (props) => {
           {item.label}
         </div>
       ),
-      command: () => { },
+      command: () => {},
     },
     { separator: true },
     { label: "Name Ascending", command: () => onMenuSort("nameAsc") },
@@ -356,14 +396,12 @@ const HelpSidebarContentsPage = (props) => {
     },
   ];
 
-
   return (
-
     <div className="mt-5">
       <div className="grid">
         <div className="col-6 flex align-items-center justify-content-start">
           <h4 className="mb-0 ml-2">
-            <span> Data /{" "}</span>
+            <span> Data / </span>
             <strong>Helpbar Contents </strong>
           </h4>
           <SplitButton
@@ -374,43 +412,44 @@ const HelpSidebarContentsPage = (props) => {
           />
         </div>
         <div className="col-6 flex justify-content-end">
-          <>            <SplitButton
-            model={filterMenuItems.filter(
-              (m) => !(m.icon === "pi pi-trash" && data?.length === 0),
-            )}
-            dropdownIcon={
-              <img
-                src={FilterIcon}
-                style={{ marginRight: "4px", width: "1em", height: "1em" }}
-              />
-            }
-            buttonClassName="hidden"
-            menuButtonClassName="ml-1 p-button-text"
-          // menuStyle={{ width: "250px" }}
-          ></SplitButton>
-            <SplitButton
-              model={sortMenuItems.filter(
-                (m) => !(m.icon === "pi pi-trash" && data?.length === 0),
-              )}
-              dropdownIcon={
-                <img
-                  src={SortIcon}
-                  style={{ marginRight: "4px", width: "1em", height: "1em" }}
-                />
-              }
-              buttonClassName="hidden"
-              menuButtonClassName="ml-1 p-button-text"
-              menuStyle={{ width: "200px" }}
-            ></SplitButton>
-            <Button label="add" style={{ height: '30px' }}
-              rounded loading={loading} icon="pi pi-plus" onClick={() => setShowCreateDialog(true)} role="helpSidebarContents-add-button" />
-
+          <>
+            {" "}
+            <FilterMenu
+              fields={fields}
+              showFilter={showFilter}
+              setShowFilter={setShowFilter}
+              selectedFilterFields={selectedFilterFields}
+              setSelectedFilterFields={setSelectedFilterFields}
+              onClickSaveFilteredfields={onClickSaveFilteredfields}
+            />
+            <SortMenu
+              fields={fields}
+              data={data}
+              setData={setData}
+              initialData={initialData}
+            />
+            <Button
+              label="add"
+              style={{ height: "30px" }}
+              rounded
+              loading={loading}
+              icon="pi pi-plus"
+              onClick={() => setShowCreateDialog(true)}
+              role="helpSidebarContents-add-button"
+            />
           </>
         </div>
       </div>
       <div className="grid align-items-center">
         <div className="col-12" role="helpSidebarContents-datatable">
-          <HelpSidebarContentsDatatable items={data} fields={fields} onRowDelete={onRowDelete} onEditRow={onEditRow} onRowClick={onRowClick} searchDialog={searchDialog} setSearchDialog={setSearchDialog}
+          <HelpSidebarContentsDatatable
+            items={data}
+            fields={fields}
+            onRowDelete={onRowDelete}
+            onEditRow={onEditRow}
+            onRowClick={onRowClick}
+            searchDialog={searchDialog}
+            setSearchDialog={setSearchDialog}
             showUpload={showUpload}
             setShowUpload={setShowUpload}
             showFilter={showFilter}
@@ -431,23 +470,55 @@ const HelpSidebarContentsPage = (props) => {
           />
         </div>
       </div>
-         <DownloadCSV
+      <DownloadCSV
         data={data}
         fileName={filename}
         triggerDownload={triggerDownload}
         setTriggerDownload={setTriggerDownload}
       />
-      <AreYouSureDialog header="Delete" body="Are you sure you want to delete this record?" show={showAreYouSureDialog} onHide={() => setShowAreYouSureDialog(false)} onYes={() => deleteRow()} loading={loading} />
-      <HelpSidebarContentsEditDialogComponent entity={_.find(data, { _id: selectedEntityIndex })} show={showEditDialog} onHide={() => setShowEditDialog(false)} onEditResult={onEditResult} />
-      <HelpSidebarContentsCreateDialogComponent entity={newRecord} onCreateResult={onCreateResult} show={showCreateDialog} onHide={() => setShowCreateDialog(false)} />
-      <HelpSidebarContentsFakerDialogComponent show={showFakerDialog} onHide={() => setShowFakerDialog(false)} onFakerCreateResults={onFakerCreateResults} />
-      <HelpSidebarContentsSeederDialogComponent show={showSeederDialog} onHide={() => setShowSeederDialog(false)} onSeederResults={onSeederResults} />
-      <AreYouSureDialog header={`Drop ${data?.length} records`} body={`Are you sure you want to drop ${data?.length} records?`} show={showDeleteAllDialog} onHide={() => setShowDeleteAllDialog(false)} onYes={() => deleteAll()} loading={loading} />
+      <AreYouSureDialog
+        header="Delete"
+        body="Are you sure you want to delete this record?"
+        show={showAreYouSureDialog}
+        onHide={() => setShowAreYouSureDialog(false)}
+        onYes={() => deleteRow()}
+        loading={loading}
+      />
+      <HelpSidebarContentsEditDialogComponent
+        entity={_.find(data, { _id: selectedEntityIndex })}
+        show={showEditDialog}
+        onHide={() => setShowEditDialog(false)}
+        onEditResult={onEditResult}
+      />
+      <HelpSidebarContentsCreateDialogComponent
+        entity={newRecord}
+        onCreateResult={onCreateResult}
+        show={showCreateDialog}
+        onHide={() => setShowCreateDialog(false)}
+      />
+      <HelpSidebarContentsFakerDialogComponent
+        show={showFakerDialog}
+        onHide={() => setShowFakerDialog(false)}
+        onFakerCreateResults={onFakerCreateResults}
+      />
+      <HelpSidebarContentsSeederDialogComponent
+        show={showSeederDialog}
+        onHide={() => setShowSeederDialog(false)}
+        onSeederResults={onSeederResults}
+      />
+      <AreYouSureDialog
+        header={`Drop ${data?.length} records`}
+        body={`Are you sure you want to drop ${data?.length} records?`}
+        show={showDeleteAllDialog}
+        onHide={() => setShowDeleteAllDialog(false)}
+        onYes={() => deleteAll()}
+        loading={loading}
+      />
       <div
         id="rightsidebar"
         className={classNames(
           "overlay-auto z-1 surface-overlay shadow-2 absolute right-0 w-20rem animation-duration-150 animation-ease-in-out",
-          { hidden: !isHelpSidebarVisible, block: isHelpSidebarVisible }
+          { hidden: !isHelpSidebarVisible, block: isHelpSidebarVisible },
         )}
         style={{ top: "60px", height: "calc(100% - 60px)" }}
       >
@@ -468,7 +539,6 @@ const mapDispatch = (dispatch) => ({
   getSchema: (serviceName) => dispatch.db.getSchema(serviceName),
   show: () => dispatch.loading.show(),
   hide: () => dispatch.loading.hide(),
-
 });
 
 export default connect(mapState, mapDispatch)(HelpSidebarContentsPage);

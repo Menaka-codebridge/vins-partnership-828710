@@ -27,8 +27,9 @@ async function objectUpload2S3(request, response) {
       const s3Response = await s3Client.send(new PutObjectCommand(params));
 
       if (typeof s3Response.VersionId === "string") {
-        // const url = `${URL}/${FOLDER}/${file.originalname}`;
-        const url = `${URL}/${file.originalname}`;
+        // Encode the filename to match S3 URL encoding
+        const encodedFileName = encodeURIComponent(file.originalname);
+        const url = `${URL}/${FOLDER}/${encodedFileName}`;
         const data = {
           lastModified: file.lastModified,
           lastModifiedDate: new Date(),
@@ -38,7 +39,7 @@ async function objectUpload2S3(request, response) {
           type: file.mimetype,
           eTag: s3Response.ETag,
           versionId: s3Response.VersionId,
-          url,
+          url, // Store the encoded URL
           tableId,
           tableName,
           createdBy: user._id,

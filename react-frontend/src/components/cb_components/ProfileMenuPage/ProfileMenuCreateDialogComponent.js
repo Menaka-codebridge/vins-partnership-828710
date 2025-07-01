@@ -421,7 +421,7 @@ const ProfileMenuCreateDialogComponent = (props) => {
     try {
       // No need to check activeStep, save everything at once
       await client.service("profileMenu").create(formData);
-      console.log("Saved form data:", formData);
+
       props.alert({
         type: "success",
         title: "User Context and Menu Items",
@@ -430,7 +430,7 @@ const ProfileMenuCreateDialogComponent = (props) => {
       navigate("/some-other-route");
     } catch (err) {
       console.error("Error saving data:", err);
-      setError({ saveData: "Failed to save data." }); // Use a generic error key
+      setError({ saveData: "Failed to save data." });
       props.alert({
         type: "error",
         title: "Save Error",

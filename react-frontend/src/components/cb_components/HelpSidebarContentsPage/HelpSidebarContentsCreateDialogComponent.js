@@ -21,7 +21,11 @@ const getSchemaValidationErrorsStrings = (errorObj) => {
       }
     }
   }
-  return errMsg.length ? errMsg : errorObj.message ? { error: errorObj.message } : {};
+  return errMsg.length
+    ? errMsg
+    : errorObj.message
+      ? { error: errorObj.message }
+      : {};
 };
 
 const HelpSidebarContentsCreateDialogComponent = (props) => {
@@ -37,7 +41,13 @@ const HelpSidebarContentsCreateDialogComponent = (props) => {
         const apiUrl = process.env.REACT_APP_SERVER_URL + "/listServices";
         const response = await axios.get(apiUrl);
         if (response.data?.status && response.data?.data) {
-          setServiceOptions(response.data.data);
+          // Use the API response directly and append "welcomeDashboard"
+          const updatedServiceOptions = [
+            ...response.data.data,
+            "welcomeDashboard",
+            "apptopbar",
+          ];
+          setServiceOptions(updatedServiceOptions);
         } else {
           console.error("Failed to fetch service options:", response.data);
         }
@@ -47,7 +57,6 @@ const HelpSidebarContentsCreateDialogComponent = (props) => {
     };
     fetchServices();
   }, []);
-
 
   const initialContentTemplate = `<p><strong>Purpose:</strong> [Briefly describe the purpose of this service/feature.]</p>
   <p><strong>How to Access:</strong> [Explain how users can navigate to this service within the application.  Be specific, e.g., "Navigate to Main Menu > Settings > Users".]</p>
@@ -62,7 +71,6 @@ const HelpSidebarContentsCreateDialogComponent = (props) => {
   <li data-list="ordered"><span class="ql-ui" contenteditable="false"></span>Click "Save" to add the company to the system.</li>
   <li data-list="ordered"><span class="ql-ui" contenteditable="false"></span>Select an existing company to edit or update its information.</li>
   </ol>`;
-
 
   useEffect(() => {
     let init = {};
@@ -85,41 +93,46 @@ const HelpSidebarContentsCreateDialogComponent = (props) => {
       ret = false;
     }
 
-
     if (!ret) setError(error);
     return ret;
-  }
+  };
 
   const onSave = async () => {
     if (!validate()) return;
     let _data = {
       serviceName: _entity?.serviceName,
-      purpose: _entity?.purpose, 
-      path: _entity?.path, 
-      features: _entity?.features, 
-      guide: _entity?.guide, 
-      video: _entity?.video, 
+      purpose: _entity?.purpose,
+      path: _entity?.path,
+      features: _entity?.features,
+      guide: _entity?.guide,
+      video: _entity?.video,
       content: _entity?.content,
       createdBy: props.user._id,
-      updatedBy: props.user._id
+      updatedBy: props.user._id,
     };
 
     setLoading(true);
 
     try {
-
       const result = await client.service("helpSidebarContents").create(_data);
       props.onHide();
-      props.alert({ type: "success", title: "Create info", message: "Info HelpSidebarContents created successfully" });
+      props.alert({
+        type: "success",
+        title: "Create info",
+        message: "Info HelpSidebarContents created successfully",
+      });
       props.onCreateResult(result);
     } catch (error) {
       console.debug("error", error);
       setError(getSchemaValidationErrorsStrings(error) || "Failed to create");
-      props.alert({ type: "error", title: "Create", message: "Failed to create in HelpSidebarContents" });
+      props.alert({
+        type: "error",
+        title: "Create",
+        message: "Failed to create in HelpSidebarContents",
+      });
     }
     setLoading(false);
   };
-
 
   const renderHeader = () => {
     return (
@@ -127,20 +140,34 @@ const HelpSidebarContentsCreateDialogComponent = (props) => {
         <button className="ql-bold" aria-label="Bold"></button>
         <button className="ql-italic" aria-label="Italic"></button>
         <button className="ql-underline" aria-label="Underline"></button>
-        <button className="ql-list" value="ordered" aria-label="Ordered List"></button>
-        <button className="ql-list" value="bullet" aria-label="Unordered List"></button>
+        <button
+          className="ql-list"
+          value="ordered"
+          aria-label="Ordered List"
+        ></button>
+        <button
+          className="ql-list"
+          value="bullet"
+          aria-label="Unordered List"
+        ></button>
         <button className="ql-link" aria-label="Insert Link"></button>
       </span>
     );
   };
 
-
-
-
   const renderFooter = () => (
     <div className="flex justify-content-end">
-      <Button label="save" className="p-button-text no-focus-effect" onClick={onSave} loading={loading} />
-      <Button label="close" className="p-button-text no-focus-effect p-button-secondary" onClick={props.onHide} />
+      <Button
+        label="save"
+        className="p-button-text no-focus-effect"
+        onClick={onSave}
+        loading={loading}
+      />
+      <Button
+        label="close"
+        className="p-button-text no-focus-effect p-button-secondary"
+        onClick={props.onHide}
+      />
     </div>
   );
 
@@ -150,12 +177,23 @@ const HelpSidebarContentsCreateDialogComponent = (props) => {
     setError({});
   };
 
-
-
   return (
-    <Dialog header="Create Helpbar Contents" visible={props.show} closable={false} onHide={props.onHide} modal style={{ width: "40vw" }} className="min-w-max scalein animation-ease-in-out animation-duration-1000" footer={renderFooter()} resizable={false}>
-      <div className="grid p-fluid overflow-y-auto"
-        style={{ maxWidth: "55vw" }} role="helpSidebarContents-create-dialog-component">
+    <Dialog
+      header="Create Helpbar Contents"
+      visible={props.show}
+      closable={false}
+      onHide={props.onHide}
+      modal
+      style={{ width: "40vw" }}
+      className="min-w-max scalein animation-ease-in-out animation-duration-1000"
+      footer={renderFooter()}
+      resizable={false}
+    >
+      <div
+        className="grid p-fluid overflow-y-auto"
+        style={{ maxWidth: "55vw" }}
+        role="helpSidebarContents-create-dialog-component"
+      >
         <div className="col-12 md:col-6 field">
           <span className="align-items-center">
             <label htmlFor="serviceName">Service:</label>
@@ -219,7 +257,9 @@ const HelpSidebarContentsCreateDialogComponent = (props) => {
           </small>
         </div>*/}
 
-        <div className="col-12 field"> {/* Removed md:col-6 to make it full width */}
+        <div className="col-12 field">
+          {" "}
+          {/* Removed md:col-6 to make it full width */}
           <span className="align-items-center">
             <label htmlFor="content">Content:</label>
             <Editor
@@ -228,7 +268,7 @@ const HelpSidebarContentsCreateDialogComponent = (props) => {
               value={_entity?.content}
               onTextChange={(e) => setValByKey("content", e.htmlValue)} // Use htmlValue
               // headerTemplate={renderHeader()} // Add the header toolbar
-              style={{ height: '320px' }} // Important: Set a height!
+              style={{ height: "320px" }} // Important: Set a height!
               required
             />
           </span>
@@ -244,7 +284,13 @@ const HelpSidebarContentsCreateDialogComponent = (props) => {
         <div className="col-12 field">
           <span className="align-items-center">
             <label htmlFor="video">Video:</label>
-            <InputText id="video" className="w-full mb-3 p-inputtext-sm" value={_entity?.video} onChange={(e) => setValByKey("video", e.target.value)} required />
+            <InputText
+              id="video"
+              className="w-full mb-3 p-inputtext-sm"
+              value={_entity?.video}
+              onChange={(e) => setValByKey("video", e.target.value)}
+              required
+            />
           </span>
           <small className="p-error">
             {!_.isEmpty(error["video"]) ? (
@@ -253,15 +299,15 @@ const HelpSidebarContentsCreateDialogComponent = (props) => {
               </p>
             ) : null}
           </small>
-        </div> 
+        </div>
 
         <small className="p-error">
           {Array.isArray(Object.keys(error))
             ? Object.keys(error).map((e, i) => (
-              <p className="m-0" key={i}>
-                {e}: {error[e]}
-              </p>
-            ))
+                <p className="m-0" key={i}>
+                  {e}: {error[e]}
+                </p>
+              ))
             : error}
         </small>
       </div>
@@ -277,4 +323,7 @@ const mapDispatch = (dispatch) => ({
   alert: (data) => dispatch.toast.alert(data),
 });
 
-export default connect(mapState, mapDispatch)(HelpSidebarContentsCreateDialogComponent);
+export default connect(
+  mapState,
+  mapDispatch,
+)(HelpSidebarContentsCreateDialogComponent);

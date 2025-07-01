@@ -1,0 +1,47 @@
+.page-container {
+  width: 100%;
+}
+
+.page-header {
+  margin-bottom: 1rem;
+}
+
+.subsection-tabview {
+  display: block;
+}
+
+.results-panel,
+.retrieved-panel,
+.confusion-panel,
+.conclusion-panel {
+  margin-bottom: 1rem;
+}
+
+.content-box,
+.retrieved-content-box,
+.explanation-box,
+.conclusion-content-box {
+  padding: 1rem;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+}
+
+.content-box.expanded {
+  max-height: none;
+}
+
+.prompt-textarea {
+  width: 100%;
+}
+
+.confusion-matrix-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.confusion-matrix-table th,
+.confusion-matrix-table td {
+  border: 1px solid #dee2e6;
+  padding: 0.5rem;
+  text-align: center;
+}

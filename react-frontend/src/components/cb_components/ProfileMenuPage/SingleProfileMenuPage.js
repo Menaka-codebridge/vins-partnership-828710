@@ -410,7 +410,7 @@ const SingleProfileMenuPage = (props) => {
   }, [props, urlParams.singleProfileMenuId]);
 
   const goBack = () => {
-    navigate("/profileMenu");
+    navigate(-1);
   };
 
   const toggleHelpSidebar = () => {

@@ -12,7 +12,7 @@ import { InputTextarea } from "primereact/inputtextarea";
 import { Editor } from "primereact/editor";
 import { getSchemaValidationErrorsStrings } from "../../../utils";
 
-const TemplatesCreateDialogComponent = (props) => {
+const TemplatesEditDialogComponent = (props) => {
   const [_entity, set_entity] = useState({});
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -87,7 +87,7 @@ const TemplatesCreateDialogComponent = (props) => {
       onHide={props.onHide}
       modal
       style={{ width: "40vw" }}
-      className="min-w-max"
+      className="min-w-max zoomin animation-duration-400"
       footer={renderFooter()}
       resizable={false}
     >
@@ -104,6 +104,7 @@ const TemplatesCreateDialogComponent = (props) => {
               className="w-full mb-3 p-inputtext-sm"
               value={_entity?.name}
               onChange={(e) => setValByKey("name", e.target.value)}
+              disabled={true}
             />
           </span>
           <small className="p-error">
@@ -203,4 +204,4 @@ const mapDispatch = (dispatch) => ({
   alert: (data) => dispatch.toast.alert(data),
 });
 
-export default connect(mapState, mapDispatch)(TemplatesCreateDialogComponent);
+export default connect(mapState, mapDispatch)(TemplatesEditDialogComponent);

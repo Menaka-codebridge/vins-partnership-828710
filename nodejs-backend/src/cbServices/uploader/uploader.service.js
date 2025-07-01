@@ -1,5 +1,5 @@
 const { Uploader } = require("./uploader.class");
-const createModel = require("../../models/uploader.model");
+const createModel = require("../../cbModels/uploader.model");
 const hooks = require("./uploader.hooks");
 
 module.exports = function (app) {

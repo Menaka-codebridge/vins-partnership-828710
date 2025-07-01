@@ -49,6 +49,7 @@ const UserGuideDataTable = ({
   const [selectedItems, setSelectedItems] = useState([]);
   const [showDialog, setShowDialog] = useState(false);
   const [data, setData] = useState([]);
+  const [filters, setFilters] = useState({});
 
   const header = (
     <div
@@ -141,6 +142,32 @@ const UserGuideDataTable = ({
     setShowDialog(false); // Close the dialog
   };
 
+  // Initialize filters based on selectedFilterFields
+  useEffect(() => {
+    const initialFilters = {};
+    selectedFilterFields.forEach((field) => {
+      initialFilters[field] = {
+        value: null,
+        matchMode: "contains",
+      };
+    });
+    setFilters(initialFilters);
+  }, [selectedFilterFields]);
+
+  const onFilter = (e) => {
+    setFilters(e.filters);
+  };
+
+  const filterTemplate = (options) => {
+    return (
+      <InputText
+        value={options.value || ""}
+        onChange={(e) => options.filterCallback(e.target.value)}
+        placeholder={`Filter ${options.field}`}
+      />
+    );
+  };
+
   return (
     <>
       <DataTable
@@ -176,6 +203,7 @@ const UserGuideDataTable = ({
           header="ServiceName"
           body={pTemplate0}
           filter={selectedFilterFields.includes("serviceName")}
+          filterElement={filterTemplate}
           hidden={selectedHideFields?.includes("serviceName")}
           sortable
           style={{ minWidth: "8rem" }}
@@ -185,6 +213,7 @@ const UserGuideDataTable = ({
           header="Expiry"
           body={p_dateTemplate1}
           filter={selectedFilterFields.includes("expiry")}
+          filterElement={filterTemplate}
           hidden={selectedHideFields?.includes("expiry")}
           sortable
           style={{ minWidth: "8rem" }}

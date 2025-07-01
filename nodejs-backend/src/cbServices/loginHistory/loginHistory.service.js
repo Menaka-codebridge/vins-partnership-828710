@@ -1,5 +1,5 @@
 const { LoginHistory } = require("./loginHistory.class");
-const createModel = require("../../models/loginHistory.model");
+const createModel = require("../../cbModels/loginHistory.model");
 const hooks = require("./loginHistory.hooks");
 
 module.exports = function (app) {

@@ -1,5 +1,5 @@
 const { Notifications } = require("./notifications.class");
-const createModel = require("../../models/notifications.model");
+const createModel = require("../../cbModels/notifications.model");
 const hooks = require("./notifications.hooks");
 
 module.exports = function (app) {

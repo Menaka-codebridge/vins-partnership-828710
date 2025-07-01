@@ -1,5 +1,5 @@
 const { MailQues } = require("./mailQues.class");
-const createModel = require("../../models/mailQues.model");
+const createModel = require("../../cbModels/mailQues.model");
 const hooks = require("./mailQues.hooks");
 
 module.exports = function (app) {

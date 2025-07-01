@@ -652,7 +652,7 @@ const ProfileMenuEditPage = (props) => {
   const handleUpdate = async () => {
     try {
       await client.service("profileMenu").patch(id, formData);
-      console.log("Updated form data:", formData);
+      // console.log("Updated form data:", formData);
       props.alert({
         type: "success",
         title: "User Context and Menu Items",

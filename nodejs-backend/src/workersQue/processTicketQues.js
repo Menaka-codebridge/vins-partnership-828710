@@ -1,8 +1,11 @@
 const { Queue, Worker } = require("bullmq");
-const connection = require("../services/redis/config");
+const connection = require("../cbServices/redis/config");
 
 // Create and export the job queue
-const jobQueue = new Queue("ticketQues", { connection });
+const jobQueue = new Queue("ticketQues", {
+  connection,
+  prefix: `${process.env.PROJECT_NAME}:bull`,
+});
 
 // Create and export the worker
 const createErrorsJobWorker = (app) => {
@@ -11,9 +14,9 @@ const createErrorsJobWorker = (app) => {
     async (id, job) => {
       const { data } = job;
       // Add your job processing logic
-      console.debug(id, data);
+      console.log(id, data);
     },
-    { connection },
+    { connection, prefix: `${process.env.PROJECT_NAME}:bull` },
   );
 
   // Event listeners for worker
@@ -51,9 +54,6 @@ const createErrorsJobWorker = (app) => {
         data: {
           id: job.id,
           data: `<pre><code>${JSON.stringify(job.data, null, 4)}</code></pre>`,
-          projectLabel: process.env.PROJECT_LABEL
-            ? process.env.PROJECT_LABEL
-            : process.env.PROJECT_NAME,
         },
         status: false,
         subject: "ticket processing failed",

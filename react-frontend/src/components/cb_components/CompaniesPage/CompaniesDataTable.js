@@ -21,7 +21,8 @@ import { Toast } from "primereact/toast";
 import DeleteImage from "../../../assets/media/Delete.png";
 import { connect } from "react-redux";
 import { InputText } from "primereact/inputtext";
-import { Skeleton } from 'primereact/skeleton';
+import { Skeleton } from "primereact/skeleton";
+import { Checkbox } from "primereact/checkbox";
 
 const CompaniesDataTable = ({
   items,
@@ -63,6 +64,7 @@ const CompaniesDataTable = ({
   const [fieldPermissions, setFieldPermissions] = useState({});
   const [triggerDownload, setTriggerDownload] = useState(false);
   const [isLoadingPermissions, setIsLoadingPermissions] = useState(true);
+  const [filters, setFilters] = useState({});
 
   const header = (
     <div
@@ -170,20 +172,17 @@ const CompaniesDataTable = ({
     },
     CurrentPageReport: (options) => {
       return (
-        <div className=" mr-20">
+        <div className="mr-20">
           <span style={{ color: "grey", userSelect: "none" }}>
             <span className="mr-3 ml-2">|</span>
             <span className="mr-20">
-              {options.first} - {options.last} of {options.totalRecords}{" "}
-              items{" "}
+              {options.first} - {options.last} of {options.totalRecords} items
             </span>
           </span>
         </div>
       );
     },
     JumpToPageInput: (options) => {
-      console.log("option", options);
-
       return (
         <div>
           <span>Page</span>
@@ -237,19 +236,16 @@ const CompaniesDataTable = ({
 
           let userPermissions = null;
 
-          // Priority 1: Profile
           userPermissions = companyPermissions.data.find(
             (perm) => perm.profile === profile._id,
           );
 
-          // Priority 2: Position
           if (!userPermissions) {
             userPermissions = companyPermissions.data.find(
               (perm) => perm.positionId === profile.position,
             );
           }
 
-          // Priority 3: Role
           if (!userPermissions) {
             userPermissions = companyPermissions.data.find(
               (perm) => perm.roleId === profile.role,
@@ -259,7 +255,7 @@ const CompaniesDataTable = ({
           if (userPermissions) {
             setPermissions(userPermissions);
           } else {
-            console.log("No permissions found for this user and service.");
+            console.debug("No permissions found for this user and service.");
           }
         }
       } catch (error) {
@@ -286,13 +282,11 @@ const CompaniesDataTable = ({
         if (filteredPermissions.length > 0) {
           setFieldPermissions(filteredPermissions[0]);
         }
-        console.log("FieldPermissions", fieldPermissions);
       } catch (error) {
         console.error("Failed to fetch permissions", error);
       }
     };
 
-    fetchFieldPermissions();
     if (selectedUser) {
       fetchFieldPermissions();
     }
@@ -405,13 +399,42 @@ const CompaniesDataTable = ({
 
   const renderSkeleton = () => {
     return (
-      <DataTable value={Array.from({ length: 5 })} className="p-datatable-striped">
+      <DataTable
+        value={Array.from({ length: 5 })}
+        className="p-datatable-striped"
+      >
         <Column body={<Skeleton />} />
         <Column body={<Skeleton />} />
         <Column body={<Skeleton />} />
         <Column body={<Skeleton />} />
         <Column body={<Skeleton />} />
       </DataTable>
+    );
+  };
+
+  // Initialize filters based on selectedFilterFields
+  useEffect(() => {
+    const initialFilters = {};
+    selectedFilterFields.forEach((field) => {
+      initialFilters[field] = {
+        value: null,
+        matchMode: "contains",
+      };
+    });
+    setFilters(initialFilters);
+  }, [selectedFilterFields]);
+
+  const onFilter = (e) => {
+    setFilters(e.filters);
+  };
+
+  const filterTemplate = (options) => {
+    return (
+      <InputText
+        value={options.value || ""}
+        onChange={(e) => options.filterCallback(e.target.value)}
+        placeholder={`Filter ${options.field}`}
+      />
     );
   };
 
@@ -440,6 +463,9 @@ const CompaniesDataTable = ({
             onCreateResult={onCreateResult}
             globalFilter={globalFilter}
             header={header}
+            filters={filters}
+            onFilter={onFilter}
+            filterDisplay="menu"
           >
             <Column
               selectionMode="multiple"
@@ -451,6 +477,7 @@ const CompaniesDataTable = ({
               header="Name"
               body={pTemplate0}
               filter={selectedFilterFields.includes("name")}
+              filterElement={filterTemplate}
               hidden={selectedHideFields?.includes("name")}
               sortable
               style={{ minWidth: "8rem" }}
@@ -461,6 +488,7 @@ const CompaniesDataTable = ({
               header="Company Type"
               body={pTemplate2}
               filter={selectedFilterFields.includes("companyType")}
+              filterElement={filterTemplate}
               hidden={selectedHideFields?.includes("companyType")}
               sortable
               style={{ minWidth: "8rem" }}
@@ -468,18 +496,20 @@ const CompaniesDataTable = ({
             />
             <Column
               field="companyNo"
-              header="Company no"
+              header="Company No"
               body={pTemplate1}
               filter={selectedFilterFields.includes("companyNo")}
+              filterElement={filterTemplate}
               hidden={selectedHideFields?.includes("companyNo")}
               sortable
               style={{ minWidth: "8rem" }}
             />
             <Column
               field="newCompanyNumber"
-              header="New company number"
+              header="New Company Number"
               body={p_numberTemplate2}
               filter={selectedFilterFields.includes("newCompanyNumber")}
+              filterElement={filterTemplate}
               hidden={selectedHideFields?.includes("newCompanyNumber")}
               sortable
               style={{ minWidth: "8rem" }}
@@ -489,29 +519,30 @@ const CompaniesDataTable = ({
               header="Date Incorporated"
               body={p_calendarTemplate3}
               filter={selectedFilterFields.includes("DateIncorporated")}
+              filterElement={filterTemplate}
               hidden={selectedHideFields?.includes("DateIncorporated")}
               sortable
               style={{ minWidth: "8rem" }}
             />
             <Column
-              field="addresses"
+              field="addresses.Street1"
               header="Addresses"
               body={dropdownTemplate4}
-              filter={selectedFilterFields.includes("addresses")}
-              hidden={selectedHideFields?.includes("addresses")}
+              filter={selectedFilterFields.includes("addresses.Street1")}
+              filterElement={filterTemplate}
+              hidden={selectedHideFields?.includes("addresses.Street1")}
               style={{ minWidth: "8rem" }}
             />
             <Column
               field="isdefault"
-              header="Is default"
+              header="Is Default"
               body={p_booleanTemplate5}
               filter={selectedFilterFields.includes("isdefault")}
+              filterElement={filterTemplate}
               hidden={selectedHideFields?.includes("isdefault")}
               sortable
               style={{ minWidth: "8rem" }}
             />
-            {/* <Column header="Edit" body={editTemplate} />
-        <Column header="Delete" body={deleteTemplate} /> */}
             {permissions.update ? (
               <Column header="Edit" body={editTemplate} />
             ) : null}
@@ -565,12 +596,9 @@ const CompaniesDataTable = ({
                 />
               </div>
 
-              {/* New buttons section */}
               <div style={{ display: "flex", alignItems: "center" }}>
-                {/* Copy button */}
                 <Button
                   label="Copy"
-                  labelposition="right"
                   icon={
                     <img
                       src={CopyIcon}
@@ -581,7 +609,6 @@ const CompaniesDataTable = ({
                       }}
                     />
                   }
-                  // tooltip="Copy"
                   onClick={handleCopy}
                   className="p-button-rounded p-button-text"
                   style={{
@@ -595,11 +622,8 @@ const CompaniesDataTable = ({
                     gap: "4px",
                   }}
                 />
-
-                {/* Duplicate button */}
                 <Button
                   label="Duplicate"
-                  labelposition="right"
                   icon={
                     <img
                       src={DuplicateIcon}
@@ -610,7 +634,6 @@ const CompaniesDataTable = ({
                       }}
                     />
                   }
-                  // tooltip="Duplicate"
                   onClick={handleDuplicate}
                   className="p-button-rounded p-button-text"
                   style={{
@@ -624,11 +647,8 @@ const CompaniesDataTable = ({
                     gap: "4px",
                   }}
                 />
-
-                {/* Export button */}
                 <Button
                   label="Export"
-                  labelposition="right"
                   icon={
                     <img
                       src={ExportIcon}
@@ -652,11 +672,8 @@ const CompaniesDataTable = ({
                     gap: "4px",
                   }}
                 />
-
-                {/* Message button */}
                 <Button
                   label="Message"
-                  labelposition="right"
                   icon={
                     <img
                       src={InviteIcon}
@@ -680,21 +697,15 @@ const CompaniesDataTable = ({
                     gap: "4px",
                   }}
                 />
-
-                {/* InboxCreateDialogComponent */}
                 <InboxCreateDialogComponent
                   show={showDialog}
                   onHide={handleHideDialog}
                   serviceInbox="companies"
                   onCreateResult={onCreateResult}
-                  // selectedItemsId={selectedItems.map(item => item._id)}
                   selectedItemsId={selectedItems}
                 />
-
-                {/* <div style={{ display: 'flex', alignItems: 'center' }}> */}
                 <Button
                   label="Delete"
-                  labelposition="right"
                   icon={
                     <img
                       src={DeleteIcon}
@@ -729,7 +740,7 @@ const CompaniesDataTable = ({
               user={user}
               serviceName="companies"
               onUploadComplete={() => {
-                setShowUpload(false); // Close the dialog after upload
+                setShowUpload(false);
               }}
             />
           </Dialog>
@@ -742,11 +753,12 @@ const CompaniesDataTable = ({
             Search
           </Dialog>
           <Dialog
-            header="Filter Users"
+            header="Filter Companies"
             visible={showFilter}
             onHide={() => setShowFilter(false)}
+            style={{ width: "30rem" }}
           >
-            <div className="card flex justify-content-center">
+            <div className="card flex flex-column gap-3">
               <MultiSelect
                 value={selectedFilterFields}
                 onChange={(e) => setSelectedFilterFields(e.value)}
@@ -754,29 +766,27 @@ const CompaniesDataTable = ({
                 optionLabel="name"
                 optionValue="value"
                 filter
-                placeholder="Select Fields"
-                maxSelectedLabels={6}
-                className="w-full md:w-20rem"
+                placeholder="Select Fields to Filter"
+                maxSelectedLabels={3}
+                className="w-full"
+              />
+              <Button
+                label="Save"
+                onClick={() => {
+                  onClickSaveFilteredfields(selectedFilterFields);
+                }}
+                className="w-full"
               />
             </div>
-            <Button
-              text
-              label="save as pref"
-              onClick={() => {
-                console.log(selectedFilterFields);
-                onClickSaveFilteredfields(selectedFilterFields);
-                setSelectedFilterFields(selectedFilterFields);
-                setShowFilter(false);
-              }}
-            ></Button>
           </Dialog>
 
           <Dialog
             header="Hide Columns"
             visible={showColumns}
             onHide={() => setShowColumns(false)}
+            style={{ width: "30rem" }}
           >
-            <div className="card flex justify-content-center">
+            <div className="card flex flex-column gap-3">
               <MultiSelect
                 value={selectedHideFields}
                 onChange={(e) => setSelectedHideFields(e.value)}
@@ -784,21 +794,18 @@ const CompaniesDataTable = ({
                 optionLabel="name"
                 optionValue="value"
                 filter
-                placeholder="Select Fields"
-                maxSelectedLabels={6}
-                className="w-full md:w-20rem"
+                placeholder="Select Columns to Hide"
+                maxSelectedLabels={3}
+                className="w-full"
+              />
+              <Button
+                label="Save"
+                onClick={() => {
+                  onClickSaveHiddenfields(selectedHideFields);
+                }}
+                className="w-full"
               />
             </div>
-            <Button
-              text
-              label="save as pref"
-              onClick={() => {
-                console.log(selectedHideFields);
-                onClickSaveHiddenfields(selectedHideFields);
-                setSelectedHideFields(selectedHideFields);
-                setShowColumns(false);
-              }}
-            ></Button>
           </Dialog>
           <Toast ref={toast} />
           <Dialog

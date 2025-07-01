@@ -20,4 +20,7 @@ const mapDispatch = (dispatch) => ({
   alert: (data) => dispatch.toast.alert(data),
 });
 
-export default connect(mapState, mapDispatch)(HelpSidebarContentProjectLayoutPage);
+export default connect(
+  mapState,
+  mapDispatch,
+)(HelpSidebarContentProjectLayoutPage);

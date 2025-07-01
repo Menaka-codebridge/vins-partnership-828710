@@ -1,5 +1,4 @@
 import React, { useState, useRef } from "react";
-import { Toast } from "primereact/toast";
 import { FileUpload } from "primereact/fileupload";
 import { ProgressBar } from "primereact/progressbar";
 import { Button } from "primereact/button";
@@ -7,184 +6,223 @@ import { Tooltip } from "primereact/tooltip";
 import { Tag } from "primereact/tag";
 
 export const UploadFilesToS3 = (props) => {
-    const toast = useRef(null);
     const [totalSize, setTotalSize] = useState(0);
     const [files, setFiles] = useState([]);
     const [returnedIds, setReturnedIds] = useState([]);
+    const [isUploading, setIsUploading] = useState(false);
     const fileUploadRef = useRef(null);
     const uploadURL = `${process.env.REACT_APP_SERVER_URL}/s3uploader`;
     const [uploadedFileCount, setUploadedFileCount] = useState(0);
 
+    const allowedFileTypes = [
+        'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
+        'application/pdf', 'text/plain'
+    ];
+    const allowedExtensions = [
+        '.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.pdf', '.txt'
+    ];
+    const maxFileSize = 100 * 1024 * 1024; 
+
+    const validateFile = (file) => {
+        if (!allowedFileTypes.includes(file.type)) {
+            return { valid: false, message: `File type ${file.type} is not allowed. Only images, PDFs, and text files are accepted.` };
+        }
+        const fileName = file.name.toLowerCase();
+        const isValidExtension = allowedExtensions.some(ext => fileName.endsWith(ext));
+        if (!isValidExtension) {
+            return { valid: false, message: `File extension not allowed. Only ${allowedExtensions.join(', ')} are accepted.` };
+        }
+        if (file.size > maxFileSize) {
+            return { valid: false, message: `File is too large. Maximum size is 25MB.` };
+        }
+        return { valid: true };
+    };
+
     const onTemplateSelect = (e) => {
-        let _totalSize = totalSize;
-        let newFiles = [...files]; // Start with existing files
+        let currentTotalSize = totalSize;
+        let currentFilesInList = [...files];
+        const validFilesFromThisSelection = [];
 
         e.files.forEach((file) => {
-            // Check for duplicates before adding
-            if (!newFiles.some((f) => f.name === file.name && f.size === file.size)) {
-                _totalSize += file.size || 0;
-                newFiles.push(file);
+            const validation = validateFile(file);
+            if (!validation.valid) {
+                props.parentToastRef?.current?.show({
+                    severity: "error",
+                    summary: "Invalid File Skipped",
+                    detail: `${file.name}: ${validation.message}`,
+                    life: 5000
+                });
+                return;
+            }
+
+            const isAlreadySelected = currentFilesInList.some((f) => f.name === file.name && f.size === file.size) ||
+                                      validFilesFromThisSelection.some((f) => f.name === file.name && f.size === file.size);
+
+            if (!isAlreadySelected) {
+                validFilesFromThisSelection.push(file);
+            } else {
+                 props.parentToastRef?.current?.show({
+                     severity: "warn",
+                     summary: "Duplicate File",
+                     detail: `File "${file.name}" is already in the list.`,
+                     life: 3000
+                 });
             }
         });
 
-        setFiles(newFiles);
-        setTotalSize(_totalSize);
+        if (validFilesFromThisSelection.length > 0) {
+            const updatedFiles = [...currentFilesInList, ...validFilesFromThisSelection];
+            setFiles(updatedFiles);
+            setTotalSize(updatedFiles.reduce((acc, file) => acc + (file.size || 0), 0));
+        }
     };
 
+    const onTemplateRemove = (fileToRemove, callback) => {
+        const index = files.findIndex(f => f.name === fileToRemove.name && f.size === fileToRemove.size);
 
-    const onTemplateUpload = (e) => {
-        // This might not be needed if you're using customUpload
-        let _totalSize = 0;
-        e.files.forEach((file) => {
-            _totalSize += file.size || 0;
-        });
+        if (index > -1) {
+            const removedFileSize = files[index].size || 0;
+            const fileInfoToRemoveFromParent = {
+                 documentStorageId: returnedIds[index],
+                 name: files[index].name
+             };
 
-        setTotalSize(_totalSize); // Keep track of total size
-        toast.current.show({
-            severity: "info",
-            summary: "Success",
-            detail: "File Uploaded",
-        });
-    };
-
-    const onTemplateRemove = (file) => {
-        setTotalSize((prevTotalSize) => prevTotalSize - file.size);
-
-        setFiles((prevFiles) => {
-            const index = prevFiles.findIndex((f) => f.name === file.name && f.size === file.size);
-            if (index > -1) {
+            setFiles((prevFiles) => {
                 const newFiles = [...prevFiles];
                 newFiles.splice(index, 1);
+                setTotalSize((prevTotalSize) => Math.max(0, prevTotalSize - removedFileSize));
                 return newFiles;
-            }
-            return prevFiles;
-        });
+            });
 
+            setReturnedIds((prevIds) => {
+                 const updatedIds = [...prevIds];
+                 if (index < updatedIds.length) {
+                    updatedIds.splice(index, 1);
+                 }
+                 if (props.onRemoveComplete && fileInfoToRemoveFromParent.documentStorageId) {
+                     props.onRemoveComplete(fileInfoToRemoveFromParent);
+                 }
+                 return updatedIds;
+            });
 
-        // Remove the corresponding ID when a file is removed
-        setReturnedIds((prevIds) => {
-            const index = files.findIndex((f) => f.name === file.name && f.size === file.size);
-            if (index > -1) {
-                const updatedIds = [...prevIds];
-                updatedIds.splice(index, 1);
-                return updatedIds;
-            }
-           return prevIds;
-        });
+            setUploadedFileCount((prevCount) => Math.max(0, prevCount - 1));
 
-        setUploadedFileCount((prevCount) => Math.max(0, prevCount - 1));
+        } else {
+             console.warn("File not found in state for removal:", fileToRemove);
+        }
+
+        if (callback) {
+             callback();
+        }
     };
 
     const onTemplateClear = () => {
+        const idsToRemove = [...returnedIds];
         setTotalSize(0);
         setFiles([]);
         setReturnedIds([]);
         setUploadedFileCount(0);
-        if (props.onUploadComplete) {
-            props.onUploadComplete([]);
+        if (props.onClearComplete && idsToRemove.length > 0) {
+            props.onClearComplete(idsToRemove);
         }
     };
 
-
     const headerTemplate = (options) => {
         const { className, chooseButton, uploadButton, cancelButton } = options;
-        const value = totalSize / 1000000; // Convert to MB for the progress bar
+        const value = totalSize / maxFileSize * 100;
         const formatedValue =
-            fileUploadRef && fileUploadRef.current
-                ? fileUploadRef.current.formatSize(totalSize)
-                : "0 B";
+            fileUploadRef?.current?.formatSize(totalSize) || "0 B";
+        const maxFormattedValue = fileUploadRef?.current?.formatSize(maxFileSize) || '25MB';
 
         return (
             <div
                 className={className}
-                style={{
-                    backgroundColor: "transparent",
-                    display: "flex",
-                    alignItems: "center",
-                    width: "100%", // Ensure it takes full width
-                }}
+                style={{ backgroundColor: "transparent", display: "flex", alignItems: "center", width: "100%" }}
             >
                 {chooseButton}
                 {uploadButton}
                 {cancelButton}
                 <div className="flex align-items-center gap-3 ml-auto">
-                    <span>{formatedValue} / 25 MB</span>
-                    <ProgressBar
-                        value={value * (100 / 25)} // Calculate percentage based on 25MB max
-                        showValue={false}
-                        style={{ width: "10rem", height: "12px" }}
-                    ></ProgressBar>
+                    <span>{formatedValue} / {maxFormattedValue}</span>
+                    <ProgressBar value={value} showValue={false} style={{ width: "10rem", height: "12px" }}></ProgressBar>
                 </div>
             </div>
         );
     };
 
-    const logo = (file) => {
-        //  return file.objectURL;  // Use objectURL directly for images
-        const regex = new RegExp("image/*");
-        if (regex.test(file.type)) {
-          return file.objectURL
+    const getFileIcon = (file) => {
+        if (file.type.startsWith('image/')) {
+            return file.objectURL;
         }
-
-        switch (file.type) {
-            case "application/pdf":
-                return "../assets/media/pdf.svg";
-            case "text/csv":
-                return "../assets/media/csv.svg";
-            case "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
-                return "../assets/media/excelLogo.svg";
-            case "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
-                return "../assets/media/docx.svg";
-            case "application/msword":
-                return "../assets/media/doc.svg";
-            case "vnd.ms-powerpoint":
-                return "../assets/media/ppt.svg";
-            case "application/vnd.openxmlformats-officedocument.presentationml.presentation":
-                return "../assets/media/pptx.svg";
-            case "image/jpeg":
-                return "../assets/media/jpg.svg";
-            case "image/jpg":
-              return "../assets/media/jpg.svg";
-            case "image/png":
-                return "../assets/media/png.svg";
-            case "text/plain":
-                return "../assets/media/txt.svg";
-            case "application/zip":
-                return "../assets/media/zip.svg";
-            default:
-                return "../assets/media/txt.svg";
+        if (file.type === 'application/pdf') {
+            return "https://cdn-icons-png.flaticon.com/512/337/337946.png"; // PDF icon
         }
-
+        if (file.type === 'text/plain') {
+            return "https://cdn-icons-png.flaticon.com/512/281/281760.png"; // Text file icon
+        }
+        return "https://cdn-icons-png.flaticon.com/512/2965/2965300.png"; // Default file icon
     };
 
-    const itemTemplate = (file, props) => {
+    const itemTemplate = (file, itemProps) => {
+        const isImage = file.type.startsWith('image/');
+        
         return (
             <div className="flex align-items-center flex-wrap" style={{width: '100%'}}>
-                <div className="flex align-items-center" style={{ width: "60%" }}> {/* Increased width for image and name */}
-                    <img
-                        alt={file.name}
-                        role="presentation"
-                        src={logo(file)}
-                        width={60}  // Smaller image
-                        style={{marginRight: '1rem'}} // Add some margin
-                    />
-                    <span className="flex flex-column text-left">
-                        {file.name}
-                        <small>{new Date().toLocaleDateString()}</small>
+                <div className="flex align-items-center" style={{ width: "60%" }}>
+                    {isImage ? (
+                        <img
+                            alt={file.name}
+                            role="presentation"
+                            src={file.objectURL}
+                            width={60}
+                            height={60}
+                            style={{
+                                marginRight: '1rem',
+                                objectFit: 'cover',
+                                borderRadius: '4px'
+                            }}
+                            onError={(e) => {
+                                e.target.src = "https://cdn-icons-png.flaticon.com/512/2965/2965300.png";
+                            }}
+                        />
+                    ) : (
+                        <img
+                            alt={file.name}
+                            src={getFileIcon(file)}
+                            width={60}
+                            height={60}
+                            style={{
+                                marginRight: '1rem',
+                                objectFit: 'contain',
+                                padding: '10px',
+                                backgroundColor: '#f8f9fa',
+                                borderRadius: '4px'
+                            }}
+                            onError={(e) => {
+                                e.target.src = "https://cdn-icons-png.flaticon.com/512/2965/2965300.png";
+                            }}
+                        />
+                    )}
+                    <span className="flex flex-column text-left ml-2">
+                        <span className="font-bold" style={{ wordBreak: 'break-word' }}>{file.name}</span>
+                        <small className="text-sm text-gray-500">{itemProps.formatSize}</small>
                     </span>
                 </div>
-                <div style={{ width: '20%', textAlign: 'center' }}> {/* Centered Tag */}
-                   <Tag value={props.formatSize} severity="warning" className="px-3 py-2" />
+                <div style={{ width: '20%', textAlign: 'center' }}>
+                    <Tag
+                        value={file.type.split('/')[1] || 'file'}
+                        severity="info"
+                        className="px-3 py-2"
+                    />
                 </div>
-
-                <div style={{ width: '20%', textAlign: 'right' }}>  {/* Right-aligned Button */}
-                  <Button
-                      type="button"
-                      icon="pi pi-times"
-                      className="p-button-outlined p-button-rounded p-button-danger"
-                      onClick={() => onTemplateRemove(file)}
-                  />
-              </div>
+                <div style={{ width: '20%', textAlign: 'right' }}>
+                    <Button
+                        type="button"
+                        icon="pi pi-times"
+                        className="p-button-outlined p-button-rounded p-button-danger"
+                        onClick={() => onTemplateRemove(file, itemProps.onRemove)}
+                    />
+                </div>
             </div>
         );
     };
@@ -192,110 +230,198 @@ export const UploadFilesToS3 = (props) => {
     const emptyTemplate = () => {
         return (
             <div className="flex align-items-center flex-column">
-                <i
-                    className="pi pi-file-o mt-3 p-5"  // Changed icon to pi-file-o
-                    style={{
-                        fontSize: "5em",
-                        borderRadius: "50%",
-                        backgroundColor: "var(--surface-b)",
-                        color: "var(--surface-d)",
-                    }}
-                ></i>
-                <span
-                    style={{ fontSize: "1.2em", color: "var(--text-color-secondary)" }}
-                    className="my-5"
-                >
+                <i className="pi pi-cloud-upload mt-3 p-5" style={{ 
+                    fontSize: "5em", 
+                    borderRadius: "50%", 
+                    backgroundColor: "var(--surface-b)", 
+                    color: "var(--surface-d)" 
+                }}></i>
+                <span style={{ 
+                    fontSize: "1.2em", 
+                    color: "var(--text-color-secondary)" 
+                }} className="my-5">
                     Drag and Drop Files Here
                 </span>
             </div>
         );
     };
 
-    const chooseOptions = {
-        icon: "pi pi-fw pi-file", // Consistent file icon
-        iconOnly: true,
-        className: "custom-choose-btn p-button-rounded p-button-outlined",
+    const chooseOptions = { 
+        icon: "pi pi-fw pi-folder-open", 
+        iconOnly: true, 
+        className: "custom-choose-btn p-button-rounded p-button-outlined" 
     };
-    const uploadOptions = {
-        icon: "pi pi-fw pi-cloud-upload",
-        iconOnly: true,
-        className:
-            "custom-upload-btn p-button-success p-button-rounded p-button-outlined",
+    
+    const uploadOptions = { 
+        icon: "pi pi-fw pi-cloud-upload", 
+        iconOnly: true, 
+        className: "custom-upload-btn p-button-success p-button-rounded p-button-outlined" 
     };
-    const cancelOptions = {
-        icon: "pi pi-fw pi-times",
-        iconOnly: true,
-        className:
-            "custom-cancel-btn p-button-danger p-button-rounded p-button-outlined",
+    
+    const cancelOptions = { 
+        icon: "pi pi-fw pi-times", 
+        iconOnly: true, 
+        className: "custom-cancel-btn p-button-danger p-button-rounded p-button-outlined" 
     };
 
     const uploadFile = async (e) => {
-        if (e.files.length > 0) {
+        const filesToUpload = e.files;
+
+        if (filesToUpload.length > 0) {
+            setIsUploading(true); // Start showing the progress bar
+            let successfulUploads = 0;
+            const newDocumentIds = [];
+
             try {
-                const formData = new FormData();
-                e.files.forEach((file) => {
+                // Validate all files first
+                const validFiles = filesToUpload.filter(file => {
+                    const validation = validateFile(file);
+                    if (!validation.valid) {
+                        props.parentToastRef?.current?.show({ 
+                            severity: "error", 
+                            summary: "Upload Aborted", 
+                            detail: `Skipping invalid file: ${file.name}. ${validation.message}`, 
+                            life: 5000 
+                        });
+                        return false;
+                    }
+                    return true;
+                });
+
+                if (validFiles.length === 0) {
+                    props.parentToastRef?.current?.show({ 
+                        severity: "warn", 
+                        summary: "No Valid Files", 
+                        detail: "No valid files selected for upload.", 
+                        life: 3000 
+                    });
+                    if (fileUploadRef.current) {
+                        fileUploadRef.current.clear();
+                    }
+                    return;
+                }
+
+                // Upload files one at a time
+                for (const file of validFiles) {
+                    const formData = new FormData();
                     formData.append("files", file);
-                });
+                    formData.append("tableId", props.id);
+                    formData.append("tableName", props.serviceName);
+                    formData.append("user", JSON.stringify(props.user ? props.user : {}));
 
-                formData.append("tableId", props.id);
-                formData.append("tableName", props.serviceName);
-                formData.append("user", JSON.stringify(props.user ? props.user : {}));
+                    try {
+                        console.log(`Uploading file: ${file.name}, size: ${(file.size / 1000000).toFixed(2)}MB`);
+                        const response = await fetch(uploadURL, { 
+                            method: "POST", 
+                            body: formData 
+                        });
 
-                const response = await fetch(uploadURL, {
-                    method: "POST",
-                    body: formData,
-                });
+                        if (!response.ok) {
+                            let errorDetail = `HTTP error! status: ${response.status}`;
+                            if (response.status === 413) {
+                                errorDetail = `File "${file.name}" is too large. Maximum size allowed by the server is 25MB.`;
+                            } else {
+                                try { 
+                                    const errorResult = await response.json(); 
+                                    errorDetail = errorResult.message || errorResult.error || JSON.stringify(errorResult); 
+                                } catch (jsonError) { 
+                                    errorDetail = response.statusText || errorDetail; 
+                                }
+                            }
+                            throw new Error(errorDetail);
+                        }
 
-                const result = await response.json();
+                        const result = await response.json();
 
-                if (result?.results && result.results.length > 0) {
-                    const documentIds = result.results.map((res) => res.documentId);
-                    setReturnedIds((prevIds) => [...prevIds, ...documentIds]);
-                    setUploadedFileCount((prevCount) => prevCount + e.files.length);
+                        if (result?.results && result.results.length > 0) {
+                            const documentId = result.results[0].documentId;
+                            newDocumentIds.push(documentId);
 
-                    if (props.onUploadComplete) {
-                         props.onUploadComplete([...returnedIds, ...documentIds]);
+                            setReturnedIds((prevIds) => {
+                                const currentIds = [...prevIds];
+                                const fileIndex = files.findIndex(f => f.name === file.name && f.size === file.size);
+                                if (fileIndex !== -1) {
+                                    currentIds.push(documentId);
+                                }
+                                return [...new Set(currentIds)];
+                            });
+
+                            successfulUploads++;
+                            setUploadedFileCount(prevCount => prevCount + 1);
+
+                            props.parentToastRef?.current?.show({ 
+                                severity: "success", 
+                                summary: "Upload Successful", 
+                                detail: `File "${file.name}" uploaded successfully.`, 
+                                life: 3000 
+                            });
+                        } else {
+                            throw new Error(`Upload completed but received unexpected response for file "${file.name}".`);
+                        }
+                    } catch (error) {
+                        console.error(`Upload error for file "${file.name}":`, error);
+                        props.parentToastRef?.current?.show({ 
+                            severity: "error", 
+                            summary: "Upload Failed", 
+                            detail: `Failed to upload "${file.name}": ${error.message || "Please try again."}`, 
+                            life: 5000 
+                        });
                     }
                 }
 
-                toast.current.show({
-                    severity: "success",
-                    summary: "Upload Successful",
-                    detail: "Your files have been uploaded.",
-                });
+                // Notify parent component of all successful uploads
+                if (successfulUploads > 0 && props.onUploadComplete) {
+                    props.onUploadComplete(newDocumentIds);
+                }
+
+                if (successfulUploads === 0) {
+                    props.parentToastRef?.current?.show({ 
+                        severity: "error", 
+                        summary: "Upload Failed", 
+                        detail: "All files failed to upload.", 
+                        life: 5000 
+                    });
+                } else if (successfulUploads < validFiles.length) {
+                    props.parentToastRef?.current?.show({ 
+                        severity: "warn", 
+                        summary: "Partial Upload", 
+                        detail: `Uploaded ${successfulUploads} out of ${validFiles.length} files.`, 
+                        life: 5000 
+                    });
+                }
+
             } catch (error) {
-                console.error("Upload error:", error);
-                toast.current.show({
-                    severity: "error",
-                    summary: "Upload Failed",
-                    detail: "File upload failed.",
+                console.error("Unexpected error during upload process:", error);
+                props.parentToastRef?.current?.show({ 
+                    severity: "error", 
+                    summary: "Upload Failed", 
+                    detail: error.message || "An unexpected error occurred. Please try again.", 
+                    life: 5000 
                 });
+            } finally {
+                setIsUploading(false); // Hide the progress bar
+                if (fileUploadRef.current) {
+                    fileUploadRef.current.clear();
+                }
             }
         }
     };
-    const onUpload = () => {
-      toast.current.show({ severity: 'info', summary: 'Success', detail: 'File Uploaded' });
-  };
-
 
     return (
         <div>
-            <Toast ref={toast}></Toast>
-
-            <Tooltip target=".custom-choose-btn" content="Choose" position="bottom" />
-            <Tooltip target=".custom-upload-btn" content="Upload" position="bottom" />
+            <Tooltip target=".custom-choose-btn" content="Choose File" position="bottom" />
+            <Tooltip target=".custom-upload-btn" content="Upload File" position="bottom" />
             <Tooltip target=".custom-cancel-btn" content="Clear" position="bottom" />
 
             <FileUpload
                 ref={fileUploadRef}
-                name="file"
-                mode="advanced"  // Use "advanced" mode
-                multiple
+                name="files"
+                mode="advanced"
+                multiple={props.multiple === undefined ? true : props.multiple}
                 customUpload
                 uploadHandler={uploadFile}
-                onUpload={onUpload}
                 onSelect={onTemplateSelect}
-                onRemove={onTemplateRemove} // Add onRemove
+                onRemove={(file, callback) => onTemplateRemove(file, callback)}
                 onClear={onTemplateClear}
                 headerTemplate={headerTemplate}
                 itemTemplate={itemTemplate}
@@ -303,12 +429,24 @@ export const UploadFilesToS3 = (props) => {
                 chooseOptions={chooseOptions}
                 uploadOptions={uploadOptions}
                 cancelOptions={cancelOptions}
-                accept=".csv, .pdf, .doc, .docx, image/*, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                maxFileSize={25000000}
-                className="custom-file-upload" // Add a custom class for styling
+                accept="image/*,.pdf,.txt"
+                maxFileSize={maxFileSize}
+                className="custom-file-upload"
                 style={{width: '100%'}}
+                disabled={props.disabled || isUploading}
+                invalidFileTypeMessageSummary="Invalid file type"
+                invalidFileTypeMessageDetail={`Allowed: ${allowedExtensions.join(', ')}`}
+                invalidFileSizeMessageSummary="File too large"
+                invalidFileSizeMessageDetail={`Maximum file size is ${maxFileSize / 1000000}MB.`}
             />
+            {isUploading && (
+                <ProgressBar 
+                    mode="indeterminate" 
+                    style={{ height: "6px", marginTop: "10px" }} 
+                />
+            )}
         </div>
     );
 };
+
 export default UploadFilesToS3;

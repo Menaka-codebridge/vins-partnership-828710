@@ -65,7 +65,7 @@ const SingleUserInvitesPage = (props) => {
   }, [props, urlParams.singleUserInvitesId]);
 
   const goBack = () => {
-    navigate("/userInvites");
+    navigate(-1);
   };
 
   return (

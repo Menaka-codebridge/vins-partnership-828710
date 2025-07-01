@@ -1,5 +1,5 @@
 const { DynaFields } = require("./dynaFields.class");
-const createModel = require("../../models/dynaFields.model");
+const createModel = require("../../cbModels/dynaFields.model");
 const hooks = require("./dynaFields.hooks");
 
 module.exports = function (app) {

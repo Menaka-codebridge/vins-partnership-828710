@@ -9,15 +9,11 @@ import client from "../../../services/restClient";
 import CommentsSection from "../../common/CommentsSection";
 import ProjectLayout from "../../Layouts/ProjectLayout";
 
-
-
 const SingleHelpSidebarContentsPage = (props) => {
   const navigate = useNavigate();
   const urlParams = useParams();
   const [_entity, set_entity] = useState({});
   const [isHelpSidebarVisible, setHelpSidebarVisible] = useState(false);
-
-
 
   useEffect(() => {
     //on mount
@@ -25,30 +21,35 @@ const SingleHelpSidebarContentsPage = (props) => {
       .service("helpSidebarContents")
       .get(urlParams.singleHelpSidebarContentsId, {
         query: {
-          $populate: [{
-            path: "createdBy",
-            service: "users",
-            select: ["name"],
-          }, {
-            path: "updatedBy",
-            service: "users",
-            select: ["name"],
-          },]
-        }
+          $populate: [
+            {
+              path: "createdBy",
+              service: "users",
+              select: ["name"],
+            },
+            {
+              path: "updatedBy",
+              service: "users",
+              select: ["name"],
+            },
+          ],
+        },
       })
       .then((res) => {
         set_entity(res || {});
-
       })
       .catch((error) => {
         console.debug({ error });
-        props.alert({ title: "HelpSidebarContents", type: "error", message: error.message || "Failed get helpSidebarContents" });
+        props.alert({
+          title: "HelpSidebarContents",
+          type: "error",
+          message: error.message || "Failed get helpSidebarContents",
+        });
       });
   }, [props, urlParams.singleHelpSidebarContentsId]);
 
-
   const goBack = () => {
-    navigate("/helpSidebarContents");
+    navigate(-1);
   };
 
   const toggleHelpSidebar = () => {
@@ -96,7 +97,11 @@ const SingleHelpSidebarContentsPage = (props) => {
         <div className="col-12">
           <div className="flex align-items-center justify-content-between">
             <div className="flex align-items-center">
-              <Button className="p-button-text" icon="pi pi-chevron-left" onClick={() => goBack()} />
+              <Button
+                className="p-button-text"
+                icon="pi pi-chevron-left"
+                onClick={() => goBack()}
+              />
               <h3 className="m-0">Helpbar Contents</h3>
               <SplitButton
                 model={menuItems}
@@ -110,14 +115,17 @@ const SingleHelpSidebarContentsPage = (props) => {
           </div>
           <div className="card w-full">
             <div className="grid ">
-
-              <div className="col-12 md:col-6 lg:col-3"><label className="text-sm text-gray-600">Service</label><p className="m-0 ml-3" >{_entity?.serviceName}</p></div>
-              <div className="col-12  "><label className="text-sm text-gray-600">Content</label>
+              <div className="col-12 md:col-6 lg:col-3">
+                <label className="text-sm text-gray-600">Service</label>
+                <p className="m-0 ml-3">{_entity?.serviceName}</p>
+              </div>
+              <div className="col-12  ">
+                <label className="text-sm text-gray-600">Content</label>
                 <p
                   className="m-0 ml-3"
                   dangerouslySetInnerHTML={{ __html: _entity?.content }}
-                ></p></div>
-
+                ></p>
+              </div>
 
               <div className="col-12">&nbsp;</div>
             </div>
@@ -125,9 +133,7 @@ const SingleHelpSidebarContentsPage = (props) => {
         </div>
       </div>
       <div className="mt-2">
-        <TabView>
-
-        </TabView>
+        <TabView></TabView>
       </div>
 
       <CommentsSection
@@ -140,14 +146,17 @@ const SingleHelpSidebarContentsPage = (props) => {
         id="rightsidebar"
         className={classNames(
           "overlay-auto z-10 surface-overlay shadow-2 fixed top-0 right-0 w-20rem animation-duration-150 animation-ease-in-out",
-          { hidden: !isHelpSidebarVisible, block: isHelpSidebarVisible }
+          { hidden: !isHelpSidebarVisible, block: isHelpSidebarVisible },
         )}
         style={{
           height: "100%",
           backgroundColor: "rgba(0, 0, 0, 0.5)",
         }}
       >
-        <div className="flex flex-column h-full p-4 bg-white" style={{ height: "calc(100% - 60px)", marginTop: "60px" }}>
+        <div
+          className="flex flex-column h-full p-4 bg-white"
+          style={{ height: "calc(100% - 60px)", marginTop: "60px" }}
+        >
           <span className="text-xl font-medium text-900 mb-3">Help bar</span>
           <div className="border-2 border-dashed surface-border border-round surface-section flex-auto"></div>
         </div>

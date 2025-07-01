@@ -49,6 +49,7 @@ const StepsDataTable = ({
   const [selectedItems, setSelectedItems] = useState([]);
   const [showDialog, setShowDialog] = useState(false);
   const [data, setData] = useState([]);
+  const [filters, setFilters] = useState({});
 
   const header = (
     <div
@@ -142,6 +143,32 @@ const StepsDataTable = ({
     setShowDialog(false); // Close the dialog
   };
 
+  // Initialize filters based on selectedFilterFields
+  useEffect(() => {
+    const initialFilters = {};
+    selectedFilterFields.forEach((field) => {
+      initialFilters[field] = {
+        value: null,
+        matchMode: "contains",
+      };
+    });
+    setFilters(initialFilters);
+  }, [selectedFilterFields]);
+
+  const onFilter = (e) => {
+    setFilters(e.filters);
+  };
+
+  const filterTemplate = (options) => {
+    return (
+      <InputText
+        value={options.value || ""}
+        onChange={(e) => options.filterCallback(e.target.value)}
+        placeholder={`Filter ${options.field}`}
+      />
+    );
+  };
+
   return (
     <>
       <DataTable
@@ -177,6 +204,7 @@ const StepsDataTable = ({
           header="UserGuideID"
           body={dropdownTemplate0}
           filter={selectedFilterFields.includes("userGuideID")}
+          filterElement={filterTemplate}
           hidden={selectedHideFields?.includes("userGuideID")}
           style={{ minWidth: "8rem" }}
         />
@@ -185,6 +213,7 @@ const StepsDataTable = ({
           header="Steps"
           body={pTemplate1}
           filter={selectedFilterFields.includes("Steps")}
+          filterElement={filterTemplate}
           hidden={selectedHideFields?.includes("Steps")}
           sortable
           style={{ minWidth: "8rem" }}
@@ -194,6 +223,7 @@ const StepsDataTable = ({
           header="Description"
           body={pTemplate2}
           filter={selectedFilterFields.includes("Description")}
+          filterElement={filterTemplate}
           hidden={selectedHideFields?.includes("Description")}
           sortable
           style={{ minWidth: "8rem" }}

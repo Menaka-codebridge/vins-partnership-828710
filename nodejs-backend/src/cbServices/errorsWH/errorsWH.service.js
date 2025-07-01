@@ -1,5 +1,5 @@
 const { ErrorsWH } = require("./errorsWH.class");
-const createModel = require("../../models/errorsWH.model");
+const createModel = require("../../cbModels/errorsWH.model");
 const hooks = require("./errorsWH.hooks");
 
 module.exports = function (app) {

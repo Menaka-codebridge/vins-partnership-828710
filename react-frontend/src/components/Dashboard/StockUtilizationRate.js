@@ -48,22 +48,36 @@ export default function StockUtilizationRate() {
           const month = new Date(item.stockOutDate).toLocaleString("default", {
             month: "short",
           });
-          monthlyUsageData[month] = (monthlyUsageData[month] || 0) + (item.quantity || 0);
+          monthlyUsageData[month] =
+            (monthlyUsageData[month] || 0) + (item.quantity || 0);
         });
 
         stockInResponse.data.forEach((item) => {
           const month = new Date(item.purchaseDate).toLocaleString("default", {
             month: "short",
           });
-          stockLevelsData[month] = (stockLevelsData[month] || 0) + (item.quantity || 0);
+          stockLevelsData[month] =
+            (stockLevelsData[month] || 0) + (item.quantity || 0);
         });
 
         const months = [
-          "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-          "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+          "Jan",
+          "Feb",
+          "Mar",
+          "Apr",
+          "May",
+          "Jun",
+          "Jul",
+          "Aug",
+          "Sep",
+          "Oct",
+          "Nov",
+          "Dec",
         ];
 
-        const monthlyUsage = months.map((month) => monthlyUsageData[month] || 0);
+        const monthlyUsage = months.map(
+          (month) => monthlyUsageData[month] || 0,
+        );
         const stockLevels = months.map((month) => stockLevelsData[month] || 0);
 
         setMonthlyUsage(monthlyUsage);
@@ -208,11 +222,12 @@ export default function StockUtilizationRate() {
             <strong>How it's calculated:</strong>
             <ul>
               <li>
-                <strong>Stock Utilization Rate:</strong> (Total Stock Out / Total
-                Stock In) × 100
+                <strong>Stock Utilization Rate:</strong> (Total Stock Out /
+                Total Stock In) × 100
               </li>
               <li>
-                <strong>Total Stock In:</strong> Sum of all items added to stock.
+                <strong>Total Stock In:</strong> Sum of all items added to
+                stock.
               </li>
               <li>
                 <strong>Total Stock Out:</strong> Sum of all items used or sold.

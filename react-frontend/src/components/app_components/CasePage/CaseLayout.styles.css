@@ -1,0 +1,307 @@
+/* --- THEME VARIABLES --- */
+:root {
+  --theme-primary: #511718; /* Dark Reddish-Brown */
+  --theme-secondary: #6a3638; /* Very Dark Brown/Black */
+  --theme-text-on-dark: #f8f9fa; /* Light text for dark backgrounds */
+  --theme-text-on-light: #260b0b; /* Dark text for light backgrounds */
+  --theme-background: #f4f5f7; /* Light grey background */
+  --theme-panel-bg: #ffffff; /* White panel background */
+  --theme-muted-bg: #f8f9fa; /* Slightly off-white for muted panels/areas */
+  --theme-border: #d1d5db; /* Light grey border */
+  --theme-primary-hover: #401213; /* Darker shade for primary hover */
+  --theme-secondary-hover: #1a0707; /* Darker shade for secondary hover */
+}
+
+.case-layout-container {
+  display: flex;
+  min-height: 100vh;
+  position: relative;
+  background-color: #ffffff;
+}
+
+.left-sidebar {
+  background-color: #f8f9fa;
+  border-right: 1px solid #dee2e6;
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  overflow-y: auto;
+  transition: width 0.3s;
+}
+
+.left-sidebar.shrunk .sidebar-submenu-item.p-button {
+  padding-left: 0.5rem;
+}
+
+.left-sidebar .sidebar-header {
+  padding: 0.5rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.left-sidebar .toggle-button {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.left-sidebar .toggle-icon {
+  width: 24px;
+  height: 24px;
+  transition: transform 0.3s;
+}
+
+.left-sidebar .toggle-icon.rotated {
+  transform: rotate(180deg);
+}
+
+.left-sidebar .sidebar-title {
+  padding: 0.5rem 1rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  border-bottom: 1px solid #dee2e6;
+  text-align: center;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.left-sidebar .sidebar-menu {
+  display: flex;
+  flex-direction: column;
+  padding: 0.5rem;
+}
+
+.left-sidebar .sidebar-menu-item.p-button {
+  background: none;
+  border: none;
+  text-align: left;
+  padding: 0.75rem 0.5rem;
+  margin: 0.25rem 0;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+  color: #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.left-sidebar .sidebar-menu-item.p-button:hover {
+  background-color: #511718 !important;
+}
+
+.left-sidebar .sidebar-menu-item.p-button.active {
+  background-color: #e0e0e0;
+  font-weight: 600;
+}
+
+.left-sidebar .sidebar-menu-item .p-button-label {
+  flex: 1;
+  text-align: left;
+}
+
+.left-sidebar .sidebar-submenu {
+  display: flex;
+  flex-direction: column;
+  padding-left: 0.5rem;
+}
+
+.left-sidebar .sidebar-submenu-item.p-button {
+  background: none;
+  border: none;
+  text-align: left;
+  padding: 0.5rem 0.5rem;
+  margin: 0.25rem 0;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  color: #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.left-sidebar .sidebar-submenu-item.p-button:hover {
+  background-color: #511718 !important;
+}
+
+.left-sidebar .sidebar-submenu-item.p-button.active-sub {
+  background-color: #e9ecef;
+  font-weight: 500;
+}
+
+.right-sidebar {
+  background-color: #f8f9fa;
+  border-left: 1px solid #dee2e6;
+  width: 60px;
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow-y: auto;
+}
+
+.right-sidebar .sidebar-menu {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 0;
+}
+
+.right-sidebar .sidebar-menu-item {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.right-sidebar .sidebar-menu-item:hover {
+  background-color: #e0e0e0;
+}
+
+.main-content {
+  flex: 1;
+  padding: 1rem;
+  min-height: 100vh;
+}
+
+/* --- SIDEBAR STYLES (FOR GENERATE LEGAL DOCUMENT) --- */
+.sidebar-toggle-button {
+  position: fixed;
+  top: 50%;
+  right: 70px; /* Adjusted to account for main right-sidebar width (60px + 10px gap) */
+  transform: translateY(-50%);
+  z-index: 1000;
+  background-color: var(--theme-primary);
+  border-color: var(--theme-primary);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition:
+    background-color 0.3s,
+    transform 0.3s;
+  color: var(--theme-text-on-dark);
+}
+
+.sidebar-toggle-button:hover {
+  background-color: var(--theme-primary-hover);
+  border-color: var(--theme-primary-hover);
+  transform: translateY(-50%) scale(1.1);
+}
+
+.case-sidebar {
+  width: 350px;
+  background-color: var(--theme-muted-bg);
+  border-left: 1px solid var(--theme-border);
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.sidebar-content {
+  width: 100%;
+}
+
+.sidebar-section {
+  margin-bottom: 1.5rem;
+}
+
+.sidebar-subsection {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: var(--theme-panel-bg);
+  border: 1px solid var(--theme-border);
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.sidebar-section-header {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--theme-secondary);
+  margin: 0 0 0.5rem 0;
+  text-transform: uppercase;
+}
+
+.sidebar-subsection-title {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--theme-primary);
+  margin: 0.5rem 0 0.25rem 0;
+}
+
+.sidebar-subsection-text {
+  font-size: 0.9rem;
+  color: var(--theme-text-on-light);
+  line-height: 1.5;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.sidebar-prompt-text {
+  margin-bottom: 0.5rem;
+}
+
+.sidebar-see-more {
+  color: var(--theme-primary);
+  padding: 0;
+  font-size: 0.85rem;
+}
+
+.sidebar-see-more:hover {
+  background: rgba(81, 23, 24, 0.1);
+}
+
+.empty-ground-truth-box {
+  border: 1px dashed #ced4da;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f8f9fa;
+  cursor: pointer;
+  border-radius: 4px;
+  margin-top: 0.5rem;
+}
+
+.empty-ground-truth-box:hover {
+  background-color: #e9ecef;
+}
+
+.plus-icon {
+  color: #495057;
+}
+
+.analysis-tabs .p-tabview-nav {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.analysis-tabs .p-tabview-nav li .p-tabview-nav-link {
+  color: #333;
+  padding: 0.75rem 1rem;
+  font-weight: 500;
+}
+
+.analysis-tabs .p-tabview-nav li.p-highlight .p-tabview-nav-link {
+  color: #007ad9;
+  border-bottom: 2px solid #007ad9;
+}
+
+.analysis-tabs .p-tabview-panels {
+  padding: 1rem;
+  background-color: #fff;
+}

@@ -493,10 +493,10 @@ const Home = (props) => {
           );
       }
 
-      console.log("Data to save:", filteredFormData); // Debugging
+      // console.log("Data to save:", filteredFormData); // Debugging
 
       await client.service("profileMenu").create(filteredFormData);
-      console.log("Saved form data:", filteredFormData);
+      // console.log("Saved form data:", filteredFormData);
       props.alert({
         type: "success",
         title: "User Context and Menu Items",

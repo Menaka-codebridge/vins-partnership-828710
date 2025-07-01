@@ -47,7 +47,7 @@ const SingleUserChangePasswordPage = (props) => {
   }, [props, urlParams.singleUserChangePasswordId]);
 
   const goBack = () => {
-    navigate("/userChangePassword");
+    navigate(-1);
   };
 
   return (

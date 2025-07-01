@@ -71,7 +71,7 @@ const SingleSectionsPage = (props) => {
   }, [props, urlParams.singleSectionsId]);
 
   const goBack = () => {
-    navigate("/sections");
+    navigate(-1);
   };
 
   const helpSidebarRef = useRef(null);
@@ -191,11 +191,18 @@ const SingleSectionsPage = (props) => {
           </div>
         </div>
         <div className="mt-2">
-<TabView>                <TabPanel header="true" leftIcon="pi pi-building-columns mr-2">
+          <TabView>
+            <div className="mt-2">
+              <TabView>
+                <TabPanel header="true" leftIcon="pi pi-building-columns mr-2">
                   <ProfilesPage />
                 </TabPanel>
+              </TabView>
+            </div>
           </TabView>
-        </div>        <CommentsSection
+        </div>
+
+        <CommentsSection
           recordId={urlParams.singleSectionsId}
           user={props.user}
           alert={props.alert}
