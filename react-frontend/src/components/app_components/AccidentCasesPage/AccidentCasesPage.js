@@ -16,7 +16,9 @@ import AccidentCasesFakerDialogComponent from "./AccidentCasesFakerDialogCompone
 import AccidentCasesSeederDialogComponent from "./AccidentCasesSeederDialogComponent";
 import SortIcon from "../../../assets/media/Sort.png";
 import FilterIcon from "../../../assets/media/Filter.png";
+import HelpbarService from "../../../services/HelpbarService";
 
+import { v4 as uuidv4 } from "uuid";
 const AccidentCasesPage = (props) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -44,6 +46,10 @@ const AccidentCasesPage = (props) => {
   const [initialData, setInitialData] = useState([]);
   const [selectedSortOption, setSelectedSortOption] = useState("");
   const [selectedDelete, setSelectedDelete] = useState([]);
+  const [refresh, setRefresh] = useState(false);
+  const [paginatorRecordsNo, setPaginatorRecordsNo] = useState(10);
+  const [activeSort, setActiveSort] = useState(null);
+
 
   const toggleHelpSidebar = () => {
     setHelpSidebarVisible(!isHelpSidebarVisible);
@@ -110,14 +116,16 @@ const AccidentCasesPage = (props) => {
           message: error.message || "Failed get Accident Cases",
         });
       });
-  }, [showFakerDialog, showDeleteAllDialog, showEditDialog, showCreateDialog]);
+  }, [showFakerDialog, showDeleteAllDialog, showEditDialog, showCreateDialog,refresh,]);
 
-  const onClickSaveFilteredfields = (ff) => {
-    console.log(ff);
+ const onClickSaveFilteredfields = (ff) => {
+    setSelectedFilterFields(ff);
+    setShowFilter(false);
   };
 
   const onClickSaveHiddenfields = (ff) => {
-    console.log(ff);
+    // setSelectedHideFields(ff);
+    // setShowColumns(false);
   };
 
   const onEditRow = (rowData, rowIndex) => {
@@ -202,6 +210,26 @@ const AccidentCasesPage = (props) => {
   const onRowClick = ({ data }) => {
     navigate(`/accidentCases/${data._id}`);
   };
+const copyPageLink = () => {
+    const currentUrl = window.location.href;
+    navigator.clipboard
+      .writeText(currentUrl)
+      .then(() => {
+        props.alert({
+          title: "Copied",
+          type: "success",
+          message: "Page link copied to clipboard",
+        });
+      })
+      .catch((error) => {
+        props.alert({
+          title: "Error",
+          type: "error",
+          message: "Failed to copy page link",
+        });
+        console.error("Failed to copy: ", error);
+      });
+  };
 
   const menuItems = [
     {
@@ -227,10 +255,10 @@ const AccidentCasesPage = (props) => {
         data.length > 0
           ? setTriggerDownload(true)
           : props.alert({
-              title: "Export",
-              type: "warn",
-              message: "no data to export",
-            });
+            title: "Export",
+            type: "warn",
+            message: "no data to export",
+          });
       },
     },
     {
@@ -240,27 +268,29 @@ const AccidentCasesPage = (props) => {
     },
     { separator: true },
 
-    {
-      label: "Testing",
-      icon: "pi pi-check-circle",
-      items: [
-        {
-          label: "Faker",
-          icon: "pi pi-bullseye",
-          command: (e) => {
-            setShowFakerDialog(true);
-          },
-          show: true,
-        },
-        {
-          label: `Drop ${data?.length}`,
-          icon: "pi pi-trash",
-          command: (e) => {
-            setShowDeleteAllDialog(true);
-          },
-        },
-      ],
-    },
+     process.env.REACT_APP_ENV == "development"
+      ? {
+          label: "Testing",
+          icon: "pi pi-check-circle",
+          items: [
+            {
+              label: "Faker",
+              icon: "pi pi-bullseye",
+              command: (e) => {
+                setShowFakerDialog(true);
+              },
+              show: true,
+            },
+            {
+              label: `Drop ${data?.length}`,
+              icon: "pi pi-trash",
+              command: (e) => {
+                setShowDeleteAllDialog(true);
+              },
+            },
+          ],
+        }
+      : null,
     {
       label: "Data seeder",
       icon: "pi pi-database",
@@ -270,27 +300,16 @@ const AccidentCasesPage = (props) => {
     },
   ];
 
-  const onMenuSort = (sortOption) => {
+   const onMenuSort = (field, order) => {
     let sortedData;
-    switch (sortOption) {
-      case "nameAsc":
-        sortedData = _.orderBy(data, ["name"], ["asc"]);
-        break;
-      case "nameDesc":
-        sortedData = _.orderBy(data, ["name"], ["desc"]);
-        break;
-      case "createdAtAsc":
-        sortedData = _.orderBy(data, ["createdAt"], ["asc"]);
-        break;
-      case "createdAtDesc":
-        sortedData = _.orderBy(data, ["createdAt"], ["desc"]);
-        break;
-      default:
-        sortedData = data;
+    if (field.includes(".")) {
+      sortedData = _.orderBy(data, [(item) => _.get(item, field, "")], [order]);
+    } else {
+      sortedData = _.orderBy(data, [field], [order]);
     }
     setData(sortedData);
+    setActiveSort(`${field}-${order}`);
   };
-
   const filterMenuItems = [
     {
       label: `Filter`,
@@ -312,8 +331,9 @@ const AccidentCasesPage = (props) => {
           style={{
             fontWeight: "bold",
             padding: "8px 16px",
-            backgroundColor: "#ffffff",
-            fontSize: "16px",
+            backgroundColor: "#f8f9fa",
+            fontSize: "14px",
+            color: "#333",
           }}
         >
           {item.label}
@@ -322,19 +342,66 @@ const AccidentCasesPage = (props) => {
       command: () => {},
     },
     { separator: true },
-    { label: "Name Ascending", command: () => onMenuSort("nameAsc") },
-    { label: "Name Descending", command: () => onMenuSort("nameDesc") },
-    {
-      label: "Created At Ascending",
-      command: () => onMenuSort("createdAtAsc"),
-    },
-    {
-      label: "Created At Descending",
-      command: () => onMenuSort("createdAtDesc"),
-    },
+    ...fields.flatMap((field) => [
+      {
+        label: `${field.name} (Ascending)`,
+        icon: activeSort === `${field.value}-asc` ? "pi pi-check" : null,
+        command: () => onMenuSort(field.value, "asc"),
+        template: (item) => (
+          <div
+            style={{
+              padding: "8px 16px",
+              fontSize: "13px",
+              color: activeSort === `${field.value}-asc` ? "#007bff" : "#333",
+              backgroundColor:
+                activeSort === `${field.value}-asc` ? "#e6f3ff" : "transparent",
+            }}
+          >
+            {item.icon && (
+              <i
+                className={item.icon}
+                style={{ marginRight: "8px", color: "#007bff" }}
+              />
+            )}
+            {item.label}
+          </div>
+        ),
+      },
+      {
+        label: `${field.name} (Descending)`,
+        icon: activeSort === `${field.value}-desc` ? "pi pi-check" : null,
+        command: () => onMenuSort(field.value, "desc"),
+        template: (item) => (
+          <div
+            style={{
+              padding: "8px 16px",
+              fontSize: "13px",
+              color: activeSort === `${field.value}-desc` ? "#007bff" : "#333",
+              backgroundColor:
+                activeSort === `${field.value}-desc`
+                  ? "#e6f3ff"
+                  : "transparent",
+            }}
+          >
+            {item.icon && (
+              <i
+                className={item.icon}
+                style={{ marginRight: "8px", color: "#007bff" }}
+              />
+            )}
+            {item.label}
+          </div>
+        ),
+      },
+    ]),
+    { separator: true },
     {
       label: "Reset",
-      command: () => setData(_.cloneDeep(initialData)), // Reset to original data if you want
+      icon: "pi pi-refresh",
+      command: () => {
+        setData(_.cloneDeep(initialData));
+        setActiveSort(null);
+      },
       template: (item) => (
         <div
           style={{
@@ -348,6 +415,7 @@ const AccidentCasesPage = (props) => {
             fontSize: "13px",
           }}
         >
+          <i className={item.icon} style={{ marginRight: "8px" }} />
           {item.label}
         </div>
       ),
@@ -386,7 +454,7 @@ const AccidentCasesPage = (props) => {
               }
               buttonClassName="hidden"
               menuButtonClassName="ml-1 p-button-text"
-              // menuStyle={{ width: "250px" }}
+            // menuStyle={{ width: "250px" }}
             ></SplitButton>
             <SplitButton
               model={sortMenuItems.filter(
@@ -402,7 +470,7 @@ const AccidentCasesPage = (props) => {
               menuButtonClassName="ml-1 p-button-text"
               menuStyle={{ width: "200px" }}
             ></SplitButton>
-            <Button
+            {/* <Button
               label="add"
               style={{ height: "30px" }}
               rounded
@@ -410,12 +478,12 @@ const AccidentCasesPage = (props) => {
               icon="pi pi-plus"
               onClick={() => setShowCreateDialog(true)}
               role="accidentCases-add-button"
-            />
+            /> */}
           </>
         </div>
       </div>
       <div className="grid align-items-center">
-        <div className="col-11" role="accidentCases-datatable">
+        <div className="col-12" role="accidentCases-datatable">
           <AccidentCasesDatatable
             items={data}
             fields={fields}
@@ -441,6 +509,7 @@ const AccidentCasesPage = (props) => {
             selectedDelete={selectedDelete}
             setSelectedDelete={setSelectedDelete}
             onCreateResult={onCreateResult}
+             setRefresh={setRefresh}
           />
         </div>
       </div>
@@ -486,19 +555,11 @@ const AccidentCasesPage = (props) => {
         onYes={() => deleteAll()}
         loading={loading}
       />
-      <div
-        id="rightsidebar"
-        className={classNames(
-          "overlay-auto z-1 surface-overlay shadow-2 absolute right-0 w-20rem animation-duration-150 animation-ease-in-out",
-          { hidden: !isHelpSidebarVisible, block: isHelpSidebarVisible },
-        )}
-        style={{ top: "60px", height: "calc(100% - 60px)" }}
-      >
-        <div className="flex flex-column h-full p-4">
-          <span className="text-xl font-medium text-900 mb-3">Help bar</span>
-          <div className="border-2 border-dashed surface-border border-round surface-section flex-auto"></div>
-        </div>
-      </div>
+  <HelpbarService
+        isVisible={isHelpSidebarVisible}
+        onToggle={toggleHelpSidebar}
+        serviceName="accidentCases"
+      />
     </div>
   );
 };

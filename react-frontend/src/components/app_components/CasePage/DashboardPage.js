@@ -42,7 +42,7 @@ const DashboardPage = (props) => {
 
   return (
     <ProjectLayout>
-      <div className="dashboard-container">
+      <div className="flex min-h-[calc(100vh-5rem)] bg-white">
         <div className="dashboard-main-content p-grid p-align-center p-jc-center">
           <div className="watermark"></div>
 
@@ -118,6 +118,7 @@ const DashboardPage = (props) => {
           }
           .dashboard-main-content {
             flex-grow: 1;
+            width:85.5rem ;
             padding: 4rem 2rem;
             position: relative;
             background-color: var(--theme-content-bg);

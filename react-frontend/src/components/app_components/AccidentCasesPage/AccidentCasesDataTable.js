@@ -2,6 +2,7 @@ import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
 import React, { useState, useRef, useEffect } from "react";
 import _ from "lodash";
+import client from "../../../services/restClient";
 import { Button } from "primereact/button";
 import { useParams } from "react-router-dom";
 import moment from "moment";
@@ -16,7 +17,12 @@ import ExportIcon from "../../../assets/media/Export & Share.png";
 import CopyIcon from "../../../assets/media/Clipboard.png";
 import DuplicateIcon from "../../../assets/media/Duplicate.png";
 import DeleteIcon from "../../../assets/media/Trash.png";
-
+import { Dropdown } from "primereact/dropdown";
+import { Toast } from "primereact/toast";
+import DeleteImage from "../../../assets/media/Delete.png";
+import { connect } from "react-redux";
+import { Skeleton } from "primereact/skeleton";
+import { Checkbox } from "primereact/checkbox";
 const AccidentCasesDataTable = ({
   items,
   fields,
@@ -38,6 +44,7 @@ const AccidentCasesDataTable = ({
   setSelectedHideFields,
   onClickSaveHiddenfields,
   loading,
+    setRefresh,
   user,
   selectedDelete,
   setSelectedDelete,
@@ -49,7 +56,34 @@ const AccidentCasesDataTable = ({
   const [selectedItems, setSelectedItems] = useState([]);
   const [showDialog, setShowDialog] = useState(false);
   const [data, setData] = useState([]);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [permissions, setPermissions] = useState({});
+  const [fieldPermissions, setFieldPermissions] = useState({});
+  const [triggerDownload, setTriggerDownload] = useState(false);
+  const [isLoadingPermissions, setIsLoadingPermissions] = useState(true);
+  const [filters, setFilters] = useState({});
 
+  const header = (
+    <div
+      className="table-header"
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+      }}
+    >
+      <h5 className="m-0"></h5>
+      <span className="p-input-icon-left">
+        <i className="pi pi-search" />
+        <InputText
+          type="search"
+          value={globalFilter}
+          onChange={(e) => setGlobalFilter(e.target.value)}
+          placeholder="Keyword Search"
+        />
+      </span>
+    </div>
+  );
   const pTemplate0 = (rowData, { rowIndex }) => <p>{rowData.insuranceRef}</p>;
   const pTemplate1 = (rowData, { rowIndex }) => <p>{rowData.summonsNo}</p>;
   const pTemplate10 = (rowData, { rowIndex }) => (
@@ -82,7 +116,7 @@ const AccidentCasesDataTable = ({
   const deleteTemplate = (rowData, { rowIndex }) => (
     <Button
       onClick={() => onRowDelete(rowData._id)}
-      icon="pi pi-times"
+      icon="pi pi-trash"
       className="p-button-rounded p-button-danger p-button-text"
     />
   );
@@ -102,8 +136,8 @@ const AccidentCasesDataTable = ({
         }
         setSelectedItems(_selectedItems);
       }}
-    />
-  );
+    />);
+
   const deselectAllRows = () => {
     // Logic to deselect all selected rows
     setSelectedItems([]); // Assuming setSelectedItems is used to manage selected items state
@@ -111,10 +145,13 @@ const AccidentCasesDataTable = ({
 
   const handleDelete = async () => {
     if (!selectedItems || selectedItems.length === 0) return;
+    setShowDeleteConfirmation(true);
+  };
 
+  const confirmDelete = async () => {
     try {
       const promises = selectedItems.map((item) =>
-        client.service("companies").remove(item._id),
+        client.service("accidentCases").remove(item._id),
       );
       await Promise.all(promises);
       const updatedData = data.filter(
@@ -122,10 +159,12 @@ const AccidentCasesDataTable = ({
       );
       setData(updatedData);
       setSelectedDelete(selectedItems.map((item) => item._id));
-
       deselectAllRows();
+      setShowDeleteConfirmation(false);
+      setRefresh((prev) => !prev);
     } catch (error) {
       console.error("Failed to delete selected records", error);
+      setShowDeleteConfirmation(false);
     }
   };
 
@@ -135,6 +174,110 @@ const AccidentCasesDataTable = ({
 
   const handleHideDialog = () => {
     setShowDialog(false); // Close the dialog
+  };
+  const handleCopy = async () => {
+    if (!selectedItems || selectedItems.length === 0) return;
+
+    try {
+      const dataToCopy = selectedItems.map((item) =>
+        _.omit(item, ["_id", "createdAt", "updatedAt"]),
+      );
+      await navigator.clipboard.writeText(JSON.stringify(dataToCopy, null, 2));
+      toast.current.show({
+        severity: "success",
+        summary: "Copied",
+        detail: `AccidentCases data copied to clipboard`,
+        life: 3000,
+      });
+      deselectAllRows();
+      setRefresh((prev) => !prev);
+    } catch (error) {
+      console.error("Failed to copy to clipboard", error);
+      toast.current.show({
+        severity: "error",
+        summary: "Error",
+        detail: "Failed to copy to clipboard",
+        life: 3000,
+      });
+    }
+  };
+
+  const handleDuplicate = async () => {
+    if (!selectedItems || selectedItems.length === 0) return;
+
+    try {
+      const promises = selectedItems.map((item) => {
+        const newItem = _.omit(item, ["_id", "createdAt", "updatedAt"]);
+        newItem.createdBy = user._id;
+        newItem.updatedBy = user._id;
+        return client.service("accidentCases").create(newItem);
+      });
+      const createdItems = await Promise.all(promises);
+      toast.current.show({
+        severity: "success",
+        summary: "Duplicated",
+        detail: `${selectedItems.length} accidentCases duplicated successfully`,
+        life: 3000,
+      });
+      deselectAllRows();
+      setRefresh((prev) => !prev);
+    } catch (error) {
+      console.error("Failed to duplicate accidentCases", error);
+      toast.current.show({
+        severity: "error",
+        summary: "Error",
+        detail: "Failed to duplicate accidentCases",
+        life: 3000,
+      });
+    }
+  };
+  const toast = useRef(null);
+
+  const handleExport = () => {
+    if (!items || items.length === 0) {
+      toast.current.show({
+        severity: "warn",
+        summary: "Warning",
+        detail: "No data available to export",
+        life: 3000,
+      });
+      return;
+    }
+
+    const dataToExport = selectedItems.length > 0 ? selectedItems : items;
+    setTriggerDownload(true);
+
+    toast.current.show({
+      severity: "success",
+      summary: "Exported",
+      detail: `${dataToExport.length} items exported successfully`,
+      life: 3000,
+    });
+  };
+  // Initialize filters based on selectedFilterFields
+  useEffect(() => {
+    const initialFilters = {};
+    selectedFilterFields.forEach((field) => {
+      initialFilters[field] = {
+        value: null,
+        matchMode: "contains",
+      };
+    });
+    setFilters(initialFilters);
+  }, [selectedFilterFields]);
+
+  const onFilter = (e) => {
+    setFilters(e.filters);
+  };
+
+  const filterTemplate = (options) => {
+    return (
+      <InputText
+        value={options.value || ""}
+        onChange={(e) => options.filterCallback(e.target.value)}
+        placeholder={`Filter ${options.field}`}
+      />
+    );
   };
 
   return (
@@ -158,6 +301,11 @@ const AccidentCasesDataTable = ({
         selection={selectedItems}
         onSelectionChange={(e) => setSelectedItems(e.value)}
         onCreateResult={onCreateResult}
+        globalFilter={globalFilter}
+        header={header}
+        filters={filters}
+        onFilter={onFilter}
+        filterDisplay="menu"
       >
         <Column
           selectionMode="multiple"
@@ -169,6 +317,7 @@ const AccidentCasesDataTable = ({
           header="Insurance Ref"
           body={pTemplate0}
           filter={selectedFilterFields.includes("insuranceRef")}
+          filterElement={filterTemplate}
           hidden={selectedHideFields?.includes("insuranceRef")}
           sortable
           style={{ minWidth: "8rem" }}
@@ -178,6 +327,7 @@ const AccidentCasesDataTable = ({
           header="Vins Partnership Reference"
           body={pTemplate10}
           filter={selectedFilterFields.includes("vinsPartnershipReference")}
+          filterElement={filterTemplate}
           hidden={selectedHideFields?.includes("vinsPartnershipReference")}
           sortable
           style={{ minWidth: "8rem" }}
@@ -187,6 +337,7 @@ const AccidentCasesDataTable = ({
           header="summons No"
           body={pTemplate1}
           filter={selectedFilterFields.includes("summonsNo")}
+          filterElement={filterTemplate}
           hidden={selectedHideFields?.includes("summonsNo")}
           sortable
           style={{ minWidth: "8rem" }}
@@ -297,8 +448,12 @@ const AccidentCasesDataTable = ({
         <div
           className="card center"
           style={{
+            position: "fixed",
+            bottom: "20px",
+            left: 200,
+            right: 0,
+            margin: "0 auto",
             width: "51rem",
-            margin: "20px auto 0",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
@@ -306,6 +461,9 @@ const AccidentCasesDataTable = ({
             fontSize: "14px",
             fontFamily: "Arial, sans-serif",
             color: "#2A4454",
+            backgroundColor: "#fff",
+            boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)",
+            zIndex: 1000,
           }}
         >
           <div
@@ -331,20 +489,20 @@ const AccidentCasesDataTable = ({
             />
           </div>
 
-          {/* New buttons section */}
           <div style={{ display: "flex", alignItems: "center" }}>
-            {/* Copy button */}
             <Button
               label="Copy"
-              labelposition="right"
               icon={
                 <img
                   src={CopyIcon}
-                  style={{ marginRight: "4px", width: "1em", height: "1em" }}
+                  style={{
+                    marginRight: "4px",
+                    width: "1em",
+                    height: "1em",
+                  }}
                 />
               }
-              // tooltip="Copy"
-              // onClick={handleCopy}
+              onClick={handleCopy}
               className="p-button-rounded p-button-text"
               style={{
                 backgroundColor: "white",
@@ -357,19 +515,19 @@ const AccidentCasesDataTable = ({
                 gap: "4px",
               }}
             />
-
-            {/* Duplicate button */}
             <Button
               label="Duplicate"
-              labelposition="right"
               icon={
                 <img
                   src={DuplicateIcon}
-                  style={{ marginRight: "4px", width: "1em", height: "1em" }}
+                  style={{
+                    marginRight: "4px",
+                    width: "1em",
+                    height: "1em",
+                  }}
                 />
               }
-              // tooltip="Duplicate"
-              // onClick={handleDuplicate}
+              onClick={handleDuplicate}
               className="p-button-rounded p-button-text"
               style={{
                 backgroundColor: "white",
@@ -382,19 +540,19 @@ const AccidentCasesDataTable = ({
                 gap: "4px",
               }}
             />
-
-            {/* Export button */}
             <Button
               label="Export"
-              labelposition="right"
               icon={
                 <img
                   src={ExportIcon}
-                  style={{ marginRight: "4px", width: "1em", height: "1em" }}
+                  style={{
+                    marginRight: "4px",
+                    width: "1em",
+                    height: "1em",
+                  }}
                 />
               }
-              // tooltip="Export"
-              // onClick={handleExport}
+              onClick={handleExport}
               className="p-button-rounded p-button-text"
               style={{
                 backgroundColor: "white",
@@ -407,15 +565,16 @@ const AccidentCasesDataTable = ({
                 gap: "4px",
               }}
             />
-
-            {/* Message button */}
             <Button
               label="Message"
-              labelposition="right"
               icon={
                 <img
                   src={InviteIcon}
-                  style={{ marginRight: "4px", width: "1em", height: "1em" }}
+                  style={{
+                    marginRight: "4px",
+                    width: "1em",
+                    height: "1em",
+                  }}
                 />
               }
               onClick={handleMessage}
@@ -431,25 +590,23 @@ const AccidentCasesDataTable = ({
                 gap: "4px",
               }}
             />
-
-            {/* InboxCreateDialogComponent */}
             <InboxCreateDialogComponent
               show={showDialog}
               onHide={handleHideDialog}
-              serviceInbox="companies"
+              serviceInbox="accidentCases"
               onCreateResult={onCreateResult}
-              // selectedItemsId={selectedItems.map(item => item._id)}
               selectedItemsId={selectedItems}
             />
-
-            {/* <div style={{ display: 'flex', alignItems: 'center' }}> */}
             <Button
               label="Delete"
-              labelposition="right"
               icon={
                 <img
                   src={DeleteIcon}
-                  style={{ marginRight: "4px", width: "1em", height: "1em" }}
+                  style={{
+                    marginRight: "4px",
+                    width: "1em",
+                    height: "1em",
+                  }}
                 />
               }
               onClick={handleDelete}
@@ -482,18 +639,19 @@ const AccidentCasesDataTable = ({
       </Dialog>
 
       <Dialog
-        header="Search AccidentCases"
+        header="Search accidentCases"
         visible={searchDialog}
         onHide={() => setSearchDialog(false)}
       >
         Search
       </Dialog>
       <Dialog
-        header="Filter Users"
+        header="Filter AccidentCases"
         visible={showFilter}
         onHide={() => setShowFilter(false)}
+        style={{ width: "30rem" }}
       >
-        <div className="card flex justify-content-center">
+        <div className="card flex flex-column gap-3">
           <MultiSelect
             value={selectedFilterFields}
             onChange={(e) => setSelectedFilterFields(e.value)}
@@ -501,29 +659,27 @@ const AccidentCasesDataTable = ({
             optionLabel="name"
             optionValue="value"
             filter
-            placeholder="Select Fields"
-            maxSelectedLabels={6}
-            className="w-full md:w-20rem"
+            placeholder="Select Fields to Filter"
+            maxSelectedLabels={3}
+            className="w-full"
+          />
+          <Button
+            label="Save"
+            onClick={() => {
+              onClickSaveFilteredfields(selectedFilterFields);
+            }}
+            className="w-full"
           />
         </div>
-        <Button
-          text
-          label="save as pref"
-          onClick={() => {
-            console.log(selectedFilterFields);
-            onClickSaveFilteredfields(selectedFilterFields);
-            setSelectedFilterFields(selectedFilterFields);
-            setShowFilter(false);
-          }}
-        ></Button>
       </Dialog>
 
       <Dialog
         header="Hide Columns"
         visible={showColumns}
         onHide={() => setShowColumns(false)}
+        style={{ width: "30rem" }}
       >
-        <div className="card flex justify-content-center">
+        <div className="card flex flex-column gap-3">
           <MultiSelect
             value={selectedHideFields}
             onChange={(e) => setSelectedHideFields(e.value)}
@@ -531,24 +687,89 @@ const AccidentCasesDataTable = ({
             optionLabel="name"
             optionValue="value"
             filter
-            placeholder="Select Fields"
-            maxSelectedLabels={6}
-            className="w-full md:w-20rem"
+            placeholder="Select Columns to Hide"
+            maxSelectedLabels={3}
+            className="w-full"
+          />
+          <Button
+            label="Save"
+            onClick={() => {
+              onClickSaveHiddenfields(selectedHideFields);
+            }}
+            className="w-full"
           />
         </div>
-        <Button
-          text
-          label="save as pref"
-          onClick={() => {
-            console.log(selectedHideFields);
-            onClickSaveHiddenfields(selectedHideFields);
-            setSelectedHideFields(selectedHideFields);
-            setShowColumns(false);
-          }}
-        ></Button>
+      </Dialog>
+      <Toast ref={toast} />
+      <Dialog
+        visible={showDeleteConfirmation}
+        onHide={() => setShowDeleteConfirmation(false)}
+        footer={
+          <div
+            className="flex justify-content-center"
+            style={{ padding: "1rem" }}
+          >
+            <Button
+              label="Cancel"
+              onClick={() => setShowDeleteConfirmation(false)}
+              rounded
+              className="p-button-rounded p-button-secondary ml-2"
+              style={{
+                color: "#D30000",
+                borderColor: "#D30000",
+                backgroundColor: "white",
+                width: "200px",
+                marginRight: "2rem",
+              }}
+            />
+            <Button
+              label="Delete"
+              onClick={confirmDelete}
+              className="no-focus-effect"
+              rounded
+              style={{ width: "200px" }}
+            />
+          </div>
+        }
+      >
+        <div className="flex flex-column align-items-center">
+          <img
+            src={DeleteImage}
+            alt="Delete Icon"
+            style={{
+              width: "150px",
+              height: "150px",
+              marginBottom: "10px",
+            }}
+          />
+          <span
+            style={{
+              fontWeight: "bold",
+              fontSize: "1.2em",
+              marginBottom: "10px",
+            }}
+          >
+            Delete listing?
+          </span>
+          <p style={{ marginBottom: "10px" }}>
+            This action cannot be undone, and all data will be deleted
+            permanently.
+          </p>
+        </div>
       </Dialog>
     </>
   );
 };
 
-export default AccidentCasesDataTable;
+const mapState = (state) => {
+  const { user, isLoggedIn } = state.auth;
+  return { user, isLoggedIn };
+};
+
+const mapDispatch = (dispatch) => ({
+  alert: (data) => dispatch.toast.alert(data),
+  get: () => dispatch.cache.get(),
+  set: (data) => dispatch.cache.set(data),
+});
+
+export default connect(mapState, mapDispatch)(AccidentCasesDataTable);

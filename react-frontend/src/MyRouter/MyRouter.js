@@ -3,6 +3,7 @@ import { Route, Routes } from 'react-router-dom';
 import { connect } from 'react-redux';
 import ProtectedRoute from './ProtectedRoute';
 import NoMatch from './NoMatch';
+import ProjectSideBarLayout from "../components/Layouts/ProjectSideBarLayout";
 
 import LoginPage from '../components/LoginPage/LoginPage';
 import SignUpPage from '../components/LoginPage/signUp/SignUpPage';
@@ -31,8 +32,38 @@ import AppRouter from './AppRouter';
 const MyRouter = (props) => {
     return (
         <Routes>
-              <Route path="/" exact element={props.isLoggedIn ? <DashboardPage /> : <LoginPage />} />
-            <Route path="/login" exact element={props.isLoggedIn === true ? <DashboardPage /> : <LoginPage />} />
+              <Route
+        path="/"
+        exact
+        element={
+          props.isLoggedIn ? (
+            <div className="flex min-h-[calc(100vh-5rem)] bg-white mt-20">
+              <ProjectSideBarLayout>
+                {/* {" "} */}
+                <DashboardPage />
+              </ProjectSideBarLayout>
+            </div>
+          ) : (
+            <LoginPage />
+          )
+        }
+      />
+      <Route
+        path="/login"
+        exact
+        element={
+          props.isLoggedIn ? (
+            <div className="flex min-h-[calc(100vh-5rem)] bg-white mt-20">
+              <ProjectSideBarLayout>
+                {" "}
+                <DashboardPage />{" "}
+              </ProjectSideBarLayout>{" "}
+            </div>
+          ) : (
+            <LoginPage />
+          )
+        }
+      />
             <Route path="/reset/:singleChangeForgotPasswordId" exact element={<ResetPage />} />
             <Route path="/signup" exact element={<SignUpPage />} />
             <Route path="/maintenance" exact element={<MaintenancePage />} />

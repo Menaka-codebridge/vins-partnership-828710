@@ -111,7 +111,7 @@ export const excludeLocations = [
   "/",
   "/login-faq",
   "/signup",
-  // "/login",
+  "/login",
   "/login-faq",
   /^\/reset\/[a-f0-9]{24}$/,
     /^\/accidentCases\/[a-f0-9]{24}$/

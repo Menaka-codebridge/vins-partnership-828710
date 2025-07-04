@@ -110,24 +110,24 @@ const AppSideBar = (props) => {
                   menuKey: "caseDocuments",
                   to: "/caseDocuments",
                 },
-                {
-                  icon: <Home />,
-                  label: "Histories",
-                  menuKey: "histories",
-                  to: "/histories",
-                },
+                // {
+                //   icon: <Home />,
+                //   label: "Histories",
+                //   menuKey: "histories",
+                //   to: "/histories",
+                // },
                 // {
                 //   icon: <Home />,
                 //   label: "Case Interaction",
                 //   menuKey: "caseInteraction",
                 //   to: "/caseInteraction",
                 // },
-                {
-                  icon: <Home />,
-                  label: "Token Usage",
-                  menuKey: "tokenUsage",
-                  to: "/tokenUsage",
-                },
+                // {
+                //   icon: <Home />,
+                //   label: "Token Usage",
+                //   menuKey: "tokenUsage",
+                //   to: "/tokenUsage",
+                // },
                 /* ~cb-add-menu~ */
               ]}
             />

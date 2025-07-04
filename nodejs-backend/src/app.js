@@ -62,6 +62,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/", express.static(app.get("public")));
 app.use("/reset/*", express.static(app.get("public")));
 app.use("/loginreset/*", express.static(app.get("public")));
+// app.use("/accidentCases/*", express.static(app.get("public")));
 app.use(favicon(path.join(app.get("public"), "favicon.ico")));
 // Set up Plugins and providers
 app.configure(express.rest());

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { connect } from "react-redux";
@@ -153,15 +154,31 @@ const CaseInferencePageLayout = ({
   useEffect(() => {
     const fetchDataWithRetry = async (retries = 3, delay = 2000) => {
       setLoading(true);
+      setError(""); // Reset error state
       for (let attempt = 1; attempt <= retries; attempt++) {
         try {
-          const accidentCaseData = await client
-            .service("accidentCases")
-            .get(singleAccidentCasesId, {
-              query: { $populate: ["createdBy", "updatedBy"] },
-            });
+          // Fetch accident case data
+          let accidentCaseData;
+          try {
+            accidentCaseData = await client
+              .service("accidentCases")
+              .get(singleAccidentCasesId, {
+                query: { $populate: ["createdBy", "updatedBy"] },
+              });
+            console.log("Fetched accidentCaseData:", accidentCaseData); // Debug log
+          } catch (fetchError) {
+            console.error(`Attempt ${attempt} - Failed to fetch accidentCases:`, fetchError);
+            throw new Error(`Failed to fetch case data: ${fetchError.message}`);
+          }
+
+          if (!accidentCaseData || !accidentCaseData.summonsNo) {
+            console.warn("accidentCaseData is missing or has no summonsNo:", accidentCaseData);
+            throw new Error("Case data is incomplete or missing summonsNo");
+          }
+
           setAccidentCase(accidentCaseData);
-          setSummonsNo(accidentCaseData.summonsNo || "");
+          setSummonsNo(accidentCaseData.summonsNo);
+          console.log("Set summonsNo:", accidentCaseData.summonsNo); // Debug log
           setCurrentSynonyms(accidentCaseData.synonyms || []);
 
           const sectionContentsRes = await client
@@ -249,13 +266,19 @@ const CaseInferencePageLayout = ({
             ),
           );
 
-          const currentSectionData = sortedSections.find(
-            (s) => s.value === props.section,
-          );
-          const sortedSubSections = currentSectionData
-            ? currentSectionData.subSections
-            : [];
-          setCurrentSubSections(sortedSubSections);
+          if (!selectedSection && sortedSections.length > 0) {
+            const firstSection = sortedSections[0].value;
+            setSelectedSection(firstSection);
+            setCurrentSubSections(sortedSections[0].subSections);
+            if (sortedSections[0].subSections.length > 0) {
+              setActiveSubSectionIndex(0);
+            }
+          } else {
+            const currentSectionData = sortedSections.find(
+              (s) => s.value === selectedSection,
+            );
+            setCurrentSubSections(currentSectionData ? currentSectionData.subSections : []);
+          }
 
           const caseDocsRes = await client.service("caseDocuments").find({
             query: {
@@ -316,15 +339,22 @@ const CaseInferencePageLayout = ({
           setError("");
           console.log("Fetched data:", {
             sectionContent,
-            subSections: sortedSubSections,
+            subSections: currentSubSections,
             allSections: sortedSections,
+            summonsNo: accidentCaseData.summonsNo,
           });
           return;
         } catch (error) {
           console.error(`Fetch attempt ${attempt} failed:`, error);
           if (attempt === retries) {
-            setError(error.message || "Failed to fetch data");
+            setError(error.message || "Failed to fetch case data or sections");
+            setSummonsNo("Unknown Case"); // Fallback for summonsNo
             setLoading(false);
+            alert({
+              severity: "error",
+              summary: "Fetch Error",
+              detail: error.message || "Failed to fetch case data or sections",
+            });
             return;
           }
           await new Promise((resolve) => setTimeout(resolve, delay));
@@ -333,7 +363,7 @@ const CaseInferencePageLayout = ({
     };
 
     fetchDataWithRetry();
-  }, [singleAccidentCasesId, props.section, alert, setAllSections]);
+  }, [singleAccidentCasesId, selectedSection, setAllSections, alert]);
 
   const openFilesDialog = () => setShowFilesDialog(true);
   const hideFilesDialog = () => setShowFilesDialog(false);
@@ -972,37 +1002,38 @@ const CaseInferencePageLayout = ({
             !error &&
             !requiredDocumentsAvailable[selectedSubSectionValue] && (
               <p className="p-text-center p-mt-3">
-                Infer Statement not available. Required documents are missing
-                for this subsection.
+                Content not available. Required documents are missing for this subsection.
               </p>
             )}
 
-          {!loading && !error && (
-            <TabView className="p-mt-3 analysis-tabs shadow-1 themed-panel-muted">
-              <TabPanel header="Relevant Extracts">
-                <div className="retrieved-content-box">
-                  {retrievedFromText || "(Source context...)"}
-                </div>
-              </TabPanel>
-              <TabPanel header="Confusion Matrix">
-                <div className="p-grid p-ai-start">
-                  <div className="p-col-12 p-md-4 p-lg-3">
-                    {renderConfusionMatrix(confusionMatrixData)}
+          {!loading &&
+            !error &&
+            requiredDocumentsAvailable[selectedSubSectionValue] && (
+              <TabView className="p-mt-3 analysis-tabs shadow-1 themed-panel-muted">
+                <TabPanel header="Relevant Extracts">
+                  <div className="retrieved-content-box">
+                    {retrievedFromText || "(Source context...)"}
                   </div>
-                  <div className="p-col-12 p-md-8 p-lg-9">
-                    <div className="explanation-box">
-                      {confusionMatrixExplanation || "(Explanation...)"}
+                </TabPanel>
+                <TabPanel header="Confusion Matrix">
+                  <div className="p-grid p-ai-start">
+                    <div className="p-col-12 p-md-4 p-lg-3">
+                      {renderConfusionMatrix(confusionMatrixData)}
+                    </div>
+                    <div className="p-col-12 p-md-8 p-lg-9">
+                      <div className="explanation-box">
+                        {confusionMatrixExplanation || "(Explanation...)"}
+                      </div>
                     </div>
                   </div>
-                </div>
-              </TabPanel>
-              <TabPanel header="Conclusion">
-                <div className="conclusion-content-box">
-                  {conclusionText || "(Conclusion...)"}
-                </div>
-              </TabPanel>
-            </TabView>
-          )}
+                </TabPanel>
+                <TabPanel header="Conclusion">
+                  <div className="conclusion-content-box">
+                    {conclusionText || "(Conclusion...)"}
+                  </div>
+                </TabPanel>
+              </TabView>
+            )}
         </div>
 
         {!loading && !error && (
