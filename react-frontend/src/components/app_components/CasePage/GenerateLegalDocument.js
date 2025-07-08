@@ -1,9 +1,10 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { Sidebar } from "primereact/sidebar";
 import { Button } from "primereact/button";
-import { PDFDownloadLink } from "@react-pdf/renderer";
+import { PDFDownloadLink, PDFViewer } from "@react-pdf/renderer";
 import { saveAs } from "file-saver";
 import * as docx from "docx";
+import mammoth from "mammoth";
 import LegalDocument from "./LegalDocument";
 import LegalDocumentWord from "./LegalDocumentWord";
 import "./CaseLayout.styles.css";
@@ -23,16 +24,45 @@ const GenerateLegalDocument = ({
   });
 
   const downloadLinkRef = useRef(null);
-  // Filter out "Confusion Matrix" section
-  const filteredSections = allSections.filter(
-    (section) => section.value !== "Confusion Matrix",
+  const [localSections, setLocalSections] = useState(
+    allSections.filter((section) => section.value !== "Confusion Matrix"),
   );
-  const [localSections, setLocalSections] = useState(filteredSections);
   const [removedGroundTruths, setRemovedGroundTruths] = useState({});
+  const [showPreview, setShowPreview] = useState(false);
+  const [format, setFormat] = useState(null); // "pdf" or "word"
+  const [wordPreviewHtml, setWordPreviewHtml] = useState("");
 
-  React.useEffect(() => {
-    setLocalSections(filteredSections);
+  useEffect(() => {
+    setLocalSections(
+      allSections.filter((section) => section.value !== "Confusion Matrix"),
+    );
   }, [allSections]);
+
+  useEffect(() => {
+    if (showPreview && format === "word") {
+      // Generate Word document and convert to HTML for preview
+      const doc = LegalDocumentWord({
+        accidentCase,
+        allSections: localSections,
+      });
+      docx.Packer.toBlob(doc).then((blob) => {
+        // Convert Blob to ArrayBuffer
+        blob.arrayBuffer().then((arrayBuffer) => {
+          mammoth
+            .convertToHtml({ arrayBuffer })
+            .then((result) => {
+              setWordPreviewHtml(result.value);
+            })
+            .catch((err) => {
+              console.error("Error converting Word to HTML:", err);
+              setWordPreviewHtml(
+                "<p>Error generating preview. Please download to view the content.</p>",
+              );
+            });
+        });
+      });
+    }
+  }, [showPreview, format, accidentCase, localSections]);
 
   const handleRemoveGroundTruth = (
     sectionValue,
@@ -87,6 +117,17 @@ const GenerateLegalDocument = ({
     docx.Packer.toBlob(doc).then((blob) => {
       saveAs(blob, "Legal_Opinion.docx");
     });
+  };
+
+  const handlePreview = (formatType) => {
+    setFormat(formatType);
+    setShowPreview(true);
+  };
+
+  const handleClosePreview = () => {
+    setShowPreview(false);
+    setFormat(null);
+    setWordPreviewHtml(""); // Clear Word preview HTML
   };
 
   return (
@@ -210,37 +251,124 @@ const GenerateLegalDocument = ({
             gap: "1rem",
           }}
         >
-          <PDFDownloadLink
-            document={
-              <LegalDocument
-                accidentCase={accidentCase}
-                allSections={localSections}
-              />
-            }
-            fileName="Legal_Opinion.pdf"
-            style={{ textDecoration: "none", flex: 1 }}
-          >
-            {({ blob, url, loading, error }) => (
-              <Button
-                label={loading ? "Generating PDF..." : "Download PDF"}
-                icon="pi pi-file-pdf"
-                className="p-button-primary w-full mt-13"
-                disabled={loading || !accidentCase}
-                onClick={() =>
-                  console.log("PDFDownloadLink:", { blob, url, error })
-                }
-              />
-            )}
-          </PDFDownloadLink>
           <Button
-            label="Download Word"
+            label="Preview PDF"
+            icon="pi pi-file-pdf"
+            className="p-button-primary w-full mt-13"
+            disabled={!accidentCase}
+            onClick={() => handlePreview("pdf")}
+          />
+          <Button
+            label="Preview Word"
             icon="pi pi-file-word"
             className="p-button-primary w-full mt-13"
             disabled={!accidentCase}
-            onClick={handleWordDownload}
+            onClick={() => handlePreview("word")}
           />
         </div>
       </Sidebar>
+
+      {showPreview && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            backgroundColor: "#fff",
+            zIndex: 1000,
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          <div style={{ flex: 1, overflowY: "auto", padding: "2rem" }}>
+            {format === "pdf" && (
+              <PDFViewer style={{ width: "100%", height: "100%" }}>
+                <LegalDocument
+                  accidentCase={accidentCase}
+                  allSections={localSections}
+                />
+              </PDFViewer>
+            )}
+            {format === "word" && (
+              <div
+                className="word-preview-container"
+                style={{
+                  backgroundColor: "#fff",
+                  padding: "2rem",
+                  border: "1px solid #dee2e6",
+                  height: "100%",
+                  overflowY: "auto",
+                  fontFamily: '"Times New Roman", serif',
+                  fontSize: "12pt",
+                  lineHeight: "1.6",
+                  maxWidth: "8.5in",
+                  margin: "0 auto",
+                  boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
+                }}
+                dangerouslySetInnerHTML={{
+                  __html: wordPreviewHtml || "<p>Loading Word preview...</p>",
+                }}
+              />
+            )}
+          </div>
+          <div
+            style={{
+              padding: "1rem",
+              borderTop: "1px solid #dee2e6",
+              backgroundColor: "#ffffff",
+              position: "sticky",
+              bottom: 0,
+              display: "flex",
+              gap: "1rem",
+              justifyContent: "center",
+            }}
+          >
+            {format === "pdf" && (
+              <PDFDownloadLink
+                document={
+                  <LegalDocument
+                    accidentCase={accidentCase}
+                    allSections={localSections}
+                  />
+                }
+                fileName="Legal_Opinion.pdf"
+                style={{ textDecoration: "none", flex: 1, maxWidth: "200px" }}
+              >
+                {({ blob, url, loading, error }) => (
+                  <Button
+                    label={loading ? "Generating PDF..." : "Download PDF"}
+                    icon="pi pi-file-pdf"
+                    className="p-button-primary w-full"
+                    disabled={loading || !accidentCase}
+                    onClick={() =>
+                      console.log("PDFDownloadLink:", { blob, url, error })
+                    }
+                  />
+                )}
+              </PDFDownloadLink>
+            )}
+            {format === "word" && (
+              <Button
+                label="Download Word"
+                icon="pi pi-file-word"
+                className="p-button-primary w-full"
+                style={{ maxWidth: "200px" }}
+                disabled={!accidentCase}
+                onClick={handleWordDownload}
+              />
+            )}
+            <Button
+              label="Close Preview"
+              icon="pi pi-times"
+              className="p-button-secondary w-full"
+              style={{ maxWidth: "200px" }}
+              onClick={handleClosePreview}
+            />
+          </div>
+        </div>
+      )}
     </>
   );
 };

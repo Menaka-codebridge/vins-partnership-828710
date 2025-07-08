@@ -13,9 +13,8 @@ import { MongoDBAtlasVectorSearchUtils } from "langchain/vectorstores/mongodb_at
 import { MongoDBAtlasVectorSearchError } from "langchain/vectorstores/mongodb_atlas_error";
 import indexVectorConfig from "./VectorIndex.json"; // Assuming this is the index configuration file
 
-
 class RAG {
-  constructor(collectionName, uri,sentenceTransformerModel, llmModel) {
+  constructor(collectionName, uri, sentenceTransformerModel, llmModel) {
     this.name = "RAG";
     this.description =
       "RAG (Retrieval-Augmented Generation) is a method that combines retrieval of relevant documents with generative models to produce more accurate and contextually relevant responses.";
@@ -23,9 +22,11 @@ class RAG {
     this.version = "1.0.0";
     this.database = null; // Placeholder for database connection
     this.collectionName = collectionName ?? "documents"; // Placeholder for collection name
-    this.uri = uri ??
+    this.uri =
+      uri ??
       "mongodb+srv://<username>:<password>@cluster.mongodb.net/mydatabase"; // Placeholder for MongoDB URI
-    this.sentenceTransformerModel = sentenceTransformerModel ?? "all-MiniLM-L6-v2"; // Placeholder for sentence transformer model
+    this.sentenceTransformerModel =
+      sentenceTransformerModel ?? "all-MiniLM-L6-v2"; // Placeholder for sentence transformer model
     this.llmModel = llmModel ?? "anthropic.claude-3-opus-20240229-v1:0"; // Placeholder for LLM model
   }
 

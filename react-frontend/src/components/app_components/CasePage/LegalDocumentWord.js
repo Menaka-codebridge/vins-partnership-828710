@@ -1,4 +1,3 @@
-
 import React from "react";
 import {
   Document,
@@ -60,17 +59,22 @@ const LegalDocumentWord = ({ accidentCase, allSections }) => {
       })
     : "No content available";
   const claimStatusDateFormatted = accidentCase?.claimStatusDate
-    ? new Date(accidentCase.claimStatusDate).toLocaleDateString("en-GB", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      }).replace(/\//g, ".")
+    ? new Date(accidentCase.claimStatusDate)
+        .toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        })
+        .replace(/\//g, ".")
     : "No content available";
-  const recipientDepartment = accidentCase?.recipientDepartment || "No content available";
+  const recipientDepartment =
+    accidentCase?.recipientDepartment || "No content available";
   const recipientName = accidentCase?.recipientName || "No content available";
 
   // Split recipientDepartment by commas for display
-  const recipientParts = recipientDepartment.split(",").map(part => part.trim());
+  const recipientParts = recipientDepartment
+    .split(",")
+    .map((part) => part.trim());
 
   // Get current date formatted as "DD Month YYYY"
   const currentDate = new Date().toLocaleDateString("en-GB", {
@@ -89,14 +93,14 @@ const LegalDocumentWord = ({ accidentCase, allSections }) => {
     ) {
       subsections[sectionKey] = removeCitations(
         section.subSections[0].groundTruth ||
-          "No content for this section available"
+          "No content for this section available",
       );
     } else {
       subsections[sectionKey] = {};
       section.subSections.forEach((subSection) => {
         const subSectionKey = normalizeKey(subSection.value);
         subsections[sectionKey][subSectionKey] = removeCitations(
-          subSection.groundTruth || "No content for this section available"
+          subSection.groundTruth || "No content for this section available",
         );
       });
     }
@@ -106,13 +110,15 @@ const LegalDocumentWord = ({ accidentCase, allSections }) => {
   let estimate = "No content available";
   let conclusionItems = [];
   if (subsections.conclusion) {
-    const conclusionMatch = subsections.conclusion.match(/TOTAL\s*RM\s*([\d,.]+)/i);
+    const conclusionMatch = subsections.conclusion.match(
+      /TOTAL\s*RM\s*([\d,.]+)/i,
+    );
     if (conclusionMatch) {
       estimate = `RM ${conclusionMatch[1]}`;
     }
     // Parse conclusion for damages items, excluding citations
     const itemMatches = subsections.conclusion.matchAll(
-      /(i{1,3}\.\s*[^:]+?)\s*(RM\s*[\d,.]+|No relevant information found)/g
+      /(i{1,3}\.\s*[^:]+?)\s*(RM\s*[\d,.]+|No relevant information found)/g,
     );
     for (const match of itemMatches) {
       conclusionItems.push({
@@ -125,7 +131,8 @@ const LegalDocumentWord = ({ accidentCase, allSections }) => {
   // Extract Liability percentage from Opinion on Liability infer statement
   let liability = "No content available";
   if (subsections.liability?.opiniononliability) {
-    const liabilityMatch = subsections.liability.opiniononliability.match(/(\d+)%\s*liable/i);
+    const liabilityMatch =
+      subsections.liability.opiniononliability.match(/(\d+)%\s*liable/i);
     if (liabilityMatch) {
       liability = `${liabilityMatch[1]}%`;
     }
@@ -133,7 +140,10 @@ const LegalDocumentWord = ({ accidentCase, allSections }) => {
 
   // Calculate Quantum on (100%) as Estimate * Liability
   let quantum = "No content available";
-  if (estimate !== "No content available" && liability !== "No content available") {
+  if (
+    estimate !== "No content available" &&
+    liability !== "No content available"
+  ) {
     const estimateValue = parseFloat(estimate.replace(/RM\s*|,|/g, ""));
     const liabilityValue = parseFloat(liability.replace(/%/g, "")) / 100;
     const quantumValue = estimateValue * liabilityValue;
@@ -145,7 +155,12 @@ const LegalDocumentWord = ({ accidentCase, allSections }) => {
 
   // Log subsections and extracted values for debugging
   console.log("Mapped Subsections:", subsections);
-  console.log("Extracted Values:", { estimate, liability, quantum, conclusionItems });
+  console.log("Extracted Values:", {
+    estimate,
+    liability,
+    quantum,
+    conclusionItems,
+  });
 
   // Static data from sample PDF
   const confidential = "PRIVATE & CONFIDENTIAL BY EMAIL";
@@ -302,7 +317,9 @@ const LegalDocumentWord = ({ accidentCase, allSections }) => {
     {
       key: "liability",
       label: "C. LIABILITY",
-      subSections: [{ key: "opiniononliability", label: "Opinion on Liability" }],
+      subSections: [
+        { key: "opiniononliability", label: "Opinion on Liability" },
+      ],
     },
     { key: "liabilityfraud", label: "D. LIABILITY FRAUD" },
     {
@@ -348,14 +365,17 @@ const LegalDocumentWord = ({ accidentCase, allSections }) => {
         // },
         // footers: { default: createFooter() },
         children: [
-          ...recipientParts.map(part => (
-            new Paragraph({
-              children: [new TextRun({ text: part, size: 18 })],
-              spacing: { after: 20 },
-            })
-          )),
+          ...recipientParts.map(
+            (part) =>
+              new Paragraph({
+                children: [new TextRun({ text: part, size: 18 })],
+                spacing: { after: 20 },
+              }),
+          ),
           new Paragraph({
-            children: [new TextRun({ text: confidential, size: 18, bold: true })],
+            children: [
+              new TextRun({ text: confidential, size: 18, bold: true }),
+            ],
             alignment: AlignmentType.LEFT,
           }),
           new Paragraph({
@@ -364,7 +384,9 @@ const LegalDocumentWord = ({ accidentCase, allSections }) => {
             spacing: { after: 300 },
           }),
           new Paragraph({
-            children: [new TextRun({ text: `Dear Ms ${recipientName},`, size: 18 })],
+            children: [
+              new TextRun({ text: `Dear Ms ${recipientName},`, size: 18 }),
+            ],
             spacing: { after: 300 },
           }),
           new Table({
@@ -761,7 +783,7 @@ const LegalDocumentWord = ({ accidentCase, allSections }) => {
               width: { size: 50, type: WidthType.PERCENTAGE },
               rows: [
                 ...conclusionItems.map((item) =>
-                  createConclusionTableRow(item.label, item.value)
+                  createConclusionTableRow(item.label, item.value),
                 ),
                 createConclusionTableRow("TOTAL", estimate, true),
               ],

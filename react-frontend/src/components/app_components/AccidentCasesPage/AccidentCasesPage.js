@@ -16,7 +16,7 @@ import AccidentCasesFakerDialogComponent from "./AccidentCasesFakerDialogCompone
 import AccidentCasesSeederDialogComponent from "./AccidentCasesSeederDialogComponent";
 import SortIcon from "../../../assets/media/Sort.png";
 import FilterIcon from "../../../assets/media/Filter.png";
-import HelpbarService from "../../../services/HelpbarService";
+// import HelpbarService from "../../../services/HelpbarService";
 
 import { v4 as uuidv4 } from "uuid";
 const AccidentCasesPage = (props) => {
@@ -49,7 +49,6 @@ const AccidentCasesPage = (props) => {
   const [refresh, setRefresh] = useState(false);
   const [paginatorRecordsNo, setPaginatorRecordsNo] = useState(10);
   const [activeSort, setActiveSort] = useState(null);
-
 
   const toggleHelpSidebar = () => {
     setHelpSidebarVisible(!isHelpSidebarVisible);
@@ -116,9 +115,15 @@ const AccidentCasesPage = (props) => {
           message: error.message || "Failed get Accident Cases",
         });
       });
-  }, [showFakerDialog, showDeleteAllDialog, showEditDialog, showCreateDialog,refresh,]);
+  }, [
+    showFakerDialog,
+    showDeleteAllDialog,
+    showEditDialog,
+    showCreateDialog,
+    refresh,
+  ]);
 
- const onClickSaveFilteredfields = (ff) => {
+  const onClickSaveFilteredfields = (ff) => {
     setSelectedFilterFields(ff);
     setShowFilter(false);
   };
@@ -210,7 +215,7 @@ const AccidentCasesPage = (props) => {
   const onRowClick = ({ data }) => {
     navigate(`/accidentCases/${data._id}`);
   };
-const copyPageLink = () => {
+  const copyPageLink = () => {
     const currentUrl = window.location.href;
     navigator.clipboard
       .writeText(currentUrl)
@@ -255,10 +260,10 @@ const copyPageLink = () => {
         data.length > 0
           ? setTriggerDownload(true)
           : props.alert({
-            title: "Export",
-            type: "warn",
-            message: "no data to export",
-          });
+              title: "Export",
+              type: "warn",
+              message: "no data to export",
+            });
       },
     },
     {
@@ -268,7 +273,7 @@ const copyPageLink = () => {
     },
     { separator: true },
 
-     process.env.REACT_APP_ENV == "development"
+    process.env.REACT_APP_ENV == "development"
       ? {
           label: "Testing",
           icon: "pi pi-check-circle",
@@ -300,7 +305,7 @@ const copyPageLink = () => {
     },
   ];
 
-   const onMenuSort = (field, order) => {
+  const onMenuSort = (field, order) => {
     let sortedData;
     if (field.includes(".")) {
       sortedData = _.orderBy(data, [(item) => _.get(item, field, "")], [order]);
@@ -310,117 +315,117 @@ const copyPageLink = () => {
     setData(sortedData);
     setActiveSort(`${field}-${order}`);
   };
-  const filterMenuItems = [
-    {
-      label: `Filter`,
-      icon: "pi pi-filter",
-      command: () => setShowFilter(true),
-    },
-    {
-      label: `Clear`,
-      icon: "pi pi-filter-slash",
-      command: () => setSelectedFilterFields([]),
-    },
-  ];
+  // const filterMenuItems = [
+  //   {
+  //     label: `Filter`,
+  //     icon: "pi pi-filter",
+  //     command: () => setShowFilter(true),
+  //   },
+  //   {
+  //     label: `Clear`,
+  //     icon: "pi pi-filter-slash",
+  //     command: () => setSelectedFilterFields([]),
+  //   },
+  // ];
 
-  const sortMenuItems = [
-    {
-      label: "Sort by",
-      template: (item) => (
-        <div
-          style={{
-            fontWeight: "bold",
-            padding: "8px 16px",
-            backgroundColor: "#f8f9fa",
-            fontSize: "14px",
-            color: "#333",
-          }}
-        >
-          {item.label}
-        </div>
-      ),
-      command: () => {},
-    },
-    { separator: true },
-    ...fields.flatMap((field) => [
-      {
-        label: `${field.name} (Ascending)`,
-        icon: activeSort === `${field.value}-asc` ? "pi pi-check" : null,
-        command: () => onMenuSort(field.value, "asc"),
-        template: (item) => (
-          <div
-            style={{
-              padding: "8px 16px",
-              fontSize: "13px",
-              color: activeSort === `${field.value}-asc` ? "#007bff" : "#333",
-              backgroundColor:
-                activeSort === `${field.value}-asc` ? "#e6f3ff" : "transparent",
-            }}
-          >
-            {item.icon && (
-              <i
-                className={item.icon}
-                style={{ marginRight: "8px", color: "#007bff" }}
-              />
-            )}
-            {item.label}
-          </div>
-        ),
-      },
-      {
-        label: `${field.name} (Descending)`,
-        icon: activeSort === `${field.value}-desc` ? "pi pi-check" : null,
-        command: () => onMenuSort(field.value, "desc"),
-        template: (item) => (
-          <div
-            style={{
-              padding: "8px 16px",
-              fontSize: "13px",
-              color: activeSort === `${field.value}-desc` ? "#007bff" : "#333",
-              backgroundColor:
-                activeSort === `${field.value}-desc`
-                  ? "#e6f3ff"
-                  : "transparent",
-            }}
-          >
-            {item.icon && (
-              <i
-                className={item.icon}
-                style={{ marginRight: "8px", color: "#007bff" }}
-              />
-            )}
-            {item.label}
-          </div>
-        ),
-      },
-    ]),
-    { separator: true },
-    {
-      label: "Reset",
-      icon: "pi pi-refresh",
-      command: () => {
-        setData(_.cloneDeep(initialData));
-        setActiveSort(null);
-      },
-      template: (item) => (
-        <div
-          style={{
-            color: "#d30000",
-            textAlign: "center",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            fontWeight: "bold",
-            padding: "8px 16px",
-            fontSize: "13px",
-          }}
-        >
-          <i className={item.icon} style={{ marginRight: "8px" }} />
-          {item.label}
-        </div>
-      ),
-    },
-  ];
+  // const sortMenuItems = [
+  //   {
+  //     label: "Sort by",
+  //     template: (item) => (
+  //       <div
+  //         style={{
+  //           fontWeight: "bold",
+  //           padding: "8px 16px",
+  //           backgroundColor: "#f8f9fa",
+  //           fontSize: "14px",
+  //           color: "#333",
+  //         }}
+  //       >
+  //         {item.label}
+  //       </div>
+  //     ),
+  //     command: () => {},
+  //   },
+  //   { separator: true },
+  //   ...fields.flatMap((field) => [
+  //     {
+  //       label: `${field.name} (Ascending)`,
+  //       icon: activeSort === `${field.value}-asc` ? "pi pi-check" : null,
+  //       command: () => onMenuSort(field.value, "asc"),
+  //       template: (item) => (
+  //         <div
+  //           style={{
+  //             padding: "8px 16px",
+  //             fontSize: "13px",
+  //             color: activeSort === `${field.value}-asc` ? "#007bff" : "#333",
+  //             backgroundColor:
+  //               activeSort === `${field.value}-asc` ? "#e6f3ff" : "transparent",
+  //           }}
+  //         >
+  //           {item.icon && (
+  //             <i
+  //               className={item.icon}
+  //               style={{ marginRight: "8px", color: "#007bff" }}
+  //             />
+  //           )}
+  //           {item.label}
+  //         </div>
+  //       ),
+  //     },
+  //     {
+  //       label: `${field.name} (Descending)`,
+  //       icon: activeSort === `${field.value}-desc` ? "pi pi-check" : null,
+  //       command: () => onMenuSort(field.value, "desc"),
+  //       template: (item) => (
+  //         <div
+  //           style={{
+  //             padding: "8px 16px",
+  //             fontSize: "13px",
+  //             color: activeSort === `${field.value}-desc` ? "#007bff" : "#333",
+  //             backgroundColor:
+  //               activeSort === `${field.value}-desc`
+  //                 ? "#e6f3ff"
+  //                 : "transparent",
+  //           }}
+  //         >
+  //           {item.icon && (
+  //             <i
+  //               className={item.icon}
+  //               style={{ marginRight: "8px", color: "#007bff" }}
+  //             />
+  //           )}
+  //           {item.label}
+  //         </div>
+  //       ),
+  //     },
+  //   ]),
+  //   { separator: true },
+  //   {
+  //     label: "Reset",
+  //     icon: "pi pi-refresh",
+  //     command: () => {
+  //       setData(_.cloneDeep(initialData));
+  //       setActiveSort(null);
+  //     },
+  //     template: (item) => (
+  //       <div
+  //         style={{
+  //           color: "#d30000",
+  //           textAlign: "center",
+  //           display: "flex",
+  //           justifyContent: "center",
+  //           alignItems: "center",
+  //           fontWeight: "bold",
+  //           padding: "8px 16px",
+  //           fontSize: "13px",
+  //         }}
+  //       >
+  //         <i className={item.icon} style={{ marginRight: "8px" }} />
+  //         {item.label}
+  //       </div>
+  //     ),
+  //   },
+  // ];
 
   return (
     <div className="mt-5">
@@ -442,7 +447,7 @@ const copyPageLink = () => {
         <div className="col-6 flex justify-content-end">
           <>
             {" "}
-            <SplitButton
+            {/* <SplitButton
               model={filterMenuItems.filter(
                 (m) => !(m.icon === "pi pi-trash" && data?.length === 0),
               )}
@@ -454,7 +459,7 @@ const copyPageLink = () => {
               }
               buttonClassName="hidden"
               menuButtonClassName="ml-1 p-button-text"
-            // menuStyle={{ width: "250px" }}
+              // menuStyle={{ width: "250px" }}
             ></SplitButton>
             <SplitButton
               model={sortMenuItems.filter(
@@ -469,7 +474,7 @@ const copyPageLink = () => {
               buttonClassName="hidden"
               menuButtonClassName="ml-1 p-button-text"
               menuStyle={{ width: "200px" }}
-            ></SplitButton>
+            ></SplitButton> */}
             {/* <Button
               label="add"
               style={{ height: "30px" }}
@@ -509,7 +514,7 @@ const copyPageLink = () => {
             selectedDelete={selectedDelete}
             setSelectedDelete={setSelectedDelete}
             onCreateResult={onCreateResult}
-             setRefresh={setRefresh}
+            setRefresh={setRefresh}
           />
         </div>
       </div>
@@ -555,11 +560,11 @@ const copyPageLink = () => {
         onYes={() => deleteAll()}
         loading={loading}
       />
-  <HelpbarService
+      {/* <HelpbarService
         isVisible={isHelpSidebarVisible}
         onToggle={toggleHelpSidebar}
         serviceName="accidentCases"
-      />
+      /> */}
     </div>
   );
 };

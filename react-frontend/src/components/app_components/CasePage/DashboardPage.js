@@ -118,7 +118,7 @@ const DashboardPage = (props) => {
           }
           .dashboard-main-content {
             flex-grow: 1;
-            width:85.5rem ;
+            width: 85.5rem;
             padding: 4rem 2rem;
             position: relative;
             background-color: var(--theme-content-bg);

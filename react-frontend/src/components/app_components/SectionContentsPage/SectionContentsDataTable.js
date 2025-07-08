@@ -50,13 +50,56 @@ const SectionContentsDataTable = ({
   const [showDialog, setShowDialog] = useState(false);
   const [data, setData] = useState([]);
 
-  const dropdownTemplate0 = (rowData, { rowIndex }) => (
-    <p>{rowData.summonsNo?.summonsNo}</p>
+  const header = (
+    <div
+      className="table-header"
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+      }}
+    >
+      <h5 className="m-0"></h5>
+      <span className="p-input-icon-left">
+        <i className="pi pi-search" />
+        <InputText
+          type="search"
+          value={globalFilter}
+          onChange={(e) => setGlobalFilter(e.target.value)}
+          placeholder="Keyword Search"
+        />
+      </span>
+    </div>
   );
+  const dropdownTemplate0 = (rowData, { rowIndex }) => {
+    // Handle direct string values
+    if (typeof rowData.summonsNo === "string") {
+      return <p>{rowData.summonsNo}</p>;
+    }
+
+    // Handle populated object
+    if (rowData.summonsNo?.summonsNo) {
+      return <p>{rowData.summonsNo.summonsNo}</p>;
+    }
+
+    // Handle null/undefined
+    return <p>No case number</p>;
+  };
   const pTemplate1 = (rowData, { rowIndex }) => <p>{rowData.section}</p>;
   const pTemplate2 = (rowData, { rowIndex }) => <p>{rowData.subsection}</p>;
   const pTemplate3 = (rowData, { rowIndex }) => (
-    <p>{rowData.initialInference}</p>
+    <div
+      style={{
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+        maxHeight: "3em",
+        lineHeight: "1.5em",
+        wordBreak: "break-word", // Ensure long words don't overflow
+      }}
+      title={rowData.initialInference}
+    >
+      {rowData.initialInference}
+    </div>
   );
   const pTemplate4 = (rowData, { rowIndex }) => <p>{rowData.groundTruth}</p>;
   const pTemplate5 = (rowData, { rowIndex }) => <p>{rowData.promptUsed}</p>;
@@ -70,10 +113,10 @@ const SectionContentsDataTable = ({
   );
   const deleteTemplate = (rowData, { rowIndex }) => (
     <Button
-      onClick={() => onRowDelete(rowData._id)}
-      icon="pi pi-times"
-      className="p-button-rounded p-button-danger p-button-text"
-    />
+         onClick={() => onRowDelete(rowData._id)}
+         icon="pi pi-trash"
+         className="p-button-rounded p-button-danger p-button-text"
+       />
   );
 
   const checkboxTemplate = (rowData) => (
@@ -147,6 +190,8 @@ const SectionContentsDataTable = ({
         selection={selectedItems}
         onSelectionChange={(e) => setSelectedItems(e.value)}
         onCreateResult={onCreateResult}
+        globalFilter={globalFilter}
+        header={header}
       >
         <Column
           selectionMode="multiple"
@@ -158,7 +203,7 @@ const SectionContentsDataTable = ({
           header="Case No"
           body={dropdownTemplate0}
           filter={selectedFilterFields.includes("summonsNo")}
-          hidden={selectedHideFields?.includes("summonsNo")}
+          // hidden={selectedHideFields?.includes("summonsNo")}
           style={{ minWidth: "8rem" }}
         />
         <Column
@@ -215,7 +260,7 @@ const SectionContentsDataTable = ({
           sortable
           style={{ minWidth: "8rem" }}
         />
-        <Column header="Edit" body={editTemplate} />
+        {/* <Column header="Edit" body={editTemplate} /> */}
         <Column header="Delete" body={deleteTemplate} />
       </DataTable>
 

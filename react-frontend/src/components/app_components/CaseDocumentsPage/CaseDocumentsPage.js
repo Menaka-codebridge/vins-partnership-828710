@@ -100,7 +100,7 @@ const CaseDocumentsPage = (props) => {
       })
       .then((res) => {
         let results = res.data;
-
+   results = _.orderBy(results, ["createdAt"], ["desc"]);
         setData(results);
         props.hide();
         setLoading(false);
@@ -407,7 +407,7 @@ const CaseDocumentsPage = (props) => {
               menuButtonClassName="ml-1 p-button-text"
               menuStyle={{ width: "200px" }}
             ></SplitButton>
-            <Button
+            {/* <Button
               label="add"
               style={{ height: "30px" }}
               rounded
@@ -415,12 +415,12 @@ const CaseDocumentsPage = (props) => {
               icon="pi pi-plus"
               onClick={() => setShowCreateDialog(true)}
               role="caseDocuments-add-button"
-            />
+            /> */}
           </>
         </div>
       </div>
       <div className="grid align-items-center">
-        <div className="col-11" role="caseDocuments-datatable">
+        <div className="col-12" role="caseDocuments-datatable">
           <CaseDocumentsDatatable
             items={data}
             fields={fields}

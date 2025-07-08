@@ -29,6 +29,7 @@
 		"jwt-decode": "^4.0.0",
 		"libphonenumber-js": "^1.11.18",
 		"lodash": "^4.17.21",
+		"mammoth": "^1.9.1",
 		"moment": "^2.29.4",
 		"npm": "^11.4.2",
 		"primeflex": "^3.3.1",

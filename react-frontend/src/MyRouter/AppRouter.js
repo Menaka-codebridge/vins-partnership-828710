@@ -24,11 +24,11 @@ import SingleTokenUsagePage from "../components/app_components/TokenUsagePage/Si
 import TokenUsageProjectLayoutPage from "../components/app_components/TokenUsagePage/TokenUsageProjectLayoutPage";
 //  ~cb-add-import~
 
-const AppRouter = () => {
+const AppRouter = (props) => {
     return (
         <Routes>
             {/* ~cb-add-unprotected-route~ */}
-            <Route element={<ProtectedRoute redirectPath={'/login'} />}>
+{/*            
                 <Route path="/accidentCases/:singleAccidentCasesId" exact element={<SingleAccidentCasesPage />} />
                 <Route path="/accidentCases" exact element={<AccidentCaseProjectLayoutPage />} />
                 <Route path="/sectionContents/:singleSectionContentsId" exact element={<SingleSectionContentsPage />} />
@@ -42,14 +42,14 @@ const AppRouter = () => {
                 <Route path="/groundTruthQueues/:singleGroundTruthQueuesId" exact element={<SingleGroundTruthQueuesPage />} />
                 <Route path="/groundTruthQueues" exact element={<GroundTruthQueueProjectLayoutPage />} />
                 <Route path="/promptQueues/:singlePromptQueuesId" exact element={<SinglePromptQueuesPage />} />
-                <Route path="/promptQueues" exact element={<PromptQueueProjectLayoutPage />} />
+                <Route path="/promptQueues" exact element={<PromptQueueProjectLayoutPage />} /> */}
                 <Route path="/caseInteraction" exact element={< CaseInteractionPage />} />
                 <Route path="/backgroundFacts" exact element={< BackgroundFactsPage />} />
                 <Route path="/caseDashboard" exact element={< DashboardPage />} />
                 <Route path="/tokenUsage/:singleTokenUsageId" exact element={<SingleTokenUsagePage />} />
                 <Route path="/tokenUsage" exact element={<TokenUsageProjectLayoutPage />} />
                 {/* ~cb-add-protected-route~ */}
-            </Route>
+
         </Routes>
     );
 }

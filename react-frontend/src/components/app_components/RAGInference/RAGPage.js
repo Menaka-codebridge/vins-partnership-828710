@@ -48,10 +48,10 @@ const RAGPage = () => {
                 apiResultContent.trim() === "")
             ) {
               console.warn(
-                `[Worker ${jobId}] Extraction API returned empty or invalid content for ${documentType}`
+                `[Worker ${jobId}] Extraction API returned empty or invalid content for ${documentType}`,
               );
               throw new Error(
-                "Extraction API returned empty or invalid content"
+                "Extraction API returned empty or invalid content",
               );
             }
 

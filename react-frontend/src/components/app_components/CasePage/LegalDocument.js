@@ -228,17 +228,22 @@ const LegalDocument = ({ accidentCase, allSections }) => {
       })
     : "No content available";
   const claimStatusDateFormatted = accidentCase?.claimStatusDate
-    ? new Date(accidentCase.claimStatusDate).toLocaleDateString("en-GB", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      }).replace(/\//g, ".")
+    ? new Date(accidentCase.claimStatusDate)
+        .toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        })
+        .replace(/\//g, ".")
     : "No content available";
-  const recipientDepartment = accidentCase?.recipientDepartment || "No content available";
+  const recipientDepartment =
+    accidentCase?.recipientDepartment || "No content available";
   const recipientName = accidentCase?.recipientName || "No content available";
 
   // Split recipientDepartment by commas for display
-  const recipientParts = recipientDepartment.split(",").map(part => part.trim());
+  const recipientParts = recipientDepartment
+    .split(",")
+    .map((part) => part.trim());
 
   // Get current date formatted as "DD Month YYYY"
   const currentDate = new Date().toLocaleDateString("en-GB", {
@@ -272,13 +277,15 @@ const LegalDocument = ({ accidentCase, allSections }) => {
   let estimate = "No content available";
   let conclusionItems = [];
   if (subsections.conclusion) {
-    const conclusionMatch = subsections.conclusion.match(/TOTAL\s*RM\s*([\d,.]+)/i);
+    const conclusionMatch = subsections.conclusion.match(
+      /TOTAL\s*RM\s*([\d,.]+)/i,
+    );
     if (conclusionMatch) {
       estimate = `RM ${conclusionMatch[1]}`;
     }
     // Parse conclusion for damages items
     const itemMatches = subsections.conclusion.matchAll(
-      /(i{1,3}\.\s*[^:]+?)\s*(RM\s*[\d,.]+|No relevant information found)\s*\[\d+\]/g
+      /(i{1,3}\.\s*[^:]+?)\s*(RM\s*[\d,.]+|No relevant information found)\s*\[\d+\]/g,
     );
     for (const match of itemMatches) {
       conclusionItems.push({
@@ -291,7 +298,8 @@ const LegalDocument = ({ accidentCase, allSections }) => {
   // Extract Liability percentage from Opinion on Liability infer statement
   let liability = "No content available";
   if (subsections.liability?.opiniononliability) {
-    const liabilityMatch = subsections.liability.opiniononliability.match(/(\d+)%\s*liable/i);
+    const liabilityMatch =
+      subsections.liability.opiniononliability.match(/(\d+)%\s*liable/i);
     if (liabilityMatch) {
       liability = `${liabilityMatch[1]}%`;
     }
@@ -299,7 +307,10 @@ const LegalDocument = ({ accidentCase, allSections }) => {
 
   // Calculate Quantum on (100%) as Estimate * Liability
   let quantum = "No content available";
-  if (estimate !== "No content available" && liability !== "No content available") {
+  if (
+    estimate !== "No content available" &&
+    liability !== "No content available"
+  ) {
     const estimateValue = parseFloat(estimate.replace(/RM\s*|,|/g, ""));
     const liabilityValue = parseFloat(liability.replace(/%/g, "")) / 100;
     const quantumValue = estimateValue * liabilityValue;
@@ -311,7 +322,12 @@ const LegalDocument = ({ accidentCase, allSections }) => {
 
   // Log subsections and extracted values for debugging
   console.log("Mapped Subsections:", subsections);
-  console.log("Extracted Values:", { estimate, liability, quantum, conclusionItems });
+  console.log("Extracted Values:", {
+    estimate,
+    liability,
+    quantum,
+    conclusionItems,
+  });
 
   // Static data from sample PDF
   const confidential = "PRIVATE & CONFIDENTIAL BY EMAIL";
@@ -355,7 +371,9 @@ const LegalDocument = ({ accidentCase, allSections }) => {
     {
       key: "liability",
       label: "C. LIABILITY",
-      subSections: [{ key: "opiniononliability", label: "Opinion on Liability" }],
+      subSections: [
+        { key: "opiniononliability", label: "Opinion on Liability" },
+      ],
     },
     { key: "liabilityfraud", label: "D. LIABILITY FRAUD" },
     {
@@ -382,7 +400,9 @@ const LegalDocument = ({ accidentCase, allSections }) => {
         <Image style={styles.HeaderImage} src={data.HeaderSrc} />
         <View style={styles.recipientInfo}>
           {recipientParts.map((part, index) => (
-            <Text key={index} style={styles.recipientText}>{part}</Text>
+            <Text key={index} style={styles.recipientText}>
+              {part}
+            </Text>
           ))}
         </View>
         <View style={styles.dateAndConfidential}>
@@ -411,7 +431,8 @@ const LegalDocument = ({ accidentCase, allSections }) => {
         </Text>
         <Text style={styles.mainHeader}>A. STATUS</Text>
         <Text style={styles.text}>
-          Please note that the abovementioned matter has been fixed for {claimStatus} on {claimStatusDateFormatted}.
+          Please note that the abovementioned matter has been fixed for{" "}
+          {claimStatus} on {claimStatusDateFormatted}.
         </Text>
         <View style={styles.footerContainerFirst} fixed>
           <Image style={styles.footerImage} src={data.footerSrc} />
@@ -480,7 +501,9 @@ const LegalDocument = ({ accidentCase, allSections }) => {
             {subsections.liability.opiniononliability && (
               <>
                 <Text style={styles.subHeader}>Opinion on Liability</Text>
-                <Text style={styles.text}>{subsections.liability.opiniononliability}</Text>
+                <Text style={styles.text}>
+                  {subsections.liability.opiniononliability}
+                </Text>
               </>
             )}
           </>
@@ -574,7 +597,9 @@ const LegalDocument = ({ accidentCase, allSections }) => {
                   <Text style={styles.conclusionTableTotalLabel}>TOTAL</Text>
                 </View>
                 <View style={styles.conclusionTableColValue}>
-                  <Text style={styles.conclusionTableTotalValue}>{estimate}</Text>
+                  <Text style={styles.conclusionTableTotalValue}>
+                    {estimate}
+                  </Text>
                 </View>
               </View>
             </View>

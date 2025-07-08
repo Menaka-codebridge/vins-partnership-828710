@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { connect } from "react-redux";
@@ -84,8 +83,8 @@ const CaseInferencePageLayout = ({
     "General Damages": ["Plaintiff File", "Medical File"],
     "Cost of Future Treatments": ["Plaintiff File", "Medical File"],
     "Special Damages": ["Plaintiff File", "Medical File"],
-    "Strategy": ["Plaintiff File", "Medical File"],
-    "Conclusion": ["Plaintiff File", "Medical File"],
+    Strategy: ["Plaintiff File", "Medical File"],
+    Conclusion: ["Plaintiff File", "Medical File"],
   };
 
   const SECTION_ORDER = [
@@ -167,12 +166,18 @@ const CaseInferencePageLayout = ({
               });
             console.log("Fetched accidentCaseData:", accidentCaseData); // Debug log
           } catch (fetchError) {
-            console.error(`Attempt ${attempt} - Failed to fetch accidentCases:`, fetchError);
+            console.error(
+              `Attempt ${attempt} - Failed to fetch accidentCases:`,
+              fetchError,
+            );
             throw new Error(`Failed to fetch case data: ${fetchError.message}`);
           }
 
           if (!accidentCaseData || !accidentCaseData.summonsNo) {
-            console.warn("accidentCaseData is missing or has no summonsNo:", accidentCaseData);
+            console.warn(
+              "accidentCaseData is missing or has no summonsNo:",
+              accidentCaseData,
+            );
             throw new Error("Case data is incomplete or missing summonsNo");
           }
 
@@ -277,7 +282,9 @@ const CaseInferencePageLayout = ({
             const currentSectionData = sortedSections.find(
               (s) => s.value === selectedSection,
             );
-            setCurrentSubSections(currentSectionData ? currentSectionData.subSections : []);
+            setCurrentSubSections(
+              currentSectionData ? currentSectionData.subSections : [],
+            );
           }
 
           const caseDocsRes = await client.service("caseDocuments").find({
@@ -1002,7 +1009,8 @@ const CaseInferencePageLayout = ({
             !error &&
             !requiredDocumentsAvailable[selectedSubSectionValue] && (
               <p className="p-text-center p-mt-3">
-                Content not available. Required documents are missing for this subsection.
+                Content not available. Required documents are missing for this
+                subsection.
               </p>
             )}
 

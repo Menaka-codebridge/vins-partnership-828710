@@ -1,17 +1,27 @@
-
 import React, { useState, useRef } from "react";
 import { connect } from "react-redux";
 import { Dialog } from "primereact/dialog";
 import { Button } from "primereact/button";
 import { InputText } from "primereact/inputtext";
 import { Dropdown } from "primereact/dropdown";
+import { Calendar } from "primereact/calendar";
 import { Steps } from "primereact/steps";
 import { Message } from "primereact/message";
 import { TabView, TabPanel } from "primereact/tabview";
 import { Toast } from "primereact/toast";
 import { ProgressBar } from "primereact/progressbar";
-import { DndContext, closestCenter, useSensor, useSensors, PointerSensor } from "@dnd-kit/core";
-import { SortableContext, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
+import {
+  DndContext,
+  closestCenter,
+  useSensor,
+  useSensors,
+  PointerSensor,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  useSortable,
+} from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import client from "../../../services/restClient";
 import UploadFilesToS3 from "../../../services/UploadFilesToS3";
@@ -38,8 +48,193 @@ const getSchemaValidationErrorsStrings = (errorObj) => {
 const CreateCaseDialogStyled = (props) => {
   const synonymousList = [
     { primary: "represent", synonyms: "warrant, covenant, undertake" },
-    { primary: "representation", synonyms: "warranty, covenant, undertaking, assurance, guarantee" },
+    {
+      primary: "representation",
+      synonyms: "warranty, covenant, undertaking, assurance, guarantee",
+    },
     { primary: "negative", synonyms: "restrictive" },
+  ];
+
+  const courtOptions = [
+    { label: "Putrajaya Federal Court", value: "Putrajaya Federal Court" },
+    { label: "Putrajaya Court of Appeal", value: "Putrajaya Court of Appeal" },
+    { label: "Kangar High Court", value: "Kangar High Court" },
+    { label: "Alor Setar High Court", value: "Alor Setar High Court" },
+    { label: "Sungai Petani High Court", value: "Sungai Petani High Court" },
+    { label: "George Town High Court", value: "George Town High Court" },
+    { label: "Ipoh High Court", value: "Ipoh High Court" },
+    { label: "Taiping High Court", value: "Taiping High Court" },
+    { label: "Shah Alam High Court", value: "Shah Alam High Court" },
+    { label: "Klang HighJan Court", value: "Klang High Court" },
+    { label: "Kuala Lumpur High Court", value: "Kuala Lumpur High Court" },
+    { label: "Seremban High Court", value: "Seremban High Court" },
+    { label: "Melaka High Court", value: "Melaka High Court" },
+    { label: "Johor Bahru High Court", value: "Johor Bahru High Court" },
+    { label: "Muar High Court", value: "Muar High Court" },
+    { label: "Kuantan High Court", value: "Kuantan High Court" },
+    { label: "Temerloh High Court", value: "Temerloh High Court" },
+    {
+      label: "Kuala Terengganu High Court",
+      value: "Kuala Terengganu High Court",
+    },
+    { label: "Kota Bharu High Court", value: "Kota Bharu High Court" },
+    { label: "Kota Kinabalu High Court", value: "Kota Kinabalu High Court" },
+    { label: "Sandakan High Court", value: "Sandakan High Court" },
+    { label: "Tawau High Court", value: "Tawau High Court" },
+    { label: "Kuching High Court", value: "Kuching High Court" },
+    { label: "Sibu High Court", value: "Sibu High Court" },
+    { label: "Miri High Court", value: "Miri High Court" },
+    { label: "Bintulu High Court", value: "Bintulu High Court" },
+    { label: "Sri Aman High Court", value: "Sri Aman High Court" },
+    { label: "Limbang High Court", value: "Limbang High Court" },
+    { label: "Kangar Sessions Court", value: "Kangar Sessions Court" },
+    { label: "Alor Setar Sessions Court", value: "Alor Setar Sessions Court" },
+    {
+      label: "Sungai Petani Sessions Court",
+      value: "Sungai Petani Sessions Court",
+    },
+    {
+      label: "George Town Sessions Court",
+      value: "George Town Sessions Court",
+    },
+    {
+      label: "Butterworth Sessions Court",
+      value: "Butterworth Sessions Court",
+    },
+    { label: "Ipoh Sessions Court", value: "Ipoh Sessions Court" },
+    { label: "Taiping Sessions Court", value: "Taiping Sessions Court" },
+    {
+      label: "Teluk Intan Sessions Court",
+      value: "Teluk Intan Sessions Court",
+    },
+    { label: "Shah Alam Sessions Court", value: "Shah Alam Sessions Court" },
+    {
+      label: "Petaling Jaya Sessions Court",
+      value: "Petaling Jaya Sessions Court",
+    },
+    { label: "Klang Sessions Court", value: "Klang Sessions Court" },
+    { label: "Sepang Sessions Court", value: "Sepang Sessions Court" },
+    {
+      label: "Kuala Lumpur Sessions Court",
+      value: "Kuala Lumpur Sessions Court",
+    },
+    { label: "Putrajaya Sessions Court", value: "Putrajaya Sessions Court" },
+    { label: "Seremban Sessions Court", value: "Seremban Sessions Court" },
+    {
+      label: "Kuala Pilah Sessions Court",
+      value: "Kuala Pilah Sessions Court",
+    },
+    { label: "Melaka Sessions Court", value: "Melaka Sessions Court" },
+    {
+      label: "Johor Bahru Sessions Court",
+      value: "Johor Bahru Sessions Court",
+    },
+    { label: "Muar Sessions Court", value: "Muar Sessions Court" },
+    { label: "Kluang Sessions Court", value: "Kluang Sessions Court" },
+    { label: "Kuantan Sessions Court", value: "Kuantan Sessions Court" },
+    { label: "Temerloh Sessions Court", value: "Temerloh Sessions Court" },
+    { label: "Raub Sessions Court", value: "Raub Sessions Court" },
+    {
+      label: "Kuala Terengganu Sessions Court",
+      value: "Kuala Terengganu Sessions Court",
+    },
+    { label: "Kemaman Sessions Court", value: "Kemaman Sessions Court" },
+    { label: "Kota Bharu Sessions Court", value: "Kota Bharu Sessions Court" },
+    { label: "Gua Musang Sessions Court", value: "Gua Musang Sessions Court" },
+    {
+      label: "Kota Kinabalu Sessions Court",
+      value: "Kota Kinabalu Sessions Court",
+    },
+    { label: "Sandakan Sessions Court", value: "Sandakan Sessions Court" },
+    { label: "Tawau Sessions Court", value: "Tawau Sessions Court" },
+    { label: "Kuching Sessions Court", value: "Kuching Sessions Court" },
+    { label: "Sibu Sessions Court", value: "Sibu Sessions Court" },
+    { label: "Miri Sessions Court", value: "Miri Sessions Court" },
+    { label: "Bintulu Sessions Court", value: "Bintulu Sessions Court" },
+    { label: "Kangar Magistrate Court", value: "Kangar Magistrate Court" },
+    {
+      label: "Alor Setar Magistrate Court",
+      value: "Alor Setar Magistrate Court",
+    },
+    {
+      label: "Sungai Petani Magistrate Court",
+      value: "Sungai Petani Magistrate Court",
+    },
+    {
+      label: "George Town Magistrate Court",
+      value: "George Town Magistrate Court",
+    },
+    {
+      label: "Butterworth Magistrate Court",
+      value: "Butterworth Magistrate Court",
+    },
+    { label: "Ipoh Magistrate Court", value: "Ipoh Magistrate Court" },
+    { label: "Taiping Magistrate Court", value: "Taiping Magistrate Court" },
+    {
+      label: "Teluk Intan Magistrate Court",
+      value: "Teluk Intan Magistrate Court",
+    },
+    {
+      label: "Shah Alam Magistrate Court",
+      value: "Shah Alam Magistrate Court",
+    },
+    {
+      label: "Petaling Jaya Magistrate Court",
+      value: "Petaling Jaya Magistrate Court",
+    },
+    { label: "Klang Magistrate Court", value: "Klang Magistrate Court" },
+    { label: "Sepang Magistrate Court", value: "Sepang Magistrate Court" },
+    {
+      label: "Kuala Lumpur Magistrate Court",
+      value: "Kuala Lumpur Magistrate Court",
+    },
+    {
+      label: "Putrajaya Magistrate Court",
+      value: "Putrajaya Magistrate Court",
+    },
+    { label: "Seremban Magistrate Court", value: "Seremban Magistrate Court" },
+    {
+      label: "Kuala Pilah Magistrate Court",
+      value: "Kuala Pilah Magistrate Court",
+    },
+    { label: "Melaka Magistrate Court", value: "Melaka Magistrate Court" },
+    {
+      label: "Alor Gajah Magistrate Court",
+      value: "Alor Gajah Magistrate Court",
+    },
+    { label: "Jasin Magistrate Court", value: "Jasin Magistrate Court" },
+    {
+      label: "Johor Bahru Magistrate Court",
+      value: "Johor Bahru Magistrate Court",
+    },
+    { label: "Muar Magistrate Court", value: "Muar Magistrate Court" },
+    { label: "Kluang Magistrate Court", value: "Kluang Magistrate Court" },
+    { label: "Kuantan Magistrate Court", value: "Kuantan Magistrate Court" },
+    { label: "Temerloh Magistrate Court", value: "Temerloh Magistrate Court" },
+    { label: "Raub Magistrate Court", value: "Raub Magistrate Court" },
+    {
+      label: "Kuala Terengganu Magistrate Court",
+      value: "Kuala Terengganu Magistrate Court",
+    },
+    { label: "Kemaman Magistrate Court", value: "Kemaman Magistrate Court" },
+    {
+      label: "Kota Bharu Magistrate Court",
+      value: "Kota Bharu Magistrate Court",
+    },
+    {
+      label: "Gua Musang Magistrate Court",
+      value: "Gua Musang Magistrate Court",
+    },
+    {
+      label: "Kota Kinabalu Magistrate Court",
+      value: "Kota Kinabalu Magistrate Court",
+    },
+    { label: "Sandakan Magistrate Court", value: "Sandakan Magistrate Court" },
+    { label: "Tawau Magistrate Court", value: "Tawau Magistrate Court" },
+    { label: "Kuching Magistrate Court", value: "Kuching Magistrate Court" },
+    { label: "Sibu Magistrate Court", value: "Sibu Magistrate Court" },
+    { label: "Miri Magistrate Court", value: "Miri Magistrate Court" },
+    { label: "Bintulu Magistrate Court", value: "Bintulu Magistrate Court" },
   ];
 
   const initialFieldsConfig = {
@@ -87,189 +282,7 @@ const CreateCaseDialogStyled = (props) => {
             id: uuidv4(),
             key: "court",
             type: "dropdown",
-            options: [
-
-              { label: "Putrajaya Federal Court", value: "Putrajaya Federal Court" },
-              { label: "Putrajaya Court of Appeal", value: "Putrajaya Court of Appeal" },
-              { label: "Kangar High Court", value: "Kangar High Court" },
-              { label: "Alor Setar High Court", value: "Alor Setar High Court" },
-              { label: "Sungai Petani High Court", value: "Sungai Petani High Court" },
-              { label: "George Town High Court", value: "George Town High Court" },
-              { label: "Ipoh High Court", value: "Ipoh High Court" },
-              { label: "Taiping High Court", value: "Taiping High Court" },
-              { label: "Shah Alam High Court", value: "Shah Alam High Court" },
-              { label: "Klang High Court", value: "Klang High Court" },
-              { label: "Kuala Lumpur High Court", value: "Kuala Lumpur High Court" },
-              { label: "Seremban High Court", value: "Seremban High Court" },
-              { label: "Melaka High Court", value: "Melaka High Court" },
-              { label: "Johor Bahru High Court", value: "Johor Bahru High Court" },
-              { label: "Muar High Court", value: "Muar High Court" },
-              { label: "Kuantan High Court", value: "Kuantan High Court" },
-              { label: "Temerloh High Court", value: "Temerloh High Court" },
-              {
-                label: "Kuala Terengganu High Court",
-                value: "Kuala Terengganu High Court",
-              },
-              { label: "Kota Bharu High Court", value: "Kota Bharu High Court" },
-              { label: "Kota Kinabalu High Court", value: "Kota Kinabalu High Court" },
-              { label: "Sandakan High Court", value: "Sandakan High Court" },
-              { label: "Tawau High Court", value: "Tawau High Court" },
-              { label: "Kuching High Court", value: "Kuching High Court" },
-              { label: "Sibu High Court", value: "Sibu High Court" },
-              { label: "Miri High Court", value: "Miri High Court" },
-              { label: "Bintulu High Court", value: "Bintulu High Court" },
-              { label: "Sri Aman High Court", value: "Sri Aman High Court" },
-              { label: "Limbang High Court", value: "Limbang High Court" },
-              { label: "Kangar Sessions Court", value: "Kangar Sessions Court" },
-              { label: "Alor Setar Sessions Court", value: "Alor Setar Sessions Court" },
-              {
-                label: "Sungai Petani Sessions Court",
-                value: "Sungai Petani Sessions Court",
-              },
-              {
-                label: "George Town Sessions Court",
-                value: "George Town Sessions Court",
-              },
-              {
-                label: "Butterworth Sessions Court",
-                value: "Butterworth Sessions Court",
-              },
-              { label: "Ipoh Sessions Court", value: "Ipoh Sessions Court" },
-              { label: "Taiping Sessions Court", value: "Taiping Sessions Court" },
-              {
-                label: "Teluk Intan Sessions Court",
-                value: "Teluk Intan Sessions Court",
-              },
-              { label: "Shah Alam Sessions Court", value: "Shah Alam Sessions Court" },
-              {
-                label: "Petaling Jaya Sessions Court",
-                value: "Petaling Jaya Sessions Court",
-              },
-              { label: "Klang Sessions Court", value: "Klang Sessions Court" },
-              { label: "Sepang Sessions Court", value: "Sepang Sessions Court" },
-              {
-                label: "Kuala Lumpur Sessions Court",
-                value: "Kuala Lumpur Sessions Court",
-              },
-              { label: "Putrajaya Sessions Court", value: "Putrajaya Sessions Court" },
-              { label: "Seremban Sessions Court", value: "Seremban Sessions Court" },
-              {
-                label: "Kuala Pilah Sessions Court",
-                value: "Kuala Pilah Sessions Court",
-              },
-              { label: "Melaka Sessions Court", value: "Melaka Sessions Court" },
-              {
-                label: "Johor Bahru Sessions Court",
-                value: "Johor Bahru Sessions Court",
-              },
-              { label: "Muar Sessions Court", value: "Muar Sessions Court" },
-              { label: "Kluang Sessions Court", value: "Kluang Sessions Court" },
-              { label: "Kuantan Sessions Court", value: "Kuantan Sessions Court" },
-              { label: "Temerloh Sessions Court", value: "Temerloh Sessions Court" },
-              { label: "Raub Sessions Court", value: "Raub Sessions Court" },
-              {
-                label: "Kuala Terengganu Sessions Court",
-                value: "Kuala Terengganu Sessions Court",
-              },
-              { label: "Kemaman Sessions Court", value: "Kemaman Sessions Court" },
-              { label: "Kota Bharu Sessions Court", value: "Kota Bharu Sessions Court" },
-              { label: "Gua Musang Sessions Court", value: "Gua Musang Sessions Court" },
-              {
-                label: "Kota Kinabalu Sessions Court",
-                value: "Kota Kinabalu Sessions Court",
-              },
-              { label: "Sandakan Sessions Court", value: "Sandakan Sessions Court" },
-              { label: "Tawau Sessions Court", value: "Tawau Sessions Court" },
-              { label: "Kuching Sessions Court", value: "Kuching Sessions Court" },
-              { label: "Sibu Sessions Court", value: "Sibu Sessions Court" },
-              { label: "Miri Sessions Court", value: "Miri Sessions Court" },
-              { label: "Bintulu Sessions Court", value: "Bintulu Sessions Court" },
-              { label: "Kangar Magistrate Court", value: "Kangar Magistrate Court" },
-              {
-                label: "Alor Setar Magistrate Court",
-                value: "Alor Setar Magistrate Court",
-              },
-              {
-                label: "Sungai Petani Magistrate Court",
-                value: "Sungai Petani Magistrate Court",
-              },
-              {
-                label: "George Town Magistrate Court",
-                value: "George Town Magistrate Court",
-              },
-              {
-                label: "Butterworth Magistrate Court",
-                value: "Butterworth Magistrate Court",
-              },
-              { label: "Ipoh Magistrate Court", value: "Ipoh Magistrate Court" },
-              { label: "Taiping Magistrate Court", value: "Taiping Magistrate Court" },
-              {
-                label: "Teluk Intan Magistrate Court",
-                value: "Teluk Intan Magistrate Court",
-              },
-              {
-                label: "Shah Alam Magistrate Court",
-                value: "Shah Alam Magistrate Court",
-              },
-              {
-                label: "Petaling Jaya Magistrate Court",
-                value: "Petaling Jaya Magistrate Court",
-              },
-              { label: "Klang Magistrate Court", value: "Klang Magistrate Court" },
-              { label: "Sepang Magistrate Court", value: "Sepang Magistrate Court" },
-              {
-                label: "Kuala Lumpur Magistrate Court",
-                value: "Kuala Lumpur Magistrate Court",
-              },
-              {
-                label: "Putrajaya Magistrate Court",
-                value: "Putrajaya Magistrate Court",
-              },
-              { label: "Seremban Magistrate Court", value: "Seremban Magistrate Court" },
-              {
-                label: "Kuala Pilah Magistrate Court",
-                value: "Kuala Pilah Magistrate Court",
-              },
-              { label: "Melaka Magistrate Court", value: "Melaka Magistrate Court" },
-              {
-                label: "Alor Gajah Magistrate Court",
-                value: "Alor Gajah Magistrate Court",
-              },
-              { label: "Jasin Magistrate Court", value: "Jasin Magistrate Court" },
-              {
-                label: "Johor Bahru Magistrate Court",
-                value: "Johor Bahru Magistrate Court",
-              },
-              { label: "Muar Magistrate Court", value: "Muar Magistrate Court" },
-              { label: "Kluang Magistrate Court", value: "Kluang Magistrate Court" },
-              { label: "Kuantan Magistrate Court", value: "Kuantan Magistrate Court" },
-              { label: "Temerloh Magistrate Court", value: "Temerloh Magistrate Court" },
-              { label: "Raub Magistrate Court", value: "Raub Magistrate Court" },
-              {
-                label: "Kuala Terengganu Magistrate Court",
-                value: "Kuala Terengganu Magistrate Court",
-              },
-              { label: "Kemaman Magistrate Court", value: "Kemaman Magistrate Court" },
-              {
-                label: "Kota Bharu Magistrate Court",
-                value: "Kota Bharu Magistrate Court",
-              },
-              {
-                label: "Gua Musang Magistrate Court",
-                value: "Gua Musang Magistrate Court",
-              },
-              {
-                label: "Kota Kinabalu Magistrate Court",
-                value: "Kota Kinabalu Magistrate Court",
-              },
-              { label: "Sandakan Magistrate Court", value: "Sandakan Magistrate Court" },
-              { label: "Tawau Magistrate Court", value: "Tawau Magistrate Court" },
-              { label: "Kuching Magistrate Court", value: "Kuching Magistrate Court" },
-              { label: "Sibu Magistrate Court", value: "Sibu Magistrate Court" },
-              { label: "Miri Magistrate Court", value: "Miri Magistrate Court" },
-              { label: "Bintulu Magistrate Court", value: "Bintulu Magistrate Court" },
-
-            ],
+            options: courtOptions,
             filter: true,
           },
         ],
@@ -302,42 +315,71 @@ const CreateCaseDialogStyled = (props) => {
       {
         id: uuidv4(),
         label: "Date and Time of Collision",
-        fields: [{ id: uuidv4(), key: "collisionDateTime", type: "datetime" }],
+        fields: [
+          { id: uuidv4(), key: "collisionDateTime", type: "datetime-local" },
+        ],
       },
       {
         id: uuidv4(),
-        label: "Status of Claim",
-        fields: [{ id: uuidv4(), key: "claimStatus", type: "text" }],
+        label: "Claim Status",
+        fields: [
+          {
+            id: uuidv4(),
+            key: "claimStatus",
+            type: "dropdown",
+            options: [
+              { label: "FILED", value: "FILED" },
+              { label: "TRIAL", value: "TRIAL" },
+              { label: "UNDER REVIEW", value: "UNDER REVIEW" },
+              { label: "PENDING DOCUMENTS", value: "PENDING DOCUMENTS" },
+              {
+                label: "SETTLEMENT IN PROGRESS",
+                value: "SETTLEMENT IN PROGRESS",
+              },
+              { label: "APPROVED", value: "APPROVED" },
+              { label: "PAID & CLOSED", value: "PAID & CLOSED" },
+              { label: "DENIED", value: "DENIED" },
+              { label: "APPEAL FILED", value: "APPEAL FILED" },
+              {
+                label: "IN THE COURT (LITIGATION)",
+                value: "IN THE COURT (LITIGATION)",
+              },
+              { label: "JUDGMENT ISSUED", value: "JUDGMENT ISSUED" },
+            ],
+          },
+          {
+            id: uuidv4(),
+            key: "claimStatusDate",
+            type: "date",
+          },
+        ],
       },
-      {
-        id: uuidv4(),
-        label: "Status of Claim Date",
-        fields: [{ id: uuidv4(), key: "claimStatusDate", type: "date" }],
-      },
-      {
-        id: uuidv4(),
-        label: "Recipient Name",
-        fields: [{ id: uuidv4(), key: "recipientName", type: "text" }],
-      },
-      // {
-      //   id: uuidv4(),
-      //   label: "Recipient Department",
-      //   fields: [{ id: uuidv4(), key: "recipientDepartment", type: "text" }],
-      // },
     ],
     additionalInfo: [
       {
         id: uuidv4(),
         label: "Partners",
         keyPrefix: "partner",
-        fields: [{ id: uuidv4(), key: `partner_${uuidv4().substring(0, 8)}`, type: "text" }],
+        fields: [
+          {
+            id: uuidv4(),
+            key: `partner_${uuidv4().substring(0, 8)}`,
+            type: "text",
+          },
+        ],
         allowMultiple: true,
       },
       {
         id: uuidv4(),
         label: "Legal Assistants",
         keyPrefix: "legal_assistant",
-        fields: [{ id: uuidv4(), key: `legal_assistant_${uuidv4().substring(0, 8)}`, type: "text" }],
+        fields: [
+          {
+            id: uuidv4(),
+            key: `legal_assistant_${uuidv4().substring(0, 8)}`,
+            type: "text",
+          },
+        ],
         allowMultiple: true,
       },
       {
@@ -379,8 +421,16 @@ const CreateCaseDialogStyled = (props) => {
       })),
     })),
     additionalInfo: {
-      partners: [{ id: uuidv4(), key: `partner_${uuidv4().substring(0, 8)}`, value: "" }],
-      legalAssistants: [{ id: uuidv4(), key: `legal_assistant_${uuidv4().substring(0, 8)}`, value: "" }],
+      partners: [
+        { id: uuidv4(), key: `partner_${uuidv4().substring(0, 8)}`, value: "" },
+      ],
+      legalAssistants: [
+        {
+          id: uuidv4(),
+          key: `legal_assistant_${uuidv4().substring(0, 8)}`,
+          value: "",
+        },
+      ],
       insuranceCompany: "",
       additionalInfoDate: "",
       additionalRecipient: "",
@@ -420,14 +470,23 @@ const CreateCaseDialogStyled = (props) => {
         return { ...prev, [key]: val };
       }
       if (section === "additionalInfo") {
-        const isMultiple = fieldsConfig.additionalInfo.find((f) => f.keyPrefix === key);
+        const isMultiple = fieldsConfig.additionalInfo.find(
+          (f) => f.keyPrefix === key,
+        );
         if (isMultiple) {
-          const currentFields = Array.isArray(prev.additionalInfo[key]) ? prev.additionalInfo[key] : [];
-          const updatedFields = currentFields.some((field) => field.key === val.key)
+          const currentFields = Array.isArray(prev.additionalInfo[key])
+            ? prev.additionalInfo[key]
+            : [];
+          const updatedFields = currentFields.some(
+            (field) => field.key === val.key,
+          )
             ? currentFields.map((field) =>
-              field.key === val.key ? { ...field, value: val.value } : field
-            )
-            : [...currentFields, { id: uuidv4(), key: val.key, value: val.value }];
+                field.key === val.key ? { ...field, value: val.value } : field,
+              )
+            : [
+                ...currentFields,
+                { id: uuidv4(), key: val.key, value: val.value },
+              ];
           return {
             ...prev,
             additionalInfo: {
@@ -450,15 +509,17 @@ const CreateCaseDialogStyled = (props) => {
       let updatedCaseDetails = prev.caseDetails.map((label) => ({
         ...label,
         fields: label.fields.map((f) =>
-          f.key === key ? { ...f, value: val } : f
+          f.key === key ? { ...f, value: val } : f,
         ),
       }));
       if (!existingField) {
         const labelConfig = fieldsConfig.customLabels.find((l) =>
-          l.fields.some((f) => f.key === key)
+          l.fields.some((f) => f.key === key),
         );
         if (labelConfig) {
-          const targetLabel = updatedCaseDetails.find((l) => l.label === labelConfig.label);
+          const targetLabel = updatedCaseDetails.find(
+            (l) => l.label === labelConfig.label,
+          );
           if (targetLabel) {
             targetLabel.fields.push({
               key,
@@ -489,11 +550,11 @@ const CreateCaseDialogStyled = (props) => {
 
   const validateDateFormat = (value, fieldKey) => {
     if (!value) return null;
-    const regex = /^\d{2}-\d{2}-\d{2}$/;
+    const regex = /^\d{4}-\d{2}-\d{2}$/;
     if (!regex.test(value)) {
-      return "Invalid format. Use yy-mm-dd (e.g., 25-07-04)";
+      return "Invalid format. Use yyyy-mm-dd (e.g., 2025-07-04)";
     }
-    const date = new Date(`20${value}`);
+    const date = new Date(value);
     if (isNaN(date.getTime())) {
       return "Invalid date";
     }
@@ -502,62 +563,41 @@ const CreateCaseDialogStyled = (props) => {
 
   const validateDateTimeFormat = (value) => {
     if (!value) return null;
-    if (typeof value === "string") {
-      const regex = /^\d{2}-\d{2}-\d{2} \d{2}:\d{2}$/;
-      if (!regex.test(value)) {
-        return "Invalid format. Use yy-mm-dd HH:mm (e.g., 25-07-04 14:30)";
-      }
-      const date = new Date(`20${value}`);
-      if (isNaN(date.getTime())) {
-        return "Invalid date or time";
-      }
-    } else if (!(value instanceof Date) || isNaN(value.getTime())) {
+    const date = new Date(value);
+    if (isNaN(date.getTime())) {
       return "Invalid date or time";
     }
     return null;
   };
 
   const handleDateTimeInput = (e) => {
-    const inputValue = e.target.value;
-    if (inputValue) {
-      const regex = /^\d{2}-\d{2}-\d{2} \d{2}:\d{2}$/;
-      if (regex.test(inputValue)) {
-        const date = new Date(`20${inputValue}`);
-        if (!isNaN(date.getTime())) {
-          setValByKey("collisionDateTime", date);
-        } else {
-          setError((prev) => ({
-            ...prev,
-            collisionDateTime: "Invalid date or time",
-          }));
-        }
-      } else {
-        setError((prev) => ({
-          ...prev,
-          collisionDateTime: "Use format yy-mm-dd HH:mm (e.g., 25-07-04 14:30)",
-        }));
-      }
-    } else {
-      setValByKey("collisionDateTime", null);
-    }
+    const inputValue = e.value;
+    setValByKey("collisionDateTime", inputValue);
+    const errorMsg = validateDateTimeFormat(inputValue);
+    setError((prev) => ({
+      ...prev,
+      collisionDateTime: errorMsg || undefined,
+    }));
+  };
+
+  const handleDateInput = (e, fieldKey) => {
+    const inputValue = e.value;
+    setValByKey(fieldKey, inputValue);
+    const errorMsg = validateDateFormat(inputValue, fieldKey);
+    setError((prev) => ({
+      ...prev,
+      [fieldKey]: errorMsg || undefined,
+    }));
   };
 
   const handleAdditionalDateInput = (e) => {
-    const inputValue = e.target.value;
-    if (inputValue) {
-      const errorMsg = validateDateFormat(inputValue, "additionalInfoDate");
-      if (!errorMsg) {
-        const date = new Date(`20${inputValue}`);
-        setValByKey("additionalInfoDate", date, "additionalInfo");
-      } else {
-        setError((prev) => ({
-          ...prev,
-          additionalInfoDate: errorMsg,
-        }));
-      }
-    } else {
-      setValByKey("additionalInfoDate", "", "additionalInfo");
-    }
+    const inputValue = e.value;
+    setValByKey("additionalInfoDate", inputValue, "additionalInfo");
+    const errorMsg = validateDateFormat(inputValue, "additionalInfoDate");
+    setError((prev) => ({
+      ...prev,
+      additionalInfoDate: errorMsg || undefined,
+    }));
   };
 
   const validateStep0 = () => {
@@ -572,20 +612,28 @@ const CreateCaseDialogStyled = (props) => {
 
     requiredFields.forEach((field) => {
       if (_.isEmpty(_entity[field]?.toString())) {
-        errors[field] = `${fieldsConfig.mandatory.find((f) => f.key === field)?.label || field
-          } is required`;
+        errors[field] =
+          `${fieldsConfig.mandatory.find((f) => f.key === field)?.label || field} is required`;
         isValid = false;
       }
     });
 
     fieldsConfig.customLabels.forEach((label) => {
       label.fields.forEach((field) => {
-        if (field.type === "datetime") {
-          const fieldValue = _entity.caseDetails
-            .find((l) => l.label === label.label)
-            ?.fields.find((f) => f.key === field.key)?.value;
+        const fieldValue = _entity.caseDetails
+          .find((l) => l.label === label.label)
+          ?.fields.find((f) => f.key === field.key)?.value;
+        if (field.type === "datetime-local") {
           if (fieldValue) {
             const errorMsg = validateDateTimeFormat(fieldValue);
+            if (errorMsg) {
+              errors[field.key] = errorMsg;
+              isValid = false;
+            }
+          }
+        } else if (field.type === "date") {
+          if (fieldValue) {
+            const errorMsg = validateDateFormat(fieldValue, field.key);
             if (errorMsg) {
               errors[field.key] = errorMsg;
               isValid = false;
@@ -599,11 +647,32 @@ const CreateCaseDialogStyled = (props) => {
     return isValid;
   };
 
+  const validateStep1 = () => {
+    const totalFiles =
+      categorizedFiles.plaintiff.length +
+      categorizedFiles.adjuster.length +
+      categorizedFiles.medical.length;
+    if (totalFiles === 0) {
+      setError({
+        upload: "At least one document must be uploaded to proceed.",
+      });
+      return false;
+    }
+    if (categorizedFiles.plaintiff.length > 2) {
+      setError({ upload: "Maximum of 2 plaintiff files allowed." });
+      return false;
+    }
+    return true;
+  };
+
   const validateStep2 = () => {
     let isValid = true;
     const errors = {};
     if (_entity.additionalInfo.additionalInfoDate) {
-      const errorMsg = validateDateFormat(_entity.additionalInfo.additionalInfoDate, "additionalInfoDate");
+      const errorMsg = validateDateFormat(
+        _entity.additionalInfo.additionalInfoDate,
+        "additionalInfoDate",
+      );
       if (errorMsg) {
         errors.additionalInfoDate = errorMsg;
         isValid = false;
@@ -623,7 +692,10 @@ const CreateCaseDialogStyled = (props) => {
       });
       return;
     }
-    const key = newLabelName.toLowerCase().replace(/\s+/g, "_") + "_" + uuidv4().substring(0, 8);
+    const key =
+      newLabelName.toLowerCase().replace(/\s+/g, "_") +
+      "_" +
+      uuidv4().substring(0, 8);
     const newLabel = {
       id: uuidv4(),
       label: newLabelName,
@@ -635,7 +707,10 @@ const CreateCaseDialogStyled = (props) => {
     }));
     set_entity((prev) => ({
       ...prev,
-      caseDetails: [...prev.caseDetails, { label: newLabelName, fields: [{ key, value: "", type: "text" }] }],
+      caseDetails: [
+        ...prev.caseDetails,
+        { label: newLabelName, fields: [{ key, value: "", type: "text" }] },
+      ],
     }));
     setNewLabelName("");
     toast.current?.show({
@@ -647,23 +722,105 @@ const CreateCaseDialogStyled = (props) => {
   };
 
   const addFieldToLabel = (labelId) => {
+    const label = fieldsConfig.customLabels.find((l) => l.id === labelId);
     const key = `field_${uuidv4().substring(0, 8)}`;
+    const newField = { id: uuidv4(), key, type: "text" };
     setFieldsConfig((prev) => ({
       ...prev,
-      customLabels: prev.customLabels.map((label) =>
-        label.id === labelId
-          ? { ...label, fields: [...label.fields, { id: uuidv4(), key, type: "text" }] }
-          : label
+      customLabels: prev.customLabels.map((l) =>
+        l.id === labelId ? { ...l, fields: [...l.fields, newField] } : l,
       ),
     }));
     set_entity((prev) => ({
       ...prev,
-      caseDetails: prev.caseDetails.map((label) =>
-        label.label === fieldsConfig.customLabels.find((l) => l.id === labelId).label
-          ? { ...label, fields: [...label.fields, { key, value: "", type: "text" }] }
-          : label
+      caseDetails: prev.caseDetails.map((l) =>
+        l.label === label.label
+          ? {
+              ...l,
+              fields: [...l.fields, { key, value: "", type: newField.type }],
+            }
+          : l,
       ),
     }));
+  };
+
+  const removeFieldFromLabel = (labelId, fieldId) => {
+    const label = fieldsConfig.customLabels.find((l) => l.id === labelId);
+    if (label.fields.length <= 1) {
+      toast.current?.show({
+        severity: "warn",
+        summary: "Cannot Remove Field",
+        detail: `Cannot delete the last field in "${label.label}". Please delete the entire label instead.`,
+        life: 3000,
+      });
+      return;
+    }
+
+    const field = label.fields.find((f) => f.id === fieldId);
+    setFieldsConfig((prev) => ({
+      ...prev,
+      customLabels: prev.customLabels.map((l) =>
+        l.id === labelId
+          ? { ...l, fields: l.fields.filter((f) => f.id !== fieldId) }
+          : l,
+      ),
+    }));
+    set_entity((prev) => ({
+      ...prev,
+      caseDetails: prev.caseDetails.map((l) =>
+        l.label === label.label
+          ? { ...l, fields: l.fields.filter((f) => f.key !== field.key) }
+          : l,
+      ),
+    }));
+    setError((prev) => _.omit(prev, field.key));
+    toast.current?.show({
+      severity: "info",
+      summary: "Field Removed",
+      detail: `Field in "${label.label}" removed.`,
+      life: 3000,
+    });
+  };
+
+  const removeFieldFromAdditionalInfo = (label, fieldId) => {
+    const keyPrefix = label === "Partners" ? "partner" : "legal_assistant";
+    const fieldConfig = fieldsConfig.additionalInfo.find(
+      (f) => f.label === label,
+    );
+
+    if (fieldConfig.fields.length <= 1) {
+      toast.current?.show({
+        severity: "warn",
+        summary: "Cannot Remove Field",
+        detail: `Cannot delete the last field in "${label}". At least one field is required.`,
+        life: 3000,
+      });
+      return;
+    }
+
+    setFieldsConfig((prev) => ({
+      ...prev,
+      additionalInfo: prev.additionalInfo.map((item) =>
+        item.label === label
+          ? { ...item, fields: item.fields.filter((f) => f.id !== fieldId) }
+          : item,
+      ),
+    }));
+    set_entity((prev) => ({
+      ...prev,
+      additionalInfo: {
+        ...prev.additionalInfo,
+        [keyPrefix]: prev.additionalInfo[keyPrefix].filter(
+          (f) => f.id !== fieldId,
+        ),
+      },
+    }));
+    toast.current?.show({
+      severity: "info",
+      summary: "Field Removed",
+      detail: `Field in "${label}" removed.`,
+      life: 3000,
+    });
   };
 
   const addFieldToAdditionalInfo = (label) => {
@@ -673,8 +830,11 @@ const CreateCaseDialogStyled = (props) => {
       ...prev,
       additionalInfo: prev.additionalInfo.map((item) =>
         item.label === label
-          ? { ...item, fields: [...item.fields, { id: uuidv4(), key, type: "text" }] }
-          : item
+          ? {
+              ...item,
+              fields: [...item.fields, { id: uuidv4(), key, type: "text" }],
+            }
+          : item,
       ),
     }));
     set_entity((prev) => ({
@@ -682,7 +842,9 @@ const CreateCaseDialogStyled = (props) => {
       additionalInfo: {
         ...prev.additionalInfo,
         [keyPrefix]: [
-          ...(Array.isArray(prev.additionalInfo[keyPrefix]) ? prev.additionalInfo[keyPrefix] : []),
+          ...(Array.isArray(prev.additionalInfo[keyPrefix])
+            ? prev.additionalInfo[keyPrefix]
+            : []),
           { id: uuidv4(), key, value: "" },
         ],
       },
@@ -702,8 +864,8 @@ const CreateCaseDialogStyled = (props) => {
     setError((prev) =>
       _.omit(
         prev,
-        label.fields.map((f) => f.key)
-      )
+        label.fields.map((f) => f.key),
+      ),
     );
     toast.current?.show({
       severity: "info",
@@ -728,92 +890,170 @@ const CreateCaseDialogStyled = (props) => {
   };
 
   const SortableLabel = ({ label }) => {
-    const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: label.id });
+    const { attributes, listeners, setNodeRef, transform, transition } =
+      useSortable({ id: label.id });
     const style = {
       transform: CSS.Transform.toString(transform),
       transition,
+      width: "100%",
+      boxSizing: "border-box",
     };
+
+    const isSingleField = label.fields.length === 1;
+    const isFixedLabel = [
+      "Date and Time of Collision",
+      "Claim Status",
+    ].includes(label.label);
+    const isCourtLabel = label.label === "Court";
 
     return (
       <div ref={setNodeRef} style={style} className="draggable-label p-mb-3">
-        <div className="p-d-flex p-ai-center p-mb-2 label-header">
-          <i className="pi pi-bars p-mr-2 drag-handle" {...attributes} {...listeners}></i>
-          <h6 className="label-title">{label.label}</h6>
+        <div className="p-d-flex p-ai-center p-jc-between p-mb-2 label-header">
+          <div className="p-d-flex p-ai-center">
+            <i
+              className="pi pi-bars p-mr-2 drag-handle"
+              {...attributes}
+              {...listeners}
+            ></i>
+            <h6 className="label-title ml-3">{label.label}</h6>
+          </div>
           <Button
             icon="pi pi-trash"
-            className="p-button-rounded p-button-danger p-button-text p-ml-auto icon-sm"
+            className="p-button-rounded p-button-danger p-button-text icon-sm"
             onClick={() => removeLabel(label.id)}
             tooltip="Remove Label"
           />
         </div>
-        {label.fields.map((field) => (
-          <div key={field.id} className="p-field p-col-12 p-md-6 p-ml-4">
-            <div className="field-container">
-              {field.type === "dropdown" ? (
-                <Dropdown
-                  id={field.id}
-                  value={
-                    _entity.caseDetails
-                      .find((l) => l.label === label.label)
-                      ?.fields.find((f) => f.key === field.key)?.value || ""
-                  }
-                  options={field.options}
-                  onChange={(e) => setValByKey(field.key, e.value)}
-                  placeholder={`Select ${label.label}`}
-                  className={`input-themed ${error[field.key] ? "p-invalid" : ""}`}
-                  filter={field.filter}
-                />
-              ) : field.type === "datetime" ? (
-                <InputText
-                  id={field.id}
-                  value={
-                    _entity.caseDetails
-                      .find((l) => l.label === label.label)
-                      ?.fields.find((f) => f.key === field.key)?.value || ""
-                  }
-                  onChange={handleDateTimeInput}
-                  className={`input-themed ${error[field.key] ? "p-invalid" : ""}`}
-                  placeholder="yy-mm-dd HH:mm (e.g., 25-07-04 14:30)"
-                />
-              ) : (
-                <InputText
-                  id={field.id}
-                  value={
-                    _entity.caseDetails
-                      .find((l) => l.label === label.label)
-                      ?.fields.find((f) => f.key === field.key)?.value || ""
-                  }
-                  onChange={(e) => setValByKey(field.key, e.target.value)}
-                  className={`input-themed ${error[field.key] ? "p-invalid" : ""}`}
-                  placeholder={`Enter ${label.label}`}
-                />
-              )}
-              <Button
-                icon="pi pi-plus"
-                className="p-button-rounded p-button-success p-button-text p-ml-2 icon-sm"
-                onClick={() => addFieldToLabel(label.id)}
-                tooltip="Add Field"
-              />
+        <div className="p-grid p-formgrid custom-fields-grid">
+          {label.fields.map((field) => (
+            <div
+              key={field.id}
+              className="p-field p-col-12 p-md-6 custom-field"
+            >
+              <div className="field-container">
+                {field.type === "dropdown" ? (
+                  <Dropdown
+                    id={field.id}
+                    value={
+                      _entity.caseDetails
+                        .find((l) => l.label === label.label)
+                        ?.fields.find((f) => f.key === field.key)?.value || ""
+                    }
+                    options={field.options}
+                    onChange={(e) => setValByKey(field.key, e.value)}
+                    placeholder={`Select ${label.label}${field.key === "claimStatus" ? " Status" : ""}`}
+                    className={`input-themed w-full ${error[field.key] ? "p-invalid" : ""}`}
+                    filter={field.filter}
+                  />
+                ) : field.type === "datetime-local" ? (
+                  <Calendar
+                    id={field.id}
+                    value={
+                      _entity.caseDetails
+                        .find((l) => l.label === label.label)
+                        ?.fields.find((f) => f.key === field.key)?.value
+                        ? new Date(
+                            _entity.caseDetails
+                              .find((l) => l.label === label.label)
+                              ?.fields.find((f) => f.key === field.key)?.value,
+                          )
+                        : null
+                    }
+                    onChange={(e) => handleDateTimeInput(e)}
+                    showTime
+                    hourFormat="24"
+                    className={`input-themed w-full ${error[field.key] ? "p-invalid" : ""}`}
+                    placeholder="Select date and time"
+                  />
+                ) : field.type === "date" ? (
+                  <Calendar
+                    id={field.id}
+                    value={
+                      _entity.caseDetails
+                        .find((l) => l.label === label.label)
+                        ?.fields.find((f) => f.key === field.key)?.value
+                        ? new Date(
+                            _entity.caseDetails
+                              .find((l) => l.label === label.label)
+                              ?.fields.find((f) => f.key === field.key)?.value,
+                          )
+                        : null
+                    }
+                    onChange={(e) => handleDateInput(e, field.key)}
+                    dateFormat="yy-mm-dd"
+                    className={`input-themed w-full ${error[field.key] ? "p-invalid" : ""}`}
+                    placeholder="yyyy-mm-dd (e.g., 2025-07-04)"
+                  />
+                ) : (
+                  <InputText
+                    id={field.id}
+                    value={
+                      _entity.caseDetails
+                        .find((l) => l.label === label.label)
+                        ?.fields.find((f) => f.key === field.key)?.value || ""
+                    }
+                    onChange={(e) => setValByKey(field.key, e.target.value)}
+                    className={`input-themed w-full ${error[field.key] ? "p-invalid" : ""}`}
+                    placeholder={`Enter ${label.label}`}
+                  />
+                )}
+                {!isFixedLabel && !isCourtLabel && (
+                  <Button
+                    icon="pi pi-plus"
+                    className="p-button-rounded p-button-success p-button-text p-ml-2 icon-sm"
+                    onClick={() => addFieldToLabel(label.id)}
+                    tooltip="Add Field"
+                  />
+                )}
+                {!isFixedLabel && !isCourtLabel && !isSingleField && (
+                  <Button
+                    icon="pi pi-trash"
+                    className="p-button-rounded p-button-danger p-button-text p-ml-2 icon-sm"
+                    onClick={() => removeFieldFromLabel(label.id, field.id)}
+                    tooltip="Remove Field"
+                  />
+                )}
+                {error[field.key] && (
+                  <small className="p-error">{error[field.key]}</small>
+                )}
+              </div>
             </div>
-            {error[field.key] && <small className="p-error">{error[field.key]}</small>}
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     );
   };
 
   const renderAdditionalInfoField = (fieldConfig) => {
-    if (fieldConfig.allowMultiple) {
-      return (
-        <div key={fieldConfig.id} className="p-field p-col-12 p-md-6 p-mb-3">
-          <h6>{fieldConfig.label}</h6>
-          {fieldConfig.fields.map((field) => (
-            <div key={field.id} className="field-container p-ml-4">
+    return (
+      <div
+        key={fieldConfig.id}
+        className="p-field p-col-12 p-md-6 additional-info-field"
+      >
+        <label
+          className="p-field-label"
+          htmlFor={fieldConfig.key || fieldConfig.keyPrefix}
+        >
+          {fieldConfig.label}
+        </label>
+        {fieldConfig.allowMultiple ? (
+          fieldConfig.fields.map((field) => (
+            <div key={field.id} className="field-container p-mt-2">
               <InputText
                 id={field.id}
-                value={_entity.additionalInfo[fieldConfig.keyPrefix]?.find((f) => f.key === field.key)?.value || ""}
-                onChange={(e) => setValByKey(fieldConfig.keyPrefix, { key: field.key, value: e.target.value }, "additionalInfo")}
-                className={`input-themed ${error[field.key] ? "p-invalid" : ""}`}
+                value={
+                  _entity.additionalInfo[fieldConfig.keyPrefix]?.find(
+                    (f) => f.key === field.key,
+                  )?.value || ""
+                }
+                onChange={(e) =>
+                  setValByKey(
+                    fieldConfig.keyPrefix,
+                    { key: field.key, value: e.target.value },
+                    "additionalInfo",
+                  )
+                }
+                className={`input-themed w-full ${error[field.key] ? "p-invalid" : ""}`}
                 placeholder={`Enter ${fieldConfig.label}`}
               />
               <Button
@@ -822,47 +1062,53 @@ const CreateCaseDialogStyled = (props) => {
                 onClick={() => addFieldToAdditionalInfo(fieldConfig.label)}
                 tooltip={`Add ${fieldConfig.label} Field`}
               />
-              {error[field.key] && <small className="p-error">{error[field.key]}</small>}
+              {fieldConfig.fields.length > 1 && (
+                <Button
+                  icon="pi pi-trash"
+                  className="p-button-rounded p-button-danger p-button-text p-ml-2 icon-sm"
+                  onClick={() =>
+                    removeFieldFromAdditionalInfo(fieldConfig.label, field.id)
+                  }
+                  tooltip={`Remove ${fieldConfig.label} Field`}
+                />
+              )}
+              {error[field.key] && (
+                <small className="p-error">{error[field.key]}</small>
+              )}
             </div>
-          ))}
-        </div>
-      );
-    }
-    return (
-      <div key={fieldConfig.id} className="p-field p-col-12 p-md-6 p-mb-3">
-        <label htmlFor={fieldConfig.key}>{fieldConfig.label}</label>
-        {fieldConfig.type === "date" ? (
-          <InputText
+          ))
+        ) : fieldConfig.type === "date" ? (
+          <Calendar
             id={fieldConfig.key}
-            value={_entity.additionalInfo[fieldConfig.key] || ""}
+            value={
+              _entity.additionalInfo[fieldConfig.key]
+                ? new Date(_entity.additionalInfo[fieldConfig.key])
+                : null
+            }
             onChange={handleAdditionalDateInput}
-            className={`input-themed ${error[fieldConfig.key] ? "p-invalid" : ""}`}
-            placeholder="yy-mm-dd (e.g., 25-07-04)"
+            dateFormat="yy-mm-dd"
+            className={`input-themed w-full ${error[fieldConfig.key] ? "p-invalid" : ""}`}
+            placeholder="yyyy-mm-dd (e.g., 2025-07-04)"
           />
         ) : (
           <InputText
             id={fieldConfig.key}
             value={_entity.additionalInfo[fieldConfig.key] || ""}
-            onChange={(e) => setValByKey(fieldConfig.key, e.target.value, "additionalInfo")}
-            className={`input-themed ${error[fieldConfig.key] ? "p-invalid" : ""}`}
+            onChange={(e) =>
+              setValByKey(fieldConfig.key, e.target.value, "additionalInfo")
+            }
+            className={`input-themed w-full ${error[fieldConfig.key] ? "p-invalid" : ""}`}
             placeholder={`Enter ${fieldConfig.label}`}
           />
         )}
-        {error[fieldConfig.key] && <small className="p-error">{error[fieldConfig.key]}</small>}
+        {error[fieldConfig.key] && !fieldConfig.allowMultiple && (
+          <small className="p-error">{error[fieldConfig.key]}</small>
+        )}
       </div>
     );
   };
 
   const handleUploadAndSave = async (documentStorageIds, category) => {
-    if (!createdCaseId) {
-      toast.current?.show({
-        severity: "error",
-        summary: "Error",
-        detail: "Case ID not found. Cannot save documents.",
-        life: 4000,
-      });
-      return;
-    }
     if (!documentStorageIds || documentStorageIds.length === 0) return;
 
     if (category === "plaintiff") {
@@ -885,50 +1131,36 @@ const CreateCaseDialogStyled = (props) => {
     const addedFilesInfo = [];
     const errorMessages = [];
 
-    let docTypeString = category;
-    if (category === "plaintiff") {
-      docTypeString = "Plaintiff File";
-    } else if (category === "adjuster") {
-      docTypeString = "Adjuster Report";
-    } else if (category === "medical") {
-      docTypeString = "Medical File";
-    }
-
     for (const docStorageId of documentStorageIds) {
-      const caseDocData = {
-        summonsNo: createdCaseId,
-        uploadedDocument: [docStorageId],
-        documentType: docTypeString,
-        uploadTimestamp: new Date(),
-        createdBy: props.user._id,
-        updatedBy: props.user._id,
-      };
-
       try {
-        console.log(`Creating caseDocument for docStorageId: ${docStorageId} with data:`, caseDocData);
-        const caseDocResult = await client.service("caseDocuments").create(caseDocData);
-        const docStorageResult = await client.service("documentStorages").get(docStorageId);
-
-        await client.service("documentStorages").patch(docStorageId, {
-          tableId: caseDocResult._id,
-          tableName: "caseDocuments",
-        });
-
+        const docStorageResult = await client
+          .service("documentStorages")
+          .get(docStorageId);
         addedFilesInfo.push({
           documentStorageId: docStorageId,
-          caseDocumentId: caseDocResult._id,
-          name: docStorageResult.originalFileName || `Document ${docStorageId.substring(0, 6)}`,
+          caseDocumentId: null, // Case document ID will be set after case creation
+          name:
+            docStorageResult.originalFileName ||
+            `Document ${docStorageId.substring(0, 6)}`,
         });
         successCount++;
       } catch (err) {
-        const errorDetail = err.message || `Failed to save document ${docStorageId.substring(0, 6)}`;
-        console.error(`Error saving document (ID: ${docStorageId}) for category ${category}:`, err);
+        const errorDetail =
+          err.message ||
+          `Failed to retrieve document ${docStorageId.substring(0, 6)}`;
+        console.error(
+          `Error retrieving document (ID: ${docStorageId}) for category ${category}:`,
+          err,
+        );
         errorMessages.push(errorDetail);
         try {
           await client.service("documentStorages").remove(docStorageId);
           console.log(`Removed orphaned documentStorage ${docStorageId}`);
         } catch (removeErr) {
-          console.error(`Error removing orphaned documentStorage ${docStorageId}:`, removeErr);
+          console.error(
+            `Error removing orphaned documentStorage ${docStorageId}:`,
+            removeErr,
+          );
         }
       }
     }
@@ -944,15 +1176,15 @@ const CreateCaseDialogStyled = (props) => {
       toast.current?.show({
         severity: "success",
         summary: "Upload Complete",
-        detail: `${successCount} file(s) saved successfully for ${category}.`,
+        detail: `${successCount} file(s) uploaded successfully for ${category}.`,
         life: 3000,
       });
     }
     if (errorMessages.length > 0) {
       toast.current?.show({
         severity: "error",
-        summary: "Document Save Error",
-        detail: `${errorMessages.length} file(s) failed to save: ${errorMessages.join(", ")}`,
+        summary: "Document Upload Error",
+        detail: `${errorMessages.length} file(s) failed to upload: ${errorMessages.join(", ")}`,
         life: 5000,
       });
     }
@@ -961,7 +1193,7 @@ const CreateCaseDialogStyled = (props) => {
   };
 
   const handleRemoveFile = async (fileInfoToRemove, category) => {
-    if (!fileInfoToRemove?.caseDocumentId || !fileInfoToRemove?.documentStorageId) {
+    if (!fileInfoToRemove?.documentStorageId) {
       toast.current?.show({
         severity: "warn",
         summary: "Cannot Remove",
@@ -974,25 +1206,14 @@ const CreateCaseDialogStyled = (props) => {
     setUploading((prev) => ({ ...prev, [category]: true }));
 
     try {
-      const queueEntries = await client.service("textExtractionQueues").find({
-        query: {
-          caseDocumentId: fileInfoToRemove.caseDocumentId,
-          status: { $in: ["queued", "processing"] },
-        },
-      });
-
-      for (const queueEntry of queueEntries.data) {
-        await client.service("textExtractionQueues").remove(queueEntry._id);
-        console.log(`Removed text extraction queue entry ${queueEntry._id}`);
-      }
-
-      await client.service("caseDocuments").remove(fileInfoToRemove.caseDocumentId);
-      await client.service("documentStorages").remove(fileInfoToRemove.documentStorageId);
+      await client
+        .service("documentStorages")
+        .remove(fileInfoToRemove.documentStorageId);
 
       setCategorizedFiles((prev) => ({
         ...prev,
         [category]: prev[category].filter(
-          (f) => f.caseDocumentId !== fileInfoToRemove.caseDocumentId
+          (f) => f.documentStorageId !== fileInfoToRemove.documentStorageId,
         ),
       }));
 
@@ -1003,7 +1224,10 @@ const CreateCaseDialogStyled = (props) => {
         life: 3000,
       });
     } catch (err) {
-      console.error(`Error removing file (CaseDocID: ${fileInfoToRemove.caseDocumentId}):`, err);
+      console.error(
+        `Error removing file (DocStorageID: ${fileInfoToRemove.documentStorageId}):`,
+        err,
+      );
       toast.current?.show({
         severity: "error",
         summary: "Removal Failed",
@@ -1015,66 +1239,12 @@ const CreateCaseDialogStyled = (props) => {
     }
   };
 
-  const validateStep1 = () => {
-    if (categorizedFiles.plaintiff.length > 2) {
-      setError({ upload: "Maximum of 2 plaintiff files allowed." });
-      return false;
-    }
-    return true;
-  };
-
   const handleNext = async () => {
     setError({});
 
     if (currentStep === 0) {
       if (!validateStep0()) return;
-      setLoading(true);
-      const caseData = {
-        typeOfClaims: _entity.typeOfClaims,
-        insuranceRef: _entity.insuranceRef,
-        vinsPartnershipReference: _entity.vinsPartnershipReference,
-        summonsNo: _entity.summonsNo,
-        caseDetails: _entity.caseDetails,
-        partners: _entity.additionalInfo.partners.map((p) => p.value).filter((v) => v),
-        legalAssistants: _entity.additionalInfo.legalAssistants.map((la) => la.value).filter((v) => v),
-        insuranceCompany: _entity.additionalInfo.insuranceCompany,
-        additionalInfoDate: _entity.additionalInfo.additionalInfoDate
-          ? new Date(`20${_entity.additionalInfo.additionalInfoDate}`)
-          : null,
-        additionalRecipient: _entity.additionalInfo.additionalRecipient,
-        synonyms: synonymousList.map((item) => ({
-          primary: item.primary,
-          synonymsList: item.synonyms.split(", ").map((syn) => syn.trim()),
-        })),
-        createdBy: props.user._id,
-        updatedBy: props.user._id,
-      };
-
-      try {
-        console.log("Sending caseData to backend:", caseData);
-        const caseResult = await client.service("accidentCases").create(caseData);
-        setCreatedCaseId(caseResult._id);
-        console.log("caseResult", caseResult);
-        toast.current?.show({
-          severity: "success",
-          summary: "Case Created",
-          detail: `Case ${caseResult.vinsPartnershipReference} created. Proceed to upload documents.`,
-          life: 3000,
-        });
-        setCurrentStep(1);
-      } catch (err) {
-        console.error("Error creating accident case:", err);
-        const validationErrors = getSchemaValidationErrorsStrings(err);
-        setError(validationErrors);
-        toast.current?.show({
-          severity: "error",
-          summary: "Error",
-          detail: validationErrors.error || "Failed to create case.",
-          life: 5000,
-        });
-      } finally {
-        setLoading(false);
-      }
+      setCurrentStep(1);
     } else if (currentStep === 1) {
       if (!validateStep1()) return;
       setCurrentStep(2);
@@ -1096,12 +1266,105 @@ const CreateCaseDialogStyled = (props) => {
     setLoading(true);
 
     try {
-      const eagerCaseResult = await client.service("accidentCases").find({
-        query: { $limit: 1, _id: createdCaseId },
-      });
+      const caseData = {
+        typeOfClaims: _entity.typeOfClaims,
+        insuranceRef: _entity.insuranceRef,
+        vinsPartnershipReference: _entity.vinsPartnershipReference,
+        summonsNo: _entity.summonsNo,
+        caseDetails: _entity.caseDetails,
+        partners: _entity.additionalInfo.partners
+          .map((p) => p.value)
+          .filter((v) => v),
+        legalAssistants: _entity.additionalInfo.legalAssistants
+          .map((la) => la.value)
+          .filter((v) => v),
+        insuranceCompany: _entity.additionalInfo.insuranceCompany,
+        additionalInfoDate: _entity.additionalInfo.additionalInfoDate
+          ? new Date(_entity.additionalInfo.additionalInfoDate)
+          : null,
+        additionalRecipient: _entity.additionalInfo.additionalRecipient,
+        synonyms: synonymousList.map((item) => ({
+          primary: item.primary,
+          synonymsList: item.synonyms.split(", ").map((syn) => syn.trim()),
+        })),
+        createdBy: props.user._id,
+        updatedBy: props.user._id,
+      };
 
-      if (eagerCaseResult.data.length > 0) {
-        props.onCaseCreated(eagerCaseResult.data[0]);
+      const caseResult = await client.service("accidentCases").create(caseData);
+      setCreatedCaseId(caseResult._id);
+
+      // Create caseDocuments for uploaded files
+      const categories = [
+        { files: categorizedFiles.plaintiff, docType: "Plaintiff File" },
+        { files: categorizedFiles.adjuster, docType: "Adjuster Report" },
+        { files: categorizedFiles.medical, docType: "Medical File" },
+      ];
+
+      let docSuccessCount = 0;
+      const docErrorMessages = [];
+
+      for (const { files, docType } of categories) {
+        for (const fileInfo of files) {
+          const caseDocData = {
+            summonsNo: caseResult._id,
+            uploadedDocument: [fileInfo.documentStorageId],
+            documentType: docType,
+            uploadTimestamp: new Date(),
+            createdBy: props.user._id,
+            updatedBy: props.user._id,
+          };
+
+          try {
+            const caseDocResult = await client
+              .service("caseDocuments")
+              .create(caseDocData);
+            await client
+              .service("documentStorages")
+              .patch(fileInfo.documentStorageId, {
+                tableId: caseDocResult._id,
+                tableName: "caseDocuments",
+              });
+
+            setCategorizedFiles((prev) => ({
+              ...prev,
+              [docType.toLowerCase().split(" ")[0]]: prev[
+                docType.toLowerCase().split(" ")[0]
+              ].map((f) =>
+                f.documentStorageId === fileInfo.documentStorageId
+                  ? { ...f, caseDocumentId: caseDocResult._id }
+                  : f,
+              ),
+            }));
+
+            docSuccessCount++;
+          } catch (err) {
+            console.error(
+              `Error creating caseDocument for ${fileInfo.name}:`,
+              err,
+            );
+            docErrorMessages.push(
+              `Failed to save ${docType}: ${fileInfo.name}`,
+            );
+          }
+        }
+      }
+
+      if (docSuccessCount > 0) {
+        toast.current?.show({
+          severity: "success",
+          summary: "Documents Linked",
+          detail: `${docSuccessCount} document(s) successfully linked to the case.`,
+          life: 3000,
+        });
+      }
+      if (docErrorMessages.length > 0) {
+        toast.current?.show({
+          severity: "error",
+          summary: "Document Linking Error",
+          detail: docErrorMessages.join(", "),
+          life: 5000,
+        });
       }
 
       await triggerExtractionJobs();
@@ -1109,17 +1372,21 @@ const CreateCaseDialogStyled = (props) => {
       props.alert({
         type: "success",
         title: "Case Submitted",
-        message: "Case submitted. Document processing queued for uploaded files (if applicable).",
+        message:
+          "Case submitted. Document processing queued for uploaded files.",
       });
+      props.onCaseCreated(caseResult);
       setCurrentStep(4);
     } catch (err) {
-      console.error("Error fetching final case data or triggering jobs:", err);
-      props.alert({
-        type: "warning",
-        title: "Submission Warning",
-        message: "Case submitted, but failed to fetch final details or queue document processing.",
+      console.error("Error creating accident case:", err);
+      const validationErrors = getSchemaValidationErrorsStrings(err);
+      setError(validationErrors);
+      toast.current?.show({
+        severity: "error",
+        summary: "Error",
+        detail: validationErrors.error || "Failed to create case.",
+        life: 5000,
       });
-      setCurrentStep(4);
     } finally {
       setLoading(false);
     }
@@ -1142,9 +1409,18 @@ const CreateCaseDialogStyled = (props) => {
         continue;
       }
 
-      console.log(`Checking extraction jobs for ${files.length} ${docType} files...`);
+      console.log(
+        `Checking extraction jobs for ${files.length} ${docType} files...`,
+      );
 
       const queuePromises = files.map((fileInfo) => {
+        if (!fileInfo.caseDocumentId) {
+          errorMessages.push(
+            `Cannot queue ${docType} file: ${fileInfo.name} (No case document ID)`,
+          );
+          return Promise.resolve({ error: true, fileInfo });
+        }
+
         return client
           .service("textExtractionQueues")
           .find({
@@ -1155,7 +1431,9 @@ const CreateCaseDialogStyled = (props) => {
           })
           .then((existing) => {
             if (existing.total > 0) {
-              console.log(`Extraction job already queued for CaseDoc ${fileInfo.caseDocumentId} (${docType})`);
+              console.log(
+                `Extraction job already queued for CaseDoc ${fileInfo.caseDocumentId} (${docType})`,
+              );
               skippedCount++;
               return { skipped: true, fileInfo };
             }
@@ -1173,13 +1451,20 @@ const CreateCaseDialogStyled = (props) => {
               .service("textExtractionQueues")
               .create(queueData)
               .then((result) => {
-                console.log(`Successfully created queue record for CaseDoc ${fileInfo.caseDocumentId} (${docType})`);
+                console.log(
+                  `Successfully created queue record for CaseDoc ${fileInfo.caseDocumentId} (${docType})`,
+                );
                 successCount++;
                 return { success: true, fileInfo };
               })
               .catch((err) => {
-                console.error(`Failed to create queue record for ${fileInfo.name} (CaseDocID: ${fileInfo.caseDocumentId}):`, err);
-                errorMessages.push(`Could not queue ${docType} file: ${fileInfo.name}`);
+                console.error(
+                  `Failed to create queue record for ${fileInfo.name} (CaseDocID: ${fileInfo.caseDocumentId}):`,
+                  err,
+                );
+                errorMessages.push(
+                  `Could not queue ${docType} file: ${fileInfo.name}`,
+                );
                 return { error: err, fileInfo };
               });
           });
@@ -1230,8 +1515,20 @@ const CreateCaseDialogStyled = (props) => {
         })),
       })),
       additionalInfo: {
-        partners: [{ id: uuidv4(), key: `partner_${uuidv4().substring(0, 8)}`, value: "" }],
-        legalAssistants: [{ id: uuidv4(), key: `legal_assistant_${uuidv4().substring(0, 8)}`, value: "" }],
+        partners: [
+          {
+            id: uuidv4(),
+            key: `partner_${uuidv4().substring(0, 8)}`,
+            value: "",
+          },
+        ],
+        legalAssistants: [
+          {
+            id: uuidv4(),
+            key: `legal_assistant_${uuidv4().substring(0, 8)}`,
+            value: "",
+          },
+        ],
         insuranceCompany: "",
         additionalInfoDate: "",
         additionalRecipient: "",
@@ -1248,14 +1545,26 @@ const CreateCaseDialogStyled = (props) => {
           id: uuidv4(),
           label: "Partners",
           keyPrefix: "partner",
-          fields: [{ id: uuidv4(), key: `partner_${uuidv4().substring(0, 8)}`, type: "text" }],
+          fields: [
+            {
+              id: uuidv4(),
+              key: `partner_${uuidv4().substring(0, 8)}`,
+              type: "text",
+            },
+          ],
           allowMultiple: true,
         },
         {
           id: uuidv4(),
           label: "Legal Assistants",
           keyPrefix: "legal_assistant",
-          fields: [{ id: uuidv4(), key: `legal_assistant_${uuidv4().substring(0, 8)}`, type: "text" }],
+          fields: [
+            {
+              id: uuidv4(),
+              key: `legal_assistant_${uuidv4().substring(0, 8)}`,
+              type: "text",
+            },
+          ],
           allowMultiple: true,
         },
         {
@@ -1287,13 +1596,26 @@ const CreateCaseDialogStyled = (props) => {
   const renderFileList = (category) => {
     const files = categorizedFiles[category];
     if (!files || files.length === 0) {
-      return <p className="p-text-secondary p-mt-2">No {category} files uploaded yet.</p>;
+      return (
+        <p className="p-text-secondary p-mt-2">
+          No {category} files uploaded yet.
+        </p>
+      );
     }
     return (
-      <ul className="p-list-none p-p-0 p-mt-3" style={{ maxHeight: "150px", overflowY: "auto" }}>
+      <ul
+        className="p-list-none p-p-0 p-mt-3"
+        style={{ maxHeight: "150px", overflowY: "auto" }}
+      >
         {files.map((fileInfo) => (
-          <li key={fileInfo.caseDocumentId || fileInfo.documentStorageId} className="p-d-flex p-ai-center p-mb-2">
-            <i className="pi pi-file-pdf p-mr-2" style={{ color: "var(--red-500)" }}></i>
+          <li
+            key={fileInfo.documentStorageId}
+            className="p-d-flex p-ai-center p-mb-2"
+          >
+            <i
+              className="pi pi-file-pdf p-mr-2"
+              style={{ color: "var(--red-500)" }}
+            ></i>
             <span className="p-mr-auto">{fileInfo.name}</span>
             <Button
               icon="pi pi-times"
@@ -1311,8 +1633,8 @@ const CreateCaseDialogStyled = (props) => {
   const renderMandatoryField = (field) => {
     const value = _entity[field.key] || "";
     return (
-      <div key={field.id} className="p-field p-col-12 p-md-6 mb-2">
-        <label htmlFor={field.key}>
+      <div key={field.id} className="p-field p-col-12 p-md-6 mandatory-field">
+        <label htmlFor={field.id}>
           {field.label} <span style={{ color: "var(--red-500)" }}>*</span>
         </label>
         {field.type === "dropdown" ? (
@@ -1322,39 +1644,52 @@ const CreateCaseDialogStyled = (props) => {
             options={field.options}
             onChange={(e) => setValByKey(field.key, e.value)}
             placeholder={`Select ${field.label}`}
-            className={`input-themed mb-2 ${error[field.key] ? "p-invalid" : ""}`}
+            className={`input-themed w-full ${error[field.key] ? "p-invalid" : ""}`}
           />
         ) : (
           <InputText
             id={field.id}
             value={value}
             onChange={(e) => setValByKey(field.key, e.target.value)}
-            className={`input-themed mb-2 ${error[field.key] ? "p-invalid" : ""}`}
+            className={`input-themed w-full ${error[field.key] ? "p-invalid1342" : ""}`}
+            placeholder={`Enter ${field.label}`}
           />
         )}
-        {error[field.key] && <small className="p-error">{error[field.key]}</small>}
+        {error[field.key] && (
+          <small className="p-error">{error[field.key]}</small>
+        )}
       </div>
     );
   };
 
   const renderAddLabelForm = () => (
-    <div className="p-field p-col-12" style={{ marginTop: "2rem", display: "flex", alignItems: "center", gap: "1rem" }}>
+    <div
+      className="p-field p-col-12 p-md-6"
+      style={{
+        marginTop: "2rem",
+        display: "flex",
+        alignItems: "center",
+        gap: "1rem",
+      }}
+    >
       <InputText
         value={newLabelName}
         onChange={(e) => setNewLabelName(e.target.value)}
         placeholder="Enter new label name"
+        className="w-full"
       />
       <span
         className="p-text-secondary"
         style={{ cursor: "pointer", whiteSpace: "nowrap" }}
         onClick={() => {
           if (newLabelName) addNewLabel();
-          else toast.current?.show({
-            severity: "warn",
-            summary: "Invalid Input",
-            detail: "Please enter a label name.",
-            life: 3000,
-          });
+          else
+            toast.current?.show({
+              severity: "warn",
+              summary: "Invalid Input",
+              detail: "Please enter a label name.",
+              life: 3000,
+            });
         }}
       >
         +Add input label
@@ -1371,25 +1706,28 @@ const CreateCaseDialogStyled = (props) => {
             icon="pi pi-arrow-left"
             onClick={handleBack}
             className="p-button-secondary p-button-outlined"
-            disabled={loading || uploading.plaintiff || uploading.adjuster || uploading.medical}
+            disabled={
+              loading ||
+              uploading.plaintiff ||
+              uploading.adjuster ||
+              uploading.medical
+            }
           />
         )}
       </div>
       <div>
         {currentStep < 3 && (
           <Button
-            label={
-              currentStep === 0
-                ? "Create Case & Next"
-                : currentStep === 1
-                  ? "Next"
-                  : "Review & Submit"
-            }
+            label="Next"
             icon="pi pi-arrow-right"
             iconPos="right"
             onClick={handleNext}
-            loading={loading && currentStep === 0}
-            disabled={loading || uploading.plaintiff || uploading.adjuster || uploading.medical}
+            disabled={
+              loading ||
+              uploading.plaintiff ||
+              uploading.adjuster ||
+              uploading.medical
+            }
             className="themed-button-prime"
           />
         )}
@@ -1399,7 +1737,9 @@ const CreateCaseDialogStyled = (props) => {
             icon="pi pi-check"
             onClick={handleSubmit}
             loading={loading}
-            disabled={uploading.plaintiff || uploading.adjuster || uploading.medical}
+            disabled={
+              uploading.plaintiff || uploading.adjuster || uploading.medical
+            }
             className="p-button-success themed-button-success"
           />
         )}
@@ -1433,40 +1773,67 @@ const CreateCaseDialogStyled = (props) => {
       {error && error.error && (
         <Message severity="error" text={error.error} className="p-mb-3" />
       )}
-      {(currentStep === 0 || currentStep === 2) && Object.keys(error).length > 0 && !error.error && (
-        <Message
-          severity="error"
-          text={
-            Object.values(error).find((msg) => typeof msg === "string") ||
-            "Please correct the highlighted fields."
-          }
-          className="p-mb-3"
-        />
-      )}
+      {(currentStep === 0 || currentStep === 2) &&
+        Object.keys(error).length > 0 &&
+        !error.error && (
+          <Message
+            severity="error"
+            text={
+              Object.values(error).find((msg) => typeof msg === "string") ||
+              "Please correct the highlighted fields."
+            }
+            className="p-mb-3"
+          />
+        )}
 
       <div className="dialog-content">
         {currentStep === 0 && (
-          <div className="p-fluid p-grid p-formgrid">
-            {fieldsConfig.mandatory.map((field) => renderMandatoryField(field))}
-            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-              <SortableContext items={fieldsConfig.customLabels.map((l) => l.id)} strategy={verticalListSortingStrategy}>
-                {fieldsConfig.customLabels.map((label) => (
-                  <SortableLabel key={label.id} label={label} />
-                ))}
-              </SortableContext>
-            </DndContext>
-            {renderAddLabelForm()}
+          <div className="p-fluid p-grid p-formgrid case-details-grid">
+            <div className="p-col-12">
+              <h5></h5>
+              <div className="p-grid p-formgrid mandatory-grid">
+                {fieldsConfig.mandatory.map((field) =>
+                  renderMandatoryField(field),
+                )}
+              </div>
+            </div>
+            <div className="p-col-12">
+              <h5> </h5>
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={fieldsConfig.customLabels.map((l) => l.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  {fieldsConfig.customLabels.map((label) => (
+                    <SortableLabel key={label.id} label={label} />
+                  ))}
+                </SortableContext>
+              </DndContext>
+              {renderAddLabelForm()}
+            </div>
           </div>
         )}
 
         {currentStep === 1 && (
           <div className="p-fluid file-upload-step">
             {error && error.upload && (
-              <Message severity="error" text={error.upload} className="p-mb-3" />
+              <Message
+                severity="error"
+                text={error.upload}
+                className="p-mb-3"
+              />
             )}
-            <h5>Upload Documents for Case: {_entity.vinsPartnershipReference || "N/A"}</h5>
+            <h5>
+              Upload Documents for Case:{" "}
+              {_entity.vinsPartnershipReference || "N/A"}
+            </h5>
             <p className="p-text-secondary p-mb-3">
-              Upload files relevant to the case (max 2 plaintiff files). Files are saved automatically.
+              Upload files relevant to the case (max 2 plaintiff files, at least
+              1 document required).
             </p>
             <TabView>
               <TabPanel header="Plaintiff Files">
@@ -1476,13 +1843,21 @@ const CreateCaseDialogStyled = (props) => {
                   id={null}
                   user={props.user}
                   parentToastRef={toast}
-                  onUploadComplete={(ids) => handleUploadAndSave(ids, "plaintiff")}
+                  onUploadComplete={(ids) =>
+                    handleUploadAndSave(ids, "plaintiff")
+                  }
                   accept="application/pdf,image/*"
                   multiple={true}
-                  disabled={uploading.plaintiff || categorizedFiles.plaintiff.length >= 2}
+                  disabled={
+                    uploading.plaintiff ||
+                    categorizedFiles.plaintiff.length >= 2
+                  }
                 />
                 {uploading.plaintiff && (
-                  <ProgressBar mode="indeterminate" style={{ height: "6px", marginTop: "10px" }} />
+                  <ProgressBar
+                    mode="indeterminate"
+                    style={{ height: "6px", marginTop: "10px" }}
+                  />
                 )}
                 {renderFileList("plaintiff")}
               </TabPanel>
@@ -1493,13 +1868,18 @@ const CreateCaseDialogStyled = (props) => {
                   id={null}
                   user={props.user}
                   parentToastRef={toast}
-                  onUploadComplete={(ids) => handleUploadAndSave(ids, "adjuster")}
+                  onUploadComplete={(ids) =>
+                    handleUploadAndSave(ids, "adjuster")
+                  }
                   accept="application/pdf,image/*"
                   multiple={true}
                   disabled={uploading.adjuster}
                 />
                 {uploading.adjuster && (
-                  <ProgressBar mode="indeterminate" style={{ height: "6px", marginTop: "10px" }} />
+                  <ProgressBar
+                    mode="indeterminate"
+                    style={{ height: "6px", marginTop: "10px" }}
+                  />
                 )}
                 {renderFileList("adjuster")}
               </TabPanel>
@@ -1510,13 +1890,18 @@ const CreateCaseDialogStyled = (props) => {
                   id={null}
                   user={props.user}
                   parentToastRef={toast}
-                  onUploadComplete={(ids) => handleUploadAndSave(ids, "medical")}
+                  onUploadComplete={(ids) =>
+                    handleUploadAndSave(ids, "medical")
+                  }
                   accept="application/pdf,image/*"
                   multiple={true}
                   disabled={uploading.medical}
                 />
                 {uploading.medical && (
-                  <ProgressBar mode="indeterminate" style={{ height: "6px", marginTop: "10px" }} />
+                  <ProgressBar
+                    mode="indeterminate"
+                    style={{ height: "6px", marginTop: "10px" }}
+                  />
                 )}
                 {renderFileList("medical")}
               </TabPanel>
@@ -1525,19 +1910,24 @@ const CreateCaseDialogStyled = (props) => {
         )}
 
         {currentStep === 2 && (
-          <div className="p-fluid p-grid p-formgrid">
+          <div className="p-fluid p-grid p-formgrid additional-info-grid">
             <h5>Additional Information</h5>
             <p className="p-text-secondary p-mb-3">
-              Provide additional details for the case. All fields are optional.
+              {/* Provide additional details for the case. All fields are optional. */}
             </p>
-            {fieldsConfig.additionalInfo.map((fieldConfig) => renderAdditionalInfoField(fieldConfig))}
+            {fieldsConfig.additionalInfo.map((fieldConfig) =>
+              renderAdditionalInfoField(fieldConfig),
+            )}
           </div>
         )}
 
         {currentStep === 3 && (
           <div className="p-fluid">
             <h5>Review and Submit</h5>
-            <p>Please review the case details, additional information, and uploaded documents before submitting.</p>
+            <p>
+              Please review the case details, additional information, and
+              uploaded documents before submitting.
+            </p>
             <div className="p-grid p-formgrid p-mb-3">
               {fieldsConfig.mandatory.map((field) => (
                 <div key={field.id} className="p-field p-col-12 p-md-6">
@@ -1549,10 +1939,18 @@ const CreateCaseDialogStyled = (props) => {
                   <h6>{label.label}</h6>
                   {label.fields.map((field) => (
                     <div key={field.id} className="p-ml-4">
-                      <label>Field:</label>{" "}
+                      <label>
+                        {field.key === "claimStatus"
+                          ? "Status"
+                          : field.key === "claimStatusDate"
+                            ? "Status Date"
+                            : "Field"}
+                        :
+                      </label>{" "}
                       {_entity.caseDetails
                         .find((l) => l.label === label.label)
-                        ?.fields.find((f) => f.key === field.key)?.value || "N/A"}
+                        ?.fields.find((f) => f.key === field.key)?.value ||
+                        "N/A"}
                     </div>
                   ))}
                 </div>
@@ -1591,9 +1989,17 @@ const CreateCaseDialogStyled = (props) => {
             </div>
             <h6>Uploaded Documents:</h6>
             <div className="p-ml-2">
-              <p><b>Plaintiff Files:</b> {categorizedFiles.plaintiff.length} file(s) (0-2 allowed)</p>
-              <p><b>Adjuster Reports:</b> {categorizedFiles.adjuster.length} file(s)</p>
-              <p><b>Medical Files:</b> {categorizedFiles.medical.length} file(s)</p>
+              <p>
+                <b>Plaintiff Files:</b> {categorizedFiles.plaintiff.length}{" "}
+                file(s) (0-2 allowed)
+              </p>
+              <p>
+                <b>Adjuster Reports:</b> {categorizedFiles.adjuster.length}{" "}
+                file(s)
+              </p>
+              <p>
+                <b>Medical Files:</b> {categorizedFiles.medical.length} file(s)
+              </p>
             </div>
           </div>
         )}
@@ -1603,10 +2009,15 @@ const CreateCaseDialogStyled = (props) => {
             <i className="pi pi-check-circle confirmation-icon"></i>
             <h3 className="p-my-3">Case Submitted Successfully!</h3>
             <p className="p-text-secondary">
-              Case Number: <strong>{_entity?.vinsPartnershipReference || "N/A"}</strong>
+              Case Number:{" "}
+              <strong>{_entity?.vinsPartnershipReference || "N/A"}</strong>
             </p>
-            <p className="p-text-secondary">Your case details and documents have been submitted.</p>
-            <p className="p-text-secondary">File extraction queued for uploaded documents (if applicable).</p>
+            <p className="p-text-secondary">
+              Your case details and documents have been submitted.
+            </p>
+            <p className="p-text-secondary">
+              File extraction queued for uploaded documents.
+            </p>
             <div className="p-mt-4">
               <Button
                 label="Go to Homepage"
@@ -1691,7 +2102,10 @@ const CreateCaseDialogStyled = (props) => {
           width: 2.5rem;
           height: 2.5rem;
           font-weight: 600;
-          transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+          transition:
+            background-color 0.2s,
+            color 0.2s,
+            border-color 0.2s;
           position: relative;
           z-index: 1;
         }
@@ -1717,6 +2131,12 @@ const CreateCaseDialogStyled = (props) => {
           display: none;
         }
         .create-case-dialog .p-field label {
+          display: block;
+          margin-bottom: 0.5rem;
+          color: var(--theme-secondary);
+          font-weight: 500;
+        }
+        .create-case-dialog .p-field-label {
           display: block;
           margin-bottom: 0.5rem;
           color: var(--theme-secondary);
@@ -1778,74 +2198,204 @@ const CreateCaseDialogStyled = (props) => {
           border-color: #15803d;
         }
         .themed-button-success:enabled:hover {
-          background: #14532d;
-          border-color: #14532d;
+          background: #166534;
+          border-color: #166534;
         }
         .draggable-label {
-          padding: 1rem;
           border: 1px solid var(--theme-border);
+          padding: 1rem;
           border-radius: 4px;
-          background-color: var(--theme-muted-bg);
-          transition: background-color 0.2s;
+          background-color: var(--theme-panel-bg);
         }
-        .draggable-label:hover {
-          background-color: #e9ecef;
+
+        .label-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 1rem;
         }
+
+        .label-header .p-d-flex.p-ai-center {
+          display: flex;
+          align-items: center;
+        }
+
         .drag-handle {
-          color: var(--theme-secondary);
+          cursor: grab;
+          color: var(--theme-text-on-light);
+          font-size: 1.2rem;
         }
+
+        .label-title {
+          margin: 0;
+          // font-size: 1.1rem;
+          font-weight: 500;
+          color: var(--theme-text-on-light);
+        }
+
+        .custom-fields-grid {
+          margin-top: 0.5rem;
+        }
+
         .field-container {
           display: flex;
           align-items: center;
+          gap: 0.5rem;
+        }
+
+        .icon-sm {
+          width: 1.5rem;
+          height: 1.5rem;
+          font-size: 0.875rem;
+        }
+
+        .create-case-dialog .p-field label {
+          display: block;
+          margin-bottom: 0.5rem;
+          color: var(--theme-secondary);
+          font-weight: 500;
+        }
+        .create-case-dialog .p-field-label {
+          display: block;
+          margin-bottom: 0.5rem;
+          color: var(--theme-secondary);
+          font-weight: 500;
+        }
+        .input-themed.p-inputtext,
+        .input-themed .p-inputtext,
+        .input-themed.p-dropdown .p-dropdown,
+        .input-themed.p-calendar {
+          border-color: var(--theme-border);
+          border-radius: 4px;
           width: 100%;
         }
-        .field-container .input-themed {
-          flex-grow: 1;
-          margin-right: 0.5rem;
+        .input-themed.p-inputtext.p-invalid,
+        .input-themed.p-dropdown.p-invalid .p-dropdown,
+        .input-themed.p-calendar.p-invalid .p-inputtext {
+          border-color: var(--red-500);
         }
-        .field-container .p-button.icon-sm {
-          width: 2rem;
-          height: 2rem;
+        .input-themed.p-inputtext:enabled:focus,
+        .input-themed .p-inputtext:enabled:focus,
+        .input-themed.p-dropdown .p-dropdown:focus,
+        .input-themed.p-calendar:enabled:focus-within {
+          border-color: var(--theme-primary);
+          box-shadow: 0 0 0 1px var(--theme-primary);
+        }
+        .file-upload-step {
+          padding: 1rem;
+        }
+        .file-upload-step .p-tabview-panels {
+          padding: 1rem 0 0 0;
+        }
+        .p-list-none {
+          list-style: none;
           padding: 0;
-          flex-shrink: 0;
+          margin: 0;
         }
-        .field-container .p-button.icon-sm .pi {
-          font-size: 1rem;
+        .p-list-none li {
+          border-bottom: 1px solid var(--surface-d);
+          padding: 0.5rem 0;
+        }
+        .p-list-none li:last-child {
+          border-bottom: none;
+        }
+        .confirmation-step .confirmation-icon {
+          font-size: 4rem !important;
+          color: var(--green-500) !important;
+        }
+        .themed-button-prime {
+          background: var(--theme-primary);
+          border-color: var(--theme-primary);
+          color: var(--theme-text-on-dark);
+        }
+        .themed-button-prime:enabled:hover {
+          background: var(--theme-primary-hover);
+          border-color: var(--theme-primary-hover);
+        }
+        .themed-button-success {
+          background: #15803d;
+          border-color: #15803d;
+        }
+        .themed-button-success:enabled:hover {
+          background: #166534;
+          border-color: #166534;
+        }
+        .draggable-label {
+          border: 1px solid var(--theme-border);
+          border-radius: 4px;
+          padding: 1rem;
+          background-color: var(--theme-muted-bg);
+          margin-bottom: 1rem;
         }
         .label-header {
           display: flex;
           align-items: center;
-          flex-wrap: nowrap;
+          margin-bottom: 0.5rem;
         }
         .label-title {
-          margin: 0 0.5rem 0 1rem;
-          flex-grow: 1;
-          whiteSpace: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
+          margin: 0;
+          // font-size: 1.1rem;
+          color: var(--theme-secondary);
         }
-        .label-header .p-button.icon-sm {
-          width: 2rem;
-          height: 2rem;
-          padding: 0;
-          flex-shrink: 0;
+        .drag-handle {
+          cursor: move;
+          color: var(--theme-secondary);
         }
-        .label-header .p-button.icon-sm .pi {
-          font-size: 1rem;
+        .icon-sm {
+          width: 1.5rem !important;
+          height: 1.5rem !important;
+          font-size: 0.875rem !important;
+        }
+        .field-container {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          width: 100%;
+        }
+        .case-details-grid {
+          max-height: calc(70vh - 100px);
+          overflow-y: auto;
+          padding-right: 0.5rem;
+        }
+        .custom-fields-grid,
+        .mandatory-grid,
+        .additional-info-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 1rem;
+          width: 100%;
+        }
+        .custom-field,
+        .mandatory-field,
+        .additional-info-field {
+          display: flex;
+          flex-direction: column;
+        }
+        .custom-field .p-inputtext,
+        .mandatory-field .p-inputtext,
+        .additional-info-field .p-inputtext,
+        .custom-field .p-dropdown,
+        .custom-field .p-calendar,
+        .additional-info-field .p-calendar {
+          width: 100%;
+        }
+        @media (max-width: 768px) {
+          .custom-fields-grid,
+          .mandatory-grid,
+          .additional-info-grid {
+            grid-template-columns: 1fr;
+          }
         }
       `}</style>
     </Dialog>
   );
 };
 
-const mapState = (state) => ({
-  user: state.auth.user,
-});
-
-const mapDispatch = (dispatch) => ({
-  alert: (data) => dispatch.toast.alert(data),
-  onCaseCreated: (data) =>
-    dispatch({ type: "CREATE_ACCIDENT_CASE_SUCCESS", payload: data }),
-});
-
-export default connect(mapState, mapDispatch)(CreateCaseDialogStyled);
+export default connect(
+  (state) => ({
+    user: state.auth.user,
+  }),
+  (dispatch) => ({
+    alert: (data) => dispatch({ type: "ALERT", payload: data }),
+  }),
+)(CreateCaseDialogStyled);

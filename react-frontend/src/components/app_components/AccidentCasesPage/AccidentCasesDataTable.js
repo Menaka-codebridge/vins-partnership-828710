@@ -44,7 +44,7 @@ const AccidentCasesDataTable = ({
   setSelectedHideFields,
   onClickSaveHiddenfields,
   loading,
-    setRefresh,
+  setRefresh,
   user,
   selectedDelete,
   setSelectedDelete,
@@ -86,6 +86,9 @@ const AccidentCasesDataTable = ({
   );
   const pTemplate0 = (rowData, { rowIndex }) => <p>{rowData.insuranceRef}</p>;
   const pTemplate1 = (rowData, { rowIndex }) => <p>{rowData.summonsNo}</p>;
+  const pTemplate12 = (rowData, { rowIndex }) => (
+    <p>{moment(rowData.updatedAt).fromNow()}</p>
+  );
   const pTemplate10 = (rowData, { rowIndex }) => (
     <p>{rowData.vinsPartnershipReference}</p>
   );
@@ -94,7 +97,7 @@ const AccidentCasesDataTable = ({
     <p>{rowData.plaintiffSolicitors}</p>
   );
   const pTemplate4 = (rowData, { rowIndex }) => <p>{rowData.plaintiff}</p>;
-  const pTemplate5 = (rowData, { rowIndex }) => <p>{rowData.insuredDriver}</p>;
+  const pTemplate5 = (rowData, { rowIndex }) => <p>{rowData.createdBy.name}</p>;
   const pTemplate6 = (rowData, { rowIndex }) => <p>{rowData.insured}</p>;
   const pTemplate7 = (rowData, { rowIndex }) => <p>{rowData.insuredVehicle}</p>;
   const p_calendarTemplate8 = (rowData, { rowIndex }) => (
@@ -105,7 +108,7 @@ const AccidentCasesDataTable = ({
     <p>{rowData.user?.name}</p>
   );
   const pTemplate11 = (rowData, { rowIndex }) => <p>{rowData.synonyms}</p>;
-  const pTemplate12 = (rowData, { rowIndex }) => <p>{rowData.parameters}</p>;
+  // const pTemplate12 = (rowData, { rowIndex }) => <p>{rowData.parameters}</p>;
   const editTemplate = (rowData, { rowIndex }) => (
     <Button
       onClick={() => onEditRow(rowData, rowIndex)}
@@ -136,7 +139,8 @@ const AccidentCasesDataTable = ({
         }
         setSelectedItems(_selectedItems);
       }}
-    />);
+    />
+  );
 
   const deselectAllRows = () => {
     // Logic to deselect all selected rows
@@ -334,11 +338,30 @@ const AccidentCasesDataTable = ({
         />
         <Column
           field="summonsNo"
-          header="summons No"
+          header="Summons No"
           body={pTemplate1}
           filter={selectedFilterFields.includes("summonsNo")}
           filterElement={filterTemplate}
           hidden={selectedHideFields?.includes("summonsNo")}
+          sortable
+          style={{ minWidth: "8rem" }}
+        />
+        <Column
+          field="updatedAt"
+          header="Updated At"
+          body={pTemplate12}
+          filter={selectedFilterFields.includes("updatedAt")}
+          filterElement={filterTemplate}
+          // hidden={selectedHideFields?.includes("updatedAt")}
+          sortable
+          style={{ minWidth: "8rem" }}
+        />
+        <Column
+          field="createdBy"
+          header="Created By"
+          body={pTemplate5}
+          filter={selectedFilterFields.includes("createdBy")}
+          // hidden={selectedHideFields?.includes("createdBy")}
           sortable
           style={{ minWidth: "8rem" }}
         />
@@ -440,7 +463,7 @@ const AccidentCasesDataTable = ({
           sortable
           style={{ minWidth: "8rem" }}
         /> */}
-        <Column header="Edit" body={editTemplate} />
+        {/* <Column header="Edit" body={editTemplate} /> */}
         <Column header="Delete" body={deleteTemplate} />
       </DataTable>
 

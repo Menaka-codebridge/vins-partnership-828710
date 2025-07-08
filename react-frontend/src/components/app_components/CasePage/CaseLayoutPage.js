@@ -13,7 +13,10 @@ const CaseLayout = (props) => {
 
   // Ensure activeSection and activeSubSectionIndex are set correctly when allSections is updated
   useEffect(() => {
-    if (allSections.length > 0 && !allSections.some(s => s.value === activeSection)) {
+    if (
+      allSections.length > 0 &&
+      !allSections.some((s) => s.value === activeSection)
+    ) {
       // Set to first section and first subsection if current activeSection is invalid
       setActiveSection("Background and Facts");
       setActiveSubSectionIndex(0);

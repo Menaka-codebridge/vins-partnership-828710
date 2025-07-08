@@ -89,14 +89,15 @@ const SectionContentsPage = (props) => {
             {
               path: "summonsNo",
               service: "accident_cases",
-              select: ["summonsNo"],
+              select: ["summonsNo"], // Only fetch the summonsNo field
             },
           ],
         },
       })
       .then((res) => {
         let results = res.data;
-
+        results = _.orderBy(results, ["createdAt"], ["desc"]);
+  
         setData(results);
         props.hide();
         setLoading(false);
@@ -403,7 +404,7 @@ const SectionContentsPage = (props) => {
               menuButtonClassName="ml-1 p-button-text"
               menuStyle={{ width: "200px" }}
             ></SplitButton>
-            <Button
+            {/* <Button
               label="add"
               style={{ height: "30px" }}
               rounded
@@ -411,12 +412,12 @@ const SectionContentsPage = (props) => {
               icon="pi pi-plus"
               onClick={() => setShowCreateDialog(true)}
               role="sectionContents-add-button"
-            />
+            /> */}
           </>
         </div>
       </div>
       <div className="grid align-items-center">
-        <div className="col-11" role="sectionContents-datatable">
+        <div className="col-12" role="sectionContents-datatable">
           <SectionContentsDatatable
             items={data}
             fields={fields}
