@@ -113,10 +113,10 @@ const SectionContentsDataTable = ({
   );
   const deleteTemplate = (rowData, { rowIndex }) => (
     <Button
-         onClick={() => onRowDelete(rowData._id)}
-         icon="pi pi-trash"
-         className="p-button-rounded p-button-danger p-button-text"
-       />
+      onClick={() => onRowDelete(rowData._id)}
+      icon="pi pi-trash"
+      className="p-button-rounded p-button-danger p-button-text"
+    />
   );
 
   const checkboxTemplate = (rowData) => (

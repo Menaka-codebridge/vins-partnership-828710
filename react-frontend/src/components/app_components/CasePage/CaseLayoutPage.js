@@ -4,20 +4,36 @@ import LeftSidebar from "./LeftSidebar";
 import "./CaseLayout.styles.css";
 
 const CaseLayout = (props) => {
-  // Initialize activeSection to the first section in SECTION_ORDER
   const [activeSection, setActiveSection] = useState("Background and Facts");
   const [activeSubSectionIndex, setActiveSubSectionIndex] = useState(0);
   const [allSections, setAllSections] = useState([]);
   const [isShrunk, setIsShrunk] = useState(false);
   const [visibleRight, setVisibleRight] = useState(false);
 
-  // Ensure activeSection and activeSubSectionIndex are set correctly when allSections is updated
+  // Navigation callback to set active section and subsection
+  const handleNavigateToSubSection = (sectionValue, subSectionValue) => {
+    const section = allSections.find((s) => s.value === sectionValue);
+    if (section) {
+      const subSectionIndex = section.subSections.findIndex(
+        (sub) => sub.value === subSectionValue
+      );
+      if (subSectionIndex !== -1) {
+        setActiveSection(sectionValue);
+        setActiveSubSectionIndex(subSectionIndex);
+        setVisibleRight(false); // Close the right sidebar after navigation
+      } else {
+        console.warn(`Subsection ${subSectionValue} not found in section ${sectionValue}`);
+      }
+    } else {
+      console.warn(`Section ${sectionValue} not found`);
+    }
+  };
+
   useEffect(() => {
     if (
       allSections.length > 0 &&
       !allSections.some((s) => s.value === activeSection)
     ) {
-      // Set to first section and first subsection if current activeSection is invalid
       setActiveSection("Background and Facts");
       setActiveSubSectionIndex(0);
     }
@@ -48,6 +64,7 @@ const CaseLayout = (props) => {
           setAllSections={setAllSections}
           visibleRight={visibleRight}
           setVisibleRight={setVisibleRight}
+          onNavigateToSubSection={handleNavigateToSubSection}
         />
       </div>
     </div>

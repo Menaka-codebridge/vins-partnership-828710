@@ -56,9 +56,21 @@ const AccidentCasesPage = (props) => {
 
   useEffect(() => {
     const _getSchema = async () => {
-      const _schema = await props.getSchema("accidentCases");
-      const _fields = _schema.data.map((field, i) => i > 13 && field.field);
-      setSelectedHideFields(_fields);
+      try {
+        const _schema = await props.getSchema("accidentCases");
+        const _fields = _schema.data
+          .map((field, i) => (i > 13 ? { name: field.field, value: field.field } : null))
+          .filter(field => field !== null); // Remove null values
+        setFields(_fields);
+        setSelectedHideFields(_fields.map(f => f.value));
+      } catch (error) {
+        console.error("Failed to fetch schema:", error);
+        props.alert({
+          title: "Schema Error",
+          type: "error",
+          message: "Failed to load schema for Accident Cases",
+        });
+      }
     };
     _getSchema();
     if (location?.state?.action === "create") {
@@ -242,11 +254,6 @@ const AccidentCasesPage = (props) => {
       icon: "pi pi-copy",
       command: () => copyPageLink(),
     },
-    // {
-    //     label: "Share",
-    //     icon: "pi pi-share-alt",
-    //     command: () => setSearchDialog(true)
-    // },
     {
       label: "Import",
       icon: "pi pi-upload",
@@ -256,14 +263,13 @@ const AccidentCasesPage = (props) => {
       label: "Export",
       icon: "pi pi-download",
       command: () => {
-        // Trigger the download by setting the triggerDownload state
         data.length > 0
           ? setTriggerDownload(true)
           : props.alert({
-              title: "Export",
-              type: "warn",
-              message: "no data to export",
-            });
+            title: "Export",
+            type: "warn",
+            message: "no data to export",
+          });
       },
     },
     {
@@ -272,38 +278,33 @@ const AccidentCasesPage = (props) => {
       command: () => toggleHelpSidebar(),
     },
     { separator: true },
-
-    process.env.REACT_APP_ENV == "development"
-      ? {
+    ...(process.env.REACT_APP_ENV === "development"
+      ? [
+        {
           label: "Testing",
           icon: "pi pi-check-circle",
           items: [
             {
               label: "Faker",
               icon: "pi pi-bullseye",
-              command: (e) => {
-                setShowFakerDialog(true);
-              },
-              show: true,
+              command: () => setShowFakerDialog(true),
             },
             {
-              label: `Drop ${data?.length}`,
+              label: `Drop ${data?.length || 0}`,
               icon: "pi pi-trash",
-              command: (e) => {
-                setShowDeleteAllDialog(true);
-              },
+              command: () => setShowDeleteAllDialog(true),
             },
-          ],
-        }
-      : null,
+          ].filter(item => item !== null),
+        },
+      ]
+      : []),
     {
       label: "Data seeder",
       icon: "pi pi-database",
-      command: (e) => {
-        setShowSeederDialog(true);
-      },
+      command: () => setShowSeederDialog(true),
     },
-  ];
+  ].filter(item => item !== null);
+
 
   const onMenuSort = (field, order) => {
     let sortedData;
@@ -328,104 +329,104 @@ const AccidentCasesPage = (props) => {
   //   },
   // ];
 
-  // const sortMenuItems = [
-  //   {
-  //     label: "Sort by",
-  //     template: (item) => (
-  //       <div
-  //         style={{
-  //           fontWeight: "bold",
-  //           padding: "8px 16px",
-  //           backgroundColor: "#f8f9fa",
-  //           fontSize: "14px",
-  //           color: "#333",
-  //         }}
-  //       >
-  //         {item.label}
-  //       </div>
-  //     ),
-  //     command: () => {},
-  //   },
-  //   { separator: true },
-  //   ...fields.flatMap((field) => [
-  //     {
-  //       label: `${field.name} (Ascending)`,
-  //       icon: activeSort === `${field.value}-asc` ? "pi pi-check" : null,
-  //       command: () => onMenuSort(field.value, "asc"),
-  //       template: (item) => (
-  //         <div
-  //           style={{
-  //             padding: "8px 16px",
-  //             fontSize: "13px",
-  //             color: activeSort === `${field.value}-asc` ? "#007bff" : "#333",
-  //             backgroundColor:
-  //               activeSort === `${field.value}-asc` ? "#e6f3ff" : "transparent",
-  //           }}
-  //         >
-  //           {item.icon && (
-  //             <i
-  //               className={item.icon}
-  //               style={{ marginRight: "8px", color: "#007bff" }}
-  //             />
-  //           )}
-  //           {item.label}
-  //         </div>
-  //       ),
-  //     },
-  //     {
-  //       label: `${field.name} (Descending)`,
-  //       icon: activeSort === `${field.value}-desc` ? "pi pi-check" : null,
-  //       command: () => onMenuSort(field.value, "desc"),
-  //       template: (item) => (
-  //         <div
-  //           style={{
-  //             padding: "8px 16px",
-  //             fontSize: "13px",
-  //             color: activeSort === `${field.value}-desc` ? "#007bff" : "#333",
-  //             backgroundColor:
-  //               activeSort === `${field.value}-desc`
-  //                 ? "#e6f3ff"
-  //                 : "transparent",
-  //           }}
-  //         >
-  //           {item.icon && (
-  //             <i
-  //               className={item.icon}
-  //               style={{ marginRight: "8px", color: "#007bff" }}
-  //             />
-  //           )}
-  //           {item.label}
-  //         </div>
-  //       ),
-  //     },
-  //   ]),
-  //   { separator: true },
-  //   {
-  //     label: "Reset",
-  //     icon: "pi pi-refresh",
-  //     command: () => {
-  //       setData(_.cloneDeep(initialData));
-  //       setActiveSort(null);
-  //     },
-  //     template: (item) => (
-  //       <div
-  //         style={{
-  //           color: "#d30000",
-  //           textAlign: "center",
-  //           display: "flex",
-  //           justifyContent: "center",
-  //           alignItems: "center",
-  //           fontWeight: "bold",
-  //           padding: "8px 16px",
-  //           fontSize: "13px",
-  //         }}
-  //       >
-  //         <i className={item.icon} style={{ marginRight: "8px" }} />
-  //         {item.label}
-  //       </div>
-  //     ),
-  //   },
-  // ];
+  const sortMenuItems = [
+    {
+      label: "Sort by",
+      template: (item) => (
+        <div
+          style={{
+            fontWeight: "bold",
+            padding: "8px 16px",
+            backgroundColor: "#f8f9fa",
+            fontSize: "14px",
+            color: "#333",
+          }}
+        >
+          {item?.label || "Sort by"}
+        </div>
+      ),
+      command: () => { },
+    },
+    { separator: true },
+    ...fields.flatMap((field) => [
+      {
+        label: `${field.name} (Ascending)`,
+        icon: activeSort === `${field.value}-asc` ? "pi pi-check" : null,
+        command: () => onMenuSort(field.value, "asc"),
+        template: (item) => (
+          <div
+            style={{
+              padding: "8px 16px",
+              fontSize: "13px",
+              color: activeSort === `${field.value}-asc` ? "#007bff" : "#333",
+              backgroundColor:
+                activeSort === `${field.value}-asc` ? "#e6f3ff" : "transparent",
+            }}
+          >
+            {item?.icon && (
+              <i
+                className={item.icon}
+                style={{ marginRight: "8px", color: "#007bff" }}
+              />
+            )}
+            {item?.label || "Unnamed"}
+          </div>
+        ),
+      },
+      {
+        label: `${field.name} (Descending)`,
+        icon: activeSort === `${field.value}-desc` ? "pi pi-check" : null,
+        command: () => immédiatementSort(field.value, "desc"),
+        template: (item) => (
+          <div
+            style={{
+              padding: "8px 16px",
+              fontSize: "13px",
+              color: activeSort === `${field.value}-desc` ? "#007bff" : "#333",
+              backgroundColor:
+                activeSort === `${field.value}-desc` ? "#e6f3ff" : "transparent",
+            }}
+          >
+            {item?.icon && (
+              <i
+                className={item.icon}
+                style={{ marginRight: "8px", color: "#007bff" }}
+              />
+            )}
+            {item?.label || "Unnamed"}
+          </div>
+        ),
+      },
+    ]),
+    { separator: true },
+    {
+      label: "Reset",
+      icon: "pi pi-refresh",
+      command: () => {
+        setData(_.cloneDeep(initialData));
+        setActiveSort(null);
+      },
+      template: (item) => (
+        <div
+          style={{
+            color: "#d30000",
+            textAlign: "center",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            fontWeight: "bold",
+            padding: "8px 16px",
+            fontSize: "13px",
+          }}
+        >
+          {item?.icon && (
+            <i className={item.icon} style={{ marginRight: "8px" }} />
+          )}
+          {item?.label || "Reset"}
+        </div>
+      ),
+    },
+  ].filter(item => item !== null);
 
   return (
     <div className="mt-5">

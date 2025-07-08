@@ -21,6 +21,7 @@ const CaseInferencePageLayout = ({
   visibleRight: externalVisibleRight,
   setVisibleRight: externalSetVisibleRight,
   setAllSections,
+  onNavigateToSubSection, // New prop
 }) => {
   const [localVisibleRight, setLocalVisibleRight] = useState(false);
   const visibleRight =
@@ -156,7 +157,6 @@ const CaseInferencePageLayout = ({
       setError(""); // Reset error state
       for (let attempt = 1; attempt <= retries; attempt++) {
         try {
-          // Fetch accident case data
           let accidentCaseData;
           try {
             accidentCaseData = await client
@@ -164,7 +164,7 @@ const CaseInferencePageLayout = ({
               .get(singleAccidentCasesId, {
                 query: { $populate: ["createdBy", "updatedBy"] },
               });
-            console.log("Fetched accidentCaseData:", accidentCaseData); // Debug log
+            console.log("Fetched accidentCaseData:", accidentCaseData);
           } catch (fetchError) {
             console.error(
               `Attempt ${attempt} - Failed to fetch accidentCases:`,
@@ -183,7 +183,7 @@ const CaseInferencePageLayout = ({
 
           setAccidentCase(accidentCaseData);
           setSummonsNo(accidentCaseData.summonsNo);
-          console.log("Set summonsNo:", accidentCaseData.summonsNo); // Debug log
+          console.log("Set summonsNo:", accidentCaseData.summonsNo);
           setCurrentSynonyms(accidentCaseData.synonyms || []);
 
           const sectionContentsRes = await client
@@ -355,7 +355,7 @@ const CaseInferencePageLayout = ({
           console.error(`Fetch attempt ${attempt} failed:`, error);
           if (attempt === retries) {
             setError(error.message || "Failed to fetch case data or sections");
-            setSummonsNo("Unknown Case"); // Fallback for summonsNo
+            setSummonsNo("Unknown Case");
             setLoading(false);
             alert({
               severity: "error",
@@ -1115,6 +1115,7 @@ const CaseInferencePageLayout = ({
         onOpenParamsDialog={openParamsDialog}
         onOpenSynonymsDialog={openSynonymsDialog}
         onGenerateLegalDocument={handleGenerateLegalDocument}
+        onNavigateToSubSection={onNavigateToSubSection} // Pass the navigation callback
       />
 
       <FilesDialog
@@ -1149,11 +1150,13 @@ CaseInferencePageLayout.propTypes = {
   visibleRight: PropTypes.bool,
   setVisibleRight: PropTypes.func,
   setAllSections: PropTypes.func.isRequired,
+  onNavigateToSubSection: PropTypes.func, // Add prop type
 };
 
 CaseInferencePageLayout.defaultProps = {
   visibleRight: undefined,
   setVisibleRight: undefined,
+  onNavigateToSubSection: undefined,
 };
 
 const mapState = (state) => {

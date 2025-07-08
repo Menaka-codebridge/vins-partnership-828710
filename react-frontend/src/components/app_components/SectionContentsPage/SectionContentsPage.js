@@ -97,7 +97,7 @@ const SectionContentsPage = (props) => {
       .then((res) => {
         let results = res.data;
         results = _.orderBy(results, ["createdAt"], ["desc"]);
-  
+
         setData(results);
         props.hide();
         setLoading(false);

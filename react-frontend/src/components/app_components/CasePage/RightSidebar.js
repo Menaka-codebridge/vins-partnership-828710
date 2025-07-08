@@ -2,6 +2,7 @@ import React from "react";
 import { Button } from "primereact/button";
 import GenerateLegalDocument from "./GenerateLegalDocument";
 import "./CaseLayout.styles.css";
+import PropTypes from "prop-types";
 
 const RightSidebar = ({
   visibleRight,
@@ -14,6 +15,7 @@ const RightSidebar = ({
   onOpenParamsDialog,
   onOpenSynonymsDialog,
   onGenerateLegalDocument,
+  onNavigateToSubSection, // New prop
 }) => {
   console.log("RightSidebar props:", { visibleRight, setVisibleRight });
 
@@ -54,16 +56,6 @@ const RightSidebar = ({
             tooltip="Generate PDF Document"
             tooltipOptions={{ position: "left" }}
           />
-          {/* <Button
-            icon="pi pi-file-word"
-            className="p-button-text sidebar-menu-item"
-            onClick={() => {
-              console.log("Generate Word Legal Document button clicked, setting visibleRight to true");
-              setVisibleRight(true);
-            }}
-            tooltip="Generate Word Document"
-            tooltipOptions={{ position: "left" }}
-          /> */}
         </div>
       </div>
 
@@ -74,9 +66,31 @@ const RightSidebar = ({
         expandedGroundTruth={expandedGroundTruth}
         toggleGroundTruthExpand={toggleGroundTruthExpand}
         accidentCase={accidentCase}
+        onNavigateToSubSection={onNavigateToSubSection} // Pass the navigation callback
       />
     </>
   );
+};
+
+RightSidebar.propTypes = {
+  visibleRight: PropTypes.bool,
+  setVisibleRight: PropTypes.func,
+  allSections: PropTypes.array.isRequired,
+  expandedGroundTruth: PropTypes.object.isRequired,
+  toggleGroundTruthExpand: PropTypes.func.isRequired,
+  accidentCase: PropTypes.object,
+  onOpenFilesDialog: PropTypes.func.isRequired,
+  onOpenParamsDialog: PropTypes.func.isRequired,
+  onOpenSynonymsDialog: PropTypes.func.isRequired,
+  onGenerateLegalDocument: PropTypes.func.isRequired,
+  onNavigateToSubSection: PropTypes.func, // Add prop type
+};
+
+RightSidebar.defaultProps = {
+  visibleRight: undefined,
+  setVisibleRight: undefined,
+  accidentCase: null,
+  onNavigateToSubSection: undefined,
 };
 
 export default RightSidebar;

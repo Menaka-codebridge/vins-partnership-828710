@@ -8,6 +8,7 @@ import mammoth from "mammoth";
 import LegalDocument from "./LegalDocument";
 import LegalDocumentWord from "./LegalDocumentWord";
 import "./CaseLayout.styles.css";
+import PropTypes from "prop-types";
 
 const GenerateLegalDocument = ({
   visibleRight,
@@ -16,6 +17,7 @@ const GenerateLegalDocument = ({
   expandedGroundTruth,
   toggleGroundTruthExpand,
   accidentCase,
+  onNavigateToSubSection, // New prop
 }) => {
   console.log("GenerateLegalDocument props:", {
     visibleRight,
@@ -24,29 +26,38 @@ const GenerateLegalDocument = ({
   });
 
   const downloadLinkRef = useRef(null);
-  const [localSections, setLocalSections] = useState(
-    allSections.filter((section) => section.value !== "Confusion Matrix"),
-  );
+  const [localSections, setLocalSections] = useState([]);
   const [removedGroundTruths, setRemovedGroundTruths] = useState({});
   const [showPreview, setShowPreview] = useState(false);
   const [format, setFormat] = useState(null); // "pdf" or "word"
   const [wordPreviewHtml, setWordPreviewHtml] = useState("");
 
+  // Function to remove superscripts from text
+  const removeSuperscripts = (text) => {
+    if (!text || typeof text !== "string") return text;
+    return text.replace(/[\u2070-\u2079\u00B2\u00B3\u00B9]/g, "");
+  };
+
   useEffect(() => {
-    setLocalSections(
-      allSections.filter((section) => section.value !== "Confusion Matrix"),
-    );
+    const filteredSections = allSections
+      .filter((section) => section.value !== "Confusion Matrix")
+      .map((section) => ({
+        ...section,
+        subSections: section.subSections.map((subSection) => ({
+          ...subSection,
+          groundTruth: removeSuperscripts(subSection.groundTruth),
+        })),
+      }));
+    setLocalSections(filteredSections);
   }, [allSections]);
 
   useEffect(() => {
     if (showPreview && format === "word") {
-      // Generate Word document and convert to HTML for preview
       const doc = LegalDocumentWord({
         accidentCase,
         allSections: localSections,
       });
       docx.Packer.toBlob(doc).then((blob) => {
-        // Convert Blob to ArrayBuffer
         blob.arrayBuffer().then((arrayBuffer) => {
           mammoth
             .convertToHtml({ arrayBuffer })
@@ -90,26 +101,11 @@ const GenerateLegalDocument = ({
   };
 
   const handleAddGroundTruth = (sectionValue, subSectionValue) => {
-    const originalGroundTruth = removedGroundTruths[subSectionValue] || "";
-    setLocalSections((prevSections) =>
-      prevSections.map((section) =>
-        section.value === sectionValue
-          ? {
-              ...section,
-              subSections: section.subSections.map((subSection) =>
-                subSection.value === subSectionValue
-                  ? { ...subSection, groundTruth: originalGroundTruth }
-                  : subSection,
-              ),
-            }
-          : section,
-      ),
-    );
-    setRemovedGroundTruths((prev) => {
-      const newState = { ...prev };
-      delete newState[subSectionValue];
-      return newState;
-    });
+    if (onNavigateToSubSection) {
+      onNavigateToSubSection(sectionValue, subSectionValue);
+    } else {
+      console.warn("onNavigateToSubSection is not provided");
+    }
   };
 
   const handleWordDownload = () => {
@@ -127,7 +123,7 @@ const GenerateLegalDocument = ({
   const handleClosePreview = () => {
     setShowPreview(false);
     setFormat(null);
-    setWordPreviewHtml(""); // Clear Word preview HTML
+    setWordPreviewHtml("");
   };
 
   return (
@@ -371,6 +367,21 @@ const GenerateLegalDocument = ({
       )}
     </>
   );
+};
+
+GenerateLegalDocument.propTypes = {
+  visibleRight: PropTypes.bool.isRequired,
+  setVisibleRight: PropTypes.func.isRequired,
+  allSections: PropTypes.array.isRequired,
+  expandedGroundTruth: PropTypes.object.isRequired,
+  toggleGroundTruthExpand: PropTypes.func.isRequired,
+  accidentCase: PropTypes.object,
+  onNavigateToSubSection: PropTypes.func, // Add prop type
+};
+
+GenerateLegalDocument.defaultProps = {
+  accidentCase: null,
+  onNavigateToSubSection: undefined,
 };
 
 export default GenerateLegalDocument;
